@@ -1,0 +1,193 @@
+== 泛型函数 ==
+# T 是占位类型名字
+<source lang="swift">
+//函数可以接受传入的是Int,float等类型的参数
+func swapTwoValues<T>(inout a: T, inout _ b: T) {
+    let temporaryA = a
+    a = b
+    b = temporaryA
+}
+
+var someInt = 3
+var anotherInt = 107
+swapTwoValues(&someInt, &anotherInt)
+// someInt is now 107, and anotherInt is now 3
+ 
+var someString = "hello"
+var anotherString = "world"
+swapTwoValues(&someString, &anotherString)
+// someString is now "world", and anotherString is now "hello"
+</source>
+----
+== 类型参数 ==
+# 一旦一个类型参数被指定，那么其可以被使用来定义一个函数的参数类型，或作为一个函数返回类型，或用作函数主体中的注释类型。
+----
+== 命名类型参数 ==
+# 一般使用大写字母开头的驼峰式命名法（例如 T 和 MyTypeParameter）来给类型参数命名
+----
+== 泛型类型 ==
+# 通常在泛型函数中，Swift 允许你定义你自己的泛型类型。这些自定义类、结构体和枚举作用于任何类型，如同Array和Dictionary的用法。
+<source lang="swift">
+struct Stack<Element> {
+    var items = [Element]()
+    mutating func push(item: Element) {
+        items.append(item)
+    }
+    mutating func pop() -> Element {
+        return items.removeLast()
+    }
+}
+
+var stackOfStrings = Stack<String>()
+stackOfStrings.push("uno")
+stackOfStrings.push("dos")
+stackOfStrings.push("tres")
+stackOfStrings.push("cuatro")
+// the stack now contains 4 strings
+</source>
+----
+== 扩展泛型类型 ==
+<source lang="swift">
+extension Stack {
+    var topItem: Element? {
+        return items.isEmpty ? nil : items[items.count - 1]
+    }
+}
+</source>
+----
+== 类型约束 ==
+=== 类型约束语法 ===
+<source lang="swift">
+func someFunction<T: SomeClass, U: SomeProtocol>(someT: T, someU: U) {
+    // function body goes here
+} 
+</source>
+----
+=== 类型约束行为 ===
+
+<source lang="swift">
+// 该函数不会被编译，这个问题的位置在等式的检查上，“if value == valueToFind”。不是所有的 Swift 中的类型都可以用等式符（==）进行比较。
+func findIndex<T>(array: [T], _ valueToFind: T) -> Int? {
+    for (index, value) in array.enumerate() {
+        if value == valueToFind {
+            return index
+        }
+    }
+    return nil
+} 
+
+//针对以上的不足，作出约束，Equatable 是 swift 标准库中定义的协议
+func findIndex<T: Equatable>(array: [T], _ valueToFind: T) -> Int? {
+    for (index, value) in array.enumerate() {
+        if value == valueToFind {
+            return index
+        }
+    }
+    return nil
+}
+</source>
+----
+== 关联类型 ==
+# 一个关联类型给定作用于协议部分的类型一个节点名。
+# 关联类型被指定为 associatedtype 关键字。
+=== 关联类型行为 ===
+<source lang="swift">
+protocol Container {
+    associatedtype ItemType
+    mutating func append(item: ItemType)
+    var count: Int { get }
+    subscript(i: Int) -> ItemType { get }
+} 
+
+struct IntStack: Container {
+    // original IntStack implementation
+    var items = [Int]()
+    mutating func push(item: Int) {
+        items.append(item)
+    }
+    mutating func pop() -> Int {
+        return items.removeLast()
+    }
+    // conformance to the Container protocol
+    typealias ItemType = Int // 这行可以省略，因为 swift 可以通过上边的进行类型推倒出 ItemType 来使用
+    mutating func append(item: Int) {
+        self.push(item)
+    }
+    var count: Int {
+        return items.count
+    }
+    subscript(i: Int) -> Int {
+        return items[i]
+    }
+}
+
+// 遵循Container协议的泛型Stack类型
+// 占位类型参数 Element 被用作 append 方法的 item 参数和下标的返回类型。Swift 因此可以推断出被用作这个特定容器的 ItemType 的合适类型
+struct Stack<Element>: Container {
+    // original Stack<Element> implementation
+    var items = [Element]()
+    mutating func push(item: Element) {
+        items.append(item)
+    }
+    mutating func pop() -> Element {
+        return items.removeLast()
+    }
+    // conformance to the Container protocol
+    mutating func append(item: Element) {
+        self.push(item)
+    }
+    var count: Int {
+        return items.count
+    }
+    subscript(i: Int) -> Element {
+        return items[i]
+    }
+}
+</source>
+----
+=== 扩展一个存在的类型为一指定关联类型 ===
+# 在使用扩展来添加协议兼容性中有描述扩展一个存在的类型添加遵循一个协议。这个类型包含一个关联类型的协议。
+<source lang="swift">
+extension Array: Container {} 
+</source>
+----
+== Where 语句 ==
+# 一个where语句使你能够要求一个关联类型遵循一个特定的协议，以及（或）那个特定的类型参数和关联类型可以是相同的。
+<source lang="swift">
+func allItemsMatch<
+    C1: Container, C2: Container
+    where C1.ItemType == C2.ItemType, C1.ItemType: Equatable>
+    (someContainer: C1, _ anotherContainer: C2) -> Bool {
+    
+    // check that both containers contain the same number of items
+    if someContainer.count != anotherContainer.count {
+        return false
+    }
+    
+    // check each pair of items to see if they are equivalent
+    for i in 0..<someContainer.count {
+        if someContainer[i] != anotherContainer[i] {
+            return false
+        }
+    }
+    
+    // all items match, so return true
+    return true
+    
+} 
+
+var stackOfStrings = Stack<String>()
+stackOfStrings.push("uno")
+stackOfStrings.push("dos")
+stackOfStrings.push("tres")
+ 
+var arrayOfStrings = ["uno", "dos", "tres"]
+ 
+if allItemsMatch(stackOfStrings, arrayOfStrings) {
+    print("All items match.")
+} else {
+    print("Not all items match.")
+}
+// Prints "All items match."
+</source>
+----

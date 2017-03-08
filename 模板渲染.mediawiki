@@ -1,0 +1,174 @@
+```python
+test.py   内容如下：
+from flask import Flask, request, url_for, render_template
+app = Flask(__name__)
+
+@app.route('/hello/')
+@app.route('/hello/<name>')
+def hello(name=None):
+    return render_template('hello.html', name=name)
+
+if __name__ == '__main__':
+    app.run()
+```
+```html
+hello.html  内容如下
+<!doctype html>
+<title>Hello from Flask</title>
+{% if name %}
+  <h1>Hello {{ name }}!</h1>
+{% else %}
+  <h1>Hello, World!</h1>
+{% endif %}
+```
+Centos下运行：
+export FLASK_APP=test.py
+flask run --host=0.0.0.0
+
+运行后访问网址：http://10.0.0.50:5000/hello/宝宝
+运行结果： Hello 宝宝!
+
+去 render_template() 方法查看一下,使用给定的 context 去渲染 template 文件夹中的文件
+template_name_or_list: 要渲染的模板的名字，传入的为：'hello.html'
+context：模板上下文环境中的变量参数,传入的为键值对: name=name
+```python
+templating.py 
+
+def render_template(template_name_or_list, **context):
+    ctx = _app_ctx_stack.top
+    ctx.app.update_template_context(context)
+    return _render(ctx.app.jinja_env.get_or_select_template(template_name_or_list),
+                   context, ctx.app)
+```
+其中主要的是 _render() 函数，渲染模板，发送信号，最终返回了一个字符串 rv, 即网页输出的内容
+template:
+```python
+templating.py 
+
+def _render(template, context, app):
+    before_render_template.send(app, template=template, context=context)
+    rv = template.render(context)
+    template_rendered.send(app, template=template, context=context)
+    return rv
+```
+```python
+htmlserializer.py
+
+    def render(self, treewalker, encoding=None):
+        if encoding:
+            return b"".join(list(self.serialize(treewalker, encoding)))
+        else:
+            return "".join(list(self.serialize(treewalker)))
+```
+在 render() 函数中调用 serialize() 函数，将传入的键值对转化成相对应的字符并序列化
+```python
+htmlserializer.py
+
+    def serialize(self, treewalker, encoding=None):
+        ...
+        for token in treewalker:
+            type = token["type"]
+            if type == "Doctype":
+                doctype = "<!DOCTYPE %s" % token["name"]
+
+                if token["publicId"]:
+                    doctype += ' PUBLIC "%s"' % token["publicId"]
+                elif token["systemId"]:
+                    doctype += " SYSTEM"
+                if token["systemId"]:
+                    if token["systemId"].find('"') >= 0:
+                        if token["systemId"].find("'") >= 0:
+                            self.serializeError("System identifer contains both single and double quote characters")
+                        quote_char = "'"
+                    else:
+                        quote_char = '"'
+                    doctype += " %s%s%s" % (quote_char, token["systemId"], quote_char)
+
+                doctype += ">"
+                yield self.encodeStrict(doctype)
+
+            elif type in ("Characters", "SpaceCharacters"):
+                if type == "SpaceCharacters" or in_cdata:
+                    if in_cdata and token["data"].find("</") >= 0:
+                        self.serializeError("Unexpected </ in CDATA")
+                    yield self.encode(token["data"])
+                else:
+                    yield self.encode(escape(token["data"]))
+
+            elif type in ("StartTag", "EmptyTag"):
+                name = token["name"]
+                yield self.encodeStrict("<%s" % name)
+                if name in rcdataElements and not self.escape_rcdata:
+                    in_cdata = True
+                elif in_cdata:
+                    self.serializeError("Unexpected child element of a CDATA element")
+                for (attr_namespace, attr_name), attr_value in token["data"].items():
+                    # TODO: Add namespace support here
+                    k = attr_name
+                    v = attr_value
+                    yield self.encodeStrict(' ')
+
+                    yield self.encodeStrict(k)
+                    if not self.minimize_boolean_attributes or \
+                        (k not in booleanAttributes.get(name, tuple())
+                         and k not in booleanAttributes.get("", tuple())):
+                        yield self.encodeStrict("=")
+                        if self.quote_attr_values or not v:
+                            quote_attr = True
+                        else:
+                            quote_attr = reduce(lambda x, y: x or (y in v),
+                                                spaceCharacters + ">\"'=", False)
+                        v = v.replace("&", "&amp;")
+                        if self.escape_lt_in_attrs:
+                            v = v.replace("<", "&lt;")
+                        if quote_attr:
+                            quote_char = self.quote_char
+                            if self.use_best_quote_char:
+                                if "'" in v and '"' not in v:
+                                    quote_char = '"'
+                                elif '"' in v and "'" not in v:
+                                    quote_char = "'"
+                            if quote_char == "'":
+                                v = v.replace("'", "&#39;")
+                            else:
+                                v = v.replace('"', "&quot;")
+                            yield self.encodeStrict(quote_char)
+                            yield self.encode(v)
+                            yield self.encodeStrict(quote_char)
+                        else:
+                            yield self.encode(v)
+                if name in voidElements and self.use_trailing_solidus:
+                    if self.space_before_trailing_solidus:
+                        yield self.encodeStrict(" /")
+                    else:
+                        yield self.encodeStrict("/")
+                yield self.encode(">")
+
+            elif type == "EndTag":
+                name = token["name"]
+                if name in rcdataElements:
+                    in_cdata = False
+                elif in_cdata:
+                    self.serializeError("Unexpected child element of a CDATA element")
+                yield self.encodeStrict("</%s>" % name)
+
+            elif type == "Comment":
+                data = token["data"]
+                if data.find("--") >= 0:
+                    self.serializeError("Comment contains --")
+                yield self.encodeStrict("<!--%s-->" % token["data"])
+
+            elif type == "Entity":
+                name = token["name"]
+                key = name + ";"
+                if key not in entities:
+                    self.serializeError("Entity %s not recognized" % name)
+                if self.resolve_entities and key not in xmlEntities:
+                    data = entities[key]
+                else:
+                    data = "&%s;" % name
+                yield self.encodeStrict(data)
+
+            else:
+                self.serializeError(token["data"])
+```

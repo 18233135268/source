@@ -1,0 +1,18 @@
+# everything in Go is passed by value.网址：https://golang.org/doc/faq#pass_by_value
+
+==何时函数的参数通过值传递？==
+* 像所有 C 语言家族的语言一样，Go 语言中的所有东西都是通过值来传递。即，一个函数总是获取被传递内容的 copy，就像有一个分配语句将值分配给参数。
+* 例如，给函数传递一个 int 值，将创建一个该 int 的 copy，传递一个指针值将创建一个该指针的 copy，而不是该指针指向的数据。
+* Map 和 slice 值类似指针的行为：它们是包含指向基础 map 或 slice 数据指针的描述符。复制一个 map 或 slice 值不复制它指向的数据。复制一个 interface 值将创建一个存储在该 interface 值中的内容的 copy。如果该 interface 值中包含了一个 struct，复制该 interface 值将创建一个该 struct 的 copy。如果该 interface 包含一个指针，复制该 interface 值将创建一个该 指针的 copy，而不是它指向的数据。
+
+==应该用值还是指针来定义方法？==
+* 以下有两个方法：
+<source lang='go'>
+func (s *MyStruct) pointerMethod() { } // method on pointer
+func (s MyStruct)  valueMethod()   { } // method on value
+</source>
+* 定义类型的方法时，receiver（上例中的 s）就像该方法中的一个参数一样运行。是否将 receiver 定义为一个值或一个指针是同样的问题，函数的参数应该是一个值还是一个指针，有以下几种考虑：
+** 最重要的一点，方法是否需要修改 receiver？如果需要，receiver 必须是一个指针（Slices 和 maps 像引用一样执行，它们的情况有些微秒，但要在方法中修改 slice 的长度时，receiver 必须是指针）。在以上例子中，如果 pointerMethod 更改 s 的字段，调用者会看到这些变化，但 valueMethod 是调用调用者的变量的一个 copy（这就是传值的定义），所以它所做的改变调用者是看不见的。
+** 第二点是关于效率的考虑，如果 receiver 非常大，比如说是一个大 struct，使用一个指针 receiver 的成本会更低。
+** 接下来是一致性。如果该类型的某些方法必须有指针 receiver，其余的方法也应该有，因此无论使用何种类型方法集都是一致的。
+* 对于一些基本类型，比如 slices 和 small structs，一个值 receiver 成本很低，所以除非该方法的语义需要一个指针，否则一个值 receiver 更加有效和清晰。

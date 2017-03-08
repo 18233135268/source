@@ -1,0 +1,87 @@
+* MySQL 支持所有标准的 SQL 数字数据类型，包含 INTEGER, SMALLINT, DECIMAL, 和 NUMERIC，以及近似数字数据类型（(FLOAT, REAL, 和 DOUBLE PRECISION）。INT 是 INTEGER 的同义词，DEC 和 FIXED 是 DECIMAL 的同义词。MySQL 中 DOUBLE 是 DOUBLE PRECISION 的同义词（非标准扩展）。在 MySQL 中 REAL 是 DOUBLE PRECISION 的同义词（一个非标准变化），除非 SQL 模式 REAL_AS_FLOAT 是启用的。
+
+==Integer 类型==
+* INTEGER, INT, SMALLINT, TINYINT, MEDIUMINT, BIGINT
+
+==Fixed-Point 类型==
+* DECIMAL, NUMERIC：存储精确的数字数据值。当需要保持准确的精度时使用这些类型，如保存货币数据时。
+* MySQL 中 NUMERIC 像 DECIMAL 一样执行，以下关于 DECIMAL 的注释同样适用于 NUMERIC。
+* MySQL 用二进制格式存储 DECIMAL 值。
+* 在 DECIMAL 列的声明时，精度和规模是可以指定的，例如：
+<source lang='mysql'>
+salary DECIMAL(5,2)
+</source>
+** DECIMAL(precision,scale)：此例中，5 相当于存储的值的有效位数，2 相当于小数点后可以存储的位数。所以 salary 列可以存储的值的范围从 -999.99 到 999.99。
+** 标准的 SQL 中，语法 DECIMAL(M) 相当于 DECIMAL(M,0)。类似的，DECIMAL 相当于 DECIMAL(M,0)。MySQL 支持这些 DECIMAL 语法的遍体，M 的默认值是10。若 scale 是 0，则不包含小数点或小数部分。
+** DECIMAL 的最大位数是 65，但是一个给定的 DECIMAL 列的实际范围可以被给定列的精度或 scale 约束。当分配给这样的列一个值，这个值的小数点后位数超过允许的小数点后位数时，值就转换为这个 scale。
+
+==Floating-Point 类型==
+* 略，避免使用浮点类型。
+
+==Bit-Value 类型==
+* BIT 数据类型用来存储位字段值。BIT(M) 允许存储 M 位的值。M 的范围从 1 到64。
+* 可以使用 b'value' 表示法来指定位值。
+* 若分配给 BIT(M) 列的值小于 M 位长度，则从左边用 0 填充值。例如：分配值 b'101'给 BIT(6) 列，实际上是分配 b'000101' 给此列。
+
+==Numeric 类型属性==
+* MySQL 支持在类型关键字后的括号内指定整数数据类型的显示宽度（可选的）。例如 INT(4)，指定了一个4 位显示宽度的 INT。这个可选的显示宽度可用于此种情况：当应用程序要显示少于此列指定的显示宽度的整数值时，需要左填充空格的情况。
+* 显示宽度并不约束列中可存储的值的范围。也不为了正确显示而防止值宽于列的显示宽度。
+* 当与可选的 ZEROFILL 一起使用时，默认的填充由空格替换为 0。例如：一个列用 INT(4) ZEROFILL 来声明，5 取回来就是 0005。
+* '''注意'''：当在表达式中涉及或联合查询时，ZEROFILL 是被忽略的。
+** 若在一个带有 ZEROFILL 属性的整数列中存储大于显示宽度的值，当 MySQL 为一些复杂的联接生成临时表时可能会遇到问题。这些情况下，MySQL 假定数据值在列显示宽度的适合范围内。
+* 所有整数类型可以有一个可选的 UNSIGNED 属性。无符号类型可用于允许只有非负数字的列中，或当此列需要有一个更大的上界时。
+* Floating-point 和 fixed-point 类型也可以有无符号属性。与整数类型不同的是，列值的上界保持不变。
+* 若为 numeric 列指定 ZEROFILL 属性，则 MySQL 自动为此列添加 UNSIGNED 属性。
+* 整数或浮点数据类型可以有附加属性 AUTO_INCREMENT。当向已索引的 AUTO_INCREMENT 列插入一个 NULL 值时，该值自动设置为序列的下一个值（通常是 value+1，value 是当前表中此列的最大值）。AUTO_INCREMENT 序列从 1 开始。这里的 NULL 换成 0 也是同样的结果，除非 SQL 模式 NO_AUTO_VALUE_ON_ZERO 是激活状态。
+** 插入 NULL 来生成 AUTO_INCREMENT 需要 列声明为 NOT NULL。如果列声明为 NULL，插入 NULL 则存储为 NULL。
+** 当插入任何其它值到 AUTO_INCREMENT 列，则存储为此值，并且序列复位，下一个自动生成的值从插入的这个值开始。
+** MySQL 5.7 中，AUTO_INCREMENT 列中不支持负值。
+
+==超出范围和溢出处理==
+* 当 MySQL 在数值列中存储一个超出这个列的数据类型所允许范围的值，结果取决于那个时间生效的 SQL 模式：
+** 如果启用了严格的 SQL 模式，MySQL 用一个报错来驳回此超出范围的值，插入失败，与 SQL 标准一致。
+** 如果启用了无限制的模式，MySQL 修剪这个值到范围相应的端点，并且存储修剪后的结果来代替插入时的值。
+*** 当一个超出范围的值分配给一个整数列时，MySQL 存储表示列数据类型范围对应的端点的值。比如，若存储 256 到一个 TINYINT 或 TINYINT UNSIGNED 列，MySQL 分别存储 127 或 255。
+* 当 MySQL 没有在严格的模式中操作时发生修剪的列赋值转换，对于 ALTER TABLE, LOAD DATA INFILE, UPDATE, 和 多行的 INSERT 语句报告为 warning。在严格模式中，这些语句失败，并且部分或所有值不会插入或进行转换，取决于表是否是事务性的表和其它因素。
+* 溢出，例如：最大的有符号 BIGINT 值是 9223372036854775807，下面的表达式产生一个报错：
+<source lang='mysql'>
+SELECT 9223372036854775807 + 1;
+ERROR 1690 (22003): BIGINT value is out of range in '(9223372036854775807 + 1)'
+</source>
+* 此例中要想操作成功，可以将值转换为无符号的：
+<source lang='mysql'>
+SELECT CAST(9223372036854775807 AS UNSIGNED) + 1;
++-------------------------------------------+
+| CAST(9223372036854775807 AS UNSIGNED) + 1 |
++-------------------------------------------+
+|                       9223372036854775808 |
++-------------------------------------------+
+</source>
+* 溢出是否发生取决于操作数的范围，所以另一个操作之前表达式的方式是使用精确值算法，因为 DECIMAL 值比整数有更大的范围：
+<source lang='mysql'>
+SELECT 9223372036854775807.0 + 1;
++---------------------------+
+| 9223372036854775807.0 + 1 |
++---------------------------+
+|     9223372036854775808.0 |
++---------------------------+
+</source>
+* 整数值之间的减法，若其中一个是无符号类型，默认产生一个无符号的结果。如果结果本来为负值，会报错：
+<source lang='mysql'>
+SET sql_mode = '';
+Query OK, 0 rows affected (0.00 sec)
+
+SELECT CAST(0 AS UNSIGNED) - 1;
+ERROR 1690 (22003): BIGINT UNSIGNED value is out of range in '(cast(0 as unsigned) - 1)'
+</source>
+* 如果启用 SQL 模式 NO_UNSIGNED_SUBTRACTION，结果为负值：
+<source lang='mysql'>
+SET sql_mode = 'NO_UNSIGNED_SUBTRACTION';
+SELECT CAST(0 AS UNSIGNED) - 1;
++-------------------------+
+| CAST(0 AS UNSIGNED) - 1 |
++-------------------------+
+|                      -1 |
++-------------------------+
+</source>
+* 如果这样一个操作的结果用来更新一个无符号的整数列，结果修剪为列类型的最大值，如果  NO_UNSIGNED_SUBTRACTION 启用的话则修剪到 0。如果启用严格的 SQL 模式，将报错并且列保持不变。

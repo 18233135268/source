@@ -1,0 +1,61 @@
+* 项目地址：https://github.com/go-sql-driver/mysql
+==安装==
+* <code>go get github.com/go-sql-driver/mysql</code>
+
+==使用==
+* Go MySQL Driver 是一个 Go 的<code>database/sql/driver</code>接口的实现。
+* 只需要导入此驱动程序后就可以使用<code>database/sql</code>的完整 API。
+* 使用<code>mysql</code>作为<code>driverName</code>，使用一个有效的 DSN 作为<code>dataSourceName</code>：
+<source lang='go'>
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
+
+db, err := sql.Open("mysql", "user:password@/dbname")
+</source>
+
+===DSN (Data Source Name)===
+* DSN 的通用格式，中括号内为可选部分：
+<source lang='go'>
+[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
+</source>
+* 一个完整形式的 DSN：
+<source lang='go'>
+username:password@protocol(address)/dbname?param=value
+</source>
+* 除了数据库名，其它值都是可选的，最小的 DSN 为<code>/dbname</code>。
+* 如果不想预先选择一个数据库，可以允许数据库名为空：<code>/</code>，一个空 DSN 字符串也有同样效果。
+
+====Password====
+* 密码可以包含任何字符，不需要进行转义。
+====Protocol====
+* 如果允许的话，应该使用一个 Unix 域套接字，否则 TCP 为最佳性能。
+=====<code>func Dial</code>=====
+* 此函数可以查看哪些网络可用：
+<source lang='go'>
+func Dial(network, address string) (Conn, error)
+</source>
+* network 参数：dial 连接到以此为名的网络的地址。
+* 已知的网络："tcp", "tcp4" (IPv4-only), "tcp6" (IPv6-only), "udp", "udp4" (IPv4-only), "udp6" (IPv6-only), "ip", "ip4" (IPv4-only), "ip6" (IPv6-only), "unix", "unixgram" 和 "unixpacket"。
+* 对于 TCP 和 UDP 网络，地址形式为：<code>host:port</code>。若 host 是字面的 IPV6 地址，必须封闭在中括号内，比如 "[::1]:80" 或 "[ipv6-host%zone]:80"。若 host 是空的，比如 ":80"，则本地系统是假定的。
+<source lang='go'>
+Dial("tcp", "192.0.2.1:80")
+Dial("tcp", "golang.org:http")
+Dial("tcp", "[2001:db8::1]:http")
+Dial("tcp", "[fe80::1%lo0]:80")
+Dial("tcp", ":80")
+</source>
+* 对于 IP 网络，网络必须是 "ip", "ip4" 或 "ip6" 后面连着冒号，然后是协议号或协议名，地址必须是字面上的 IP 地址：
+<source lang='go'>
+Dial("ip4:1", "192.0.2.1")
+Dial("ip6:ipv6-icmp", "2001:db8::1")
+</source>
+* 对于 Unix 网络，地址必须是一个文件系统路径。
+
+====Address====
+* 对于 TCP 和 UDP 网络，地址形式为：<code>host:port</code>。若 host 是字面的 IPV6 地址，必须封闭在中括号内。函数 <code>JoinHostPort</code> 和 <code>net.SplitHostPort</code> 用此形式操作地址。
+* 对于 Unix 域套接字，地址是 MySQL-Server-socket 的绝对路径，比如<code>/var/run/mysqld/mysqld.sock</code>或<code>/tmp/mysql.sock</code>。
+
+====Parameters====
+* 参数是大小写敏感的。
+* <code>allowAllFiles</code>：<code>allowAllFiles=true</code>为<code>LOAD DATA LOCAL INFILE</code>禁用文件白名单，允许所有文件。默认值为 false。
+* <code>allowCleartextPasswords</code>：如果账户要求，allowCleartextPasswords=true 允许使用 cleartext client side plugin（不使用哈希或加密将密码发送到服务器）。在一些配置中用明文发送密码可能有安全问题。

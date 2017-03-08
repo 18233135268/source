@@ -1,0 +1,44 @@
+==需求==
+如果web应用程序从运行起处理过一个HTTP请求，这个时候再向Flask添加route规则，则Flask在调试模式下，可以检查出一个APP的错误。为什么这种情况是个错误呢？想像一下，如果一个web应用程序已经上线提供服务了，这个时候由于某些条件触发，向Flask又添加了一个route规则，则说明在添加这个route规则之前，向这个route发送的请求是没有接口可以处理的。
+
+==解决方案==
+Flask定义了setupmethod装饰器来确保所有的初始化函数必须在web应用程序开始提供服务之前被调用。如果在已经提供服务之后被调用，则报错。
+
+==源码分析==
+setupmethod装饰器源码定义在app.py里：
+<source lang="python">
+def setupmethod(f):
+    """Wraps a method so that it performs a check in debug mode if the
+    first request was already handled.
+    """
+    def wrapper_func(self, *args, **kwargs):
+        if self.debug and self._got_first_request:
+            raise AssertionError('A setup function was called after the '
+                'first request was handled.  This usually indicates a bug '
+                'in the application where a module was not imported '
+                'and decorators or other functionality was called too late.\n'
+                'To fix this make sure to import all your view modules, '
+                'database models and everything related at a central place '
+                'before the application starts serving requests.')
+        return f(self, *args, **kwargs)
+    return update_wrapper(wrapper_func, f)
+</source>
+*Line 6：这里确保用setupmethod装饰的函数在被实际调用之前，都会去检查self._got_first_request
+*Line 14：这里的f(self, *args, **kwargs)确保setupmethod装饰器可以装饰任何参数形式的函数
+*Line 15: update_wrapper是functools包提供的一个函数,它就是把被封装的函数的 module, name, doc 和 dict 复制到封装的函数中去.
+update_wrapper函数源码如下:
+<source lang="python">
+```python
+WRAPPER_ASSIGNMENTS = ('__module__', '__name__' , '__doc__')
+WRAPPER_UPDATES = ('__dict__',)
+def update_wrapper(wrapper,
+                   wrapped,
+                   assigned = WRAPPER_ASSIGNMENTS,
+                   updated = WRAPPER_UPDATES):
+    for attr in assigned:
+        setattr(wrapper, attr, getattr(wrapped, attr))
+    for attr in updated:
+        getattr(wrapper, attr).update(getattr(wrapped, attr, {}))
+    return wrapper
+```
+</source>

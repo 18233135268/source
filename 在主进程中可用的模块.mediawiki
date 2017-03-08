@@ -1,0 +1,4 @@
+# [[app]]
+# [[autoUpdater]]
+# [[BrowserWindow]]
+# [[Menu]]

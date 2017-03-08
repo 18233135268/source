@@ -1,0 +1,13 @@
+== 安装 Python3 ==
+# wget  https://www.python.org/ftp/python/3.5.0/Python-3.5.0.tar.xz
+# tar Jxvf Python-3.5.0.tar.xz
+# cd Python-3.5.0
+# yum install zlib-devel bzip2-devel sqlite sqlite-devel openssl-devel
+# ./configure --prefix=/usr/local/python3 --enable-loadable-sqlite-extensions  --with-ensurepip=install //做配置，生成 Makefile
+# make
+# make install
+# ln -s /usr/local/python3/bin/python3 /usr/bin/python //ln 命令用于生成链接,将可以直接使用 python 命令
+== 安装 pip ==
+# wget https://bootstrap.pypa.io/get-pip.py
+# python get-pip.py
+# ln -s /usr/local/python3/bin/pip3 /usr/bin/pip //做一个符号链接，否则 Python3 不能识别 pip

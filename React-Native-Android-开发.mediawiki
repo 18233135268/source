@@ -1,0 +1,428 @@
+= react-native Depth =
+== 生命周期 ==
+=== componentWillMount() ===
+=== render() ===
+=== componentDidMount() ===
+=== componentWillReceiveProps() ===
+=== shouldComponentUpdate(...) ===
+=== componentWillUpdate() ===
+=== componentDidUpdate() ===
+=== componentWillUnmount() ===
+{|
+|生命周期||调用次数||调用时机||能否使用setState()||相关描述
+|-
+|componentWillMount()||1||准备加载组件时||yes||进行业务初始化或设置组件状态
+|-
+|render||>=1||加载组件时||no||更新界面
+|-
+|componentDidMount()||1||第一次绘制之后||yes||和JS其他框架交互，如设置计时器或发起网络请求
+|-
+|componentWillReceiveProps||>=0||接收到新的属性(props)时||是||接收新的属性并通知
+|-
+|shouldComponentUpdate||>=0||接收到新的属性(props)和状态(state)时||否||保证数据变化时UI能够同步更新。也可重载这个函数，通过检查变化前后属性和状态来决定UI是否需要更新，能有效提高应用性能。
+|-
+|componentWillUpdate||>=0||状态或属性改变并且shouldComponentUpdate()方法返回true时||否||执行一些在更新界面之前要做的事情。紧接着这个函数就会调用 render() 来更新界面。
+|-
+|componentDidUpdate||>=0||界面更新完成之后||否||更新组件完成并通知
+|-
+|componentWillUnmount||1||组件将被移除时||否||执行相关清理工作，如取消计时器、网络请求等
+|}
+----
+== 网络操作 ==
+=== Fetch ===
+*GET 方式请求数据
+<source lang='javascript'>
+fetch(url) //url:数据地址，string型
+    .then(function (response) {
+        console.log(response); 
+        return response.json(); //将json传给下一级
+    })
+    .then(function (json) {
+        console.log(json); //返回一个json串
+    })
+    .catch((error) => {
+        console.error(error); //错误处理
+    });
+</source>
+
+*POST 方式请求数据
+<source lang='javascript'>
+let fetchCell = { 
+    method: 'POST', //设置请求方法
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ //请求参数
+        firstParam: 'firstParam',
+        secondParam: 'secondParam',
+    })
+}
+
+promiseTimeout(5000, //设置超时时间
+    fetch(url, fetchCell))
+    .then(function (response) {
+        console.log(response);
+        return response.json(); //将json传递给下一级
+    })
+    .then((json) => {
+        console.log(json); //获取json数据
+    })
+    .catch((error) => {
+        console.log(error); //处理错误信息
+    });
+</source>
+----
+== 文件存储 ==
+=== Storage ===
+learn more: https://github.com/sunnylqm/react-native-storage<br>
+
+Installation：<code>$ npm install react-native-storage --save</code>
+<source lang='javascript'>
+//定义和初始化
+import { AsyncStorage } from 'react-native';
+
+var storage = new Storage({
+    size: 1000,    //最大容量，默认值1000条数据循环存储
+
+    // 存储引擎：对于RN使用AsyncStorage，对于web使用window.localStorage
+    // 如果不指定则数据只会保存在内存中，重启后即丢失
+    storageBackend: AsyncStorage,
+
+    // 数据过期时间，默认一整天（1000 * 3600 * 24 毫秒），设为null则永不过期
+    defaultExpires: 1000 * 3600 * 24,
+
+    // 读写时在内存中缓存数据。默认启用。
+    enableCache: true,
+
+    // 如果storage中没有相应数据，或数据已过期，
+    // 则会调用相应的sync同步方法，无缝返回最新数据。
+    sync : {
+        //同步方法
+    }
+})  
+
+// 最好在全局范围内创建一个（且只有一个）storage实例，方便直接调用
+// 对于react native: global.storage = storage; 这样在之后的任意位置即可以直接调用storage
+</source>
+
+<source lang='javascript'>
+//保存
+storage.save({
+    key: 'loginState', 
+    rawData: { //保存的数据
+      from: 'some other site',
+      userid: 'some userid',
+      token: 'some token'
+    },
+
+    // 如果不指定过期时间，则会使用defaultExpires参数
+    // 如果设为null，则永不过期
+    expires: 1000 * 3600
+});
+</source>
+
+<source lang='javascript'>
+//读取
+storage.load({
+    key: 'loginState',
+    // autoSync(默认为true)意味着在没有找到数据或数据过期时自动调用相应的同步方法
+    autoSync: true,
+
+    // syncInBackground(默认为true)意味着如果数据过期，
+    // 在调用同步方法的同时先返回已经过期的数据。
+    // 设置为false的话，则始终强制返回同步方法提供的最新数据(当然会需要更多等待时间)。
+    syncInBackground: true
+  }).then(ret => {
+    //如果找到数据，则在then方法中返回
+    console.log(ret.userid);
+    //注意：由于是异步操作，所以这个ret数据无法传出这个函数块
+  }).catch(err => {
+    //如果没有找到数据且没有同步方法，或者有其他异常，则在catch中返回
+    console.warn(err);
+  })
+</source>
+
+<source lang='javascript'>
+// 删除单个数据
+storage.remove({
+    key: 'lastPage'
+});
+storage.remove({
+    key: 'user',
+    id: '1001'
+});
+
+//清空map，移除所有"key-id"数据（但会保留只有key的数据）
+storage.clearMap();
+</source>
+----
+== 自定义组件 ==
+=== props ===
+props: 属性，常用于组件之间传递，一般为定值，自定义组建时可以从容器组件中获取<br>
+如：<code>this.props.color</code>
+----
+=== state ===
+state: 状态，常用于组件状态(显示、尺寸等)更新或者数据刷新，一般为动态改变，当state值改变后，组件会随之刷新对应状态<br>
+如：
+<source lang='javascript'>
+this.state={ //state是一个对象，一般定义在constroctor() {}函数体中
+    color: '#f00',
+}
+</source>
+当需要动态改变时：
+<source lang='javascript'>
+this.setState({color: '#0f0'}); //setState()函数体中传入一个对象，属性对应定义时的属性名，可以包含多个属性
+</source>
+自定义组件：自定义一个按钮Button，文件名为button.js，添加title属性
+<source lang='javascript'>
+export default class Button extends Component { //export default：将组件导出供全局使用
+    constroctor(props) {
+        super(props);
+        
+    }
+
+    _onClick = () => {
+        console.log('pressed!');
+    }
+
+    render() {
+        return(
+            <TouchableOpacty onPress={() => this._onClick}>
+                <Text>{this.props.title}</Text>
+            </TouchableOpacty>
+        )
+    }
+}
+</source>
+使用时：
+<source>
+import Button from '~/button'; //引入后的组件名首字母必须大写，否则报错， from后填入组件所在文件的相对路径
+
+...
+render() {
+    <View>
+        <Button title='click me!'/> //为上述定义的属性title赋值
+    </View>
+}
+...
+</source>
+----
+== 第三方库的使用 ==
+=== react-native-vector-icons ===
+图标显示组件<br>
+learn more：https://github.com/oblador/react-native-vector-icons<br>
+
+Installation：<code>$ npm install react-native-vector-icons --save</code><br>
+Link：<code>$ rnpm link</code>
+<source lang='javascript'>
+import Icon from 'react-native-vector-icons/FontAwesome';
+
+{
+    <Icon 
+        name="user" 
+        size={30} 
+        color="#900"
+    />
+}
+</source>
+
+more Icons: https://www.npmjs.com/package/react-native-vector-icons
+----
+=== react-native-gifted-listview ===
+具有下拉刷新，上拉加载的第三方ListView组件<br>
+learn more：https://github.com/FaridSafi/react-native-gifted-listview
+
+Installation：<code>$ npm install react-native-gifted-listview --save</code>
+<source lang='javascript'>
+import GiftedListView from 'react-native-gifted-listview';
+
+{
+    _onFetch = (page = 1, callback, options) => {
+        setTimeout(() => {
+            //提供一个数组作为数据源，用于填充组件
+            var rows = [someElements,...];
+            if (page === 3) {
+                callback(rows, {
+                    allLoaded: true, 
+                });
+            } else {
+                callback(rows);
+            }
+        }, 1000); 
+    }
+
+    //声明单击事件
+    _onPress = (rowData) => {
+        console.log(rowData+' pressed');
+    }
+
+    //提供一个组件作为列表的每一行，可自定义
+    _renderRowView = (rowData) => {
+        return (
+            <TouchableHighlight
+                 onPress={() => this._onPress(rowData)}>
+                 <Text>{rowData}</Text>
+            </TouchableHighlight>
+        );
+    }
+
+    <GiftedListView
+        rowView={this._renderRowView}
+        onFetch={this._onFetch}
+        firstLoader={true} // 加载数据时是否显示一个动画效果
+        pagination={true} // 是否显示上拉加载‘load more’效果
+        refreshable={true} // 是否允许下拉刷新
+        withSections={false} // 是否分段
+    />
+}
+</source>
+----
+=== react-native-scrollable-tab-view ===
+顶部或底部tab指示栏，可支持滑动<br>
+learn more：https://github.com/skv-headless/react-native-scrollable-tab-view
+
+Installation：<code>$ npm install react-native-scrollable-tab-view --save</code>
+<source lang='javascript'>
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+
+{
+    <ScrollableTabView
+        initialPage={1} //初始化时被选中的页面，默认0
+        renderTabBar={() => <DefaultTabBar/>}> //TabBar样式，DefaultTabBar(Tab平分在水平方向的空间)和ScrollableTabBar(Tab超过屏幕范围时，滚动可以显示)
+        tabBarPosition={top} //显示位置，默认top(顶部)，bottom(底部)，overlayTop(位于顶部并悬浮于内容视图之上)，overlayBottom(位于底部并悬浮于内容视图之上)
+    >
+        <ScrollView tabLabel="label1">
+            <View>
+                <Text>page1</Text>
+            </View>
+        </ScrollView>
+
+        <ScrollView tabLabel="label2">
+            <View>
+                <Text>page2</Text>
+            </View>
+        </ScrollView>
+
+        <ScrollView tabLabel="label2">
+            <View>
+                <Text>page3</Text>
+            </View>
+        </ScrollView>
+    </ScrollableTabView>;
+}
+</source>
+----
+=== react-native-tab-menu ===
+----
+== Redux ==
+laern more: http://redux.js.org/index.html<br>
+用于状态管理的第三方库<br>
+<code>$ npm install --save redux</code><br>
+<code>$ npm install --save react-redux</code><br>
+<code>$ npm install --save-dev redux-devtools</code>
+=== Store ===
+*一个单一对象，用于管理对象的state
+*<code>store.getState()</code> 获取 state
+*<code>store.dispatch(action)</code> 触发 state 更新
+*<code>store.subscribe(listener)</code> 注册 state 变化监听器
+*<code>createStore(reducer, [initialState])</code> 创建
+*只允许有一个 store 对象，可以通过<code>combineReducers(reducers)</code> 来实现对 state 管理的逻辑划分（多个 reducer)
+----
+=== Action ===
+*应用向store传递的数据信息，一般为用户交互信息
+<source lang='javascript'>
+function addTodo(text) {
+    return {
+        type: ADD_TODO,
+        text,
+    }
+}
+store.dispatch(addTodo(text))
+</source>
+<source>
+dispatch(action) 是一个同步的过程：执行 reducer 更新 state -> 调用 store 的监听处理函数
+</source>
+----
+=== Reducer ===
+<source>
+reducer 实际上是一个函数：(previousState, action) => newState。用来执行根据指定 action 来更新 state 的逻辑。通过 combineReducers(reducers) 可以把多个 reducer 合并成一个 root reducer。
+</source>
+<source>
+reducer 不存储 state, reducer 函数逻辑中不应该直接改变 state 对象, 而是返回新的 state 对象
+</source>
+----
+== Video ==
+*视频组件
+
+Installation：<code>$ npm i -S react-native-video</code><br>
+Link: <code>$ rnpm link react-native-video</code>
+link后需要重新打包
+<source lang='javascript'>
+<Video source={{uri: "broadchurch"}} //视频资源位置，可以是本地或者网络的
+    style={styles.fullScreen} 
+    rate={this.state.rate} //播放倍率，number
+    paused={this.state.paused} //是否暂停，bool
+    volume={this.state.volume} //音量，number
+    muted={this.state.muted} //静音，bool
+    resizeMode={this.state.resizeMode} //窗口大小，enum(contain包含,cover覆盖,stretch拉伸)
+    onLoad={this.onLoad} //加载视频，可获取时长，function
+    onProgress={this.onProgress} //进度条事件，可获取当前播放进度，function
+    onEnd={() => { console.log('Done!') }} //停止事件，function
+    repeat={true} //是否重复，bool
+/>
+</source>
+----
+== 原生模块支持 ==
+----
+== 打包已签名的apk ==
+*生成签名的key<br>
+在项目主目录中执行, 在产生的时候需要提供密钥和存储密码，后续会用到<br>
+<source>
+$ keytool -genkey -v -keystore my-release-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000   
+</source>
+<source>
+$ mv my-release-key.keystore android/app/
+</source>
+
+*修改android/gradle.properties文件，增加如下
+<source>
+MYAPP_RELEASE_STORE_FILE=my-release-key.keystore
+MYAPP_RELEASE_KEY_ALIAS=my-key-alias
+MYAPP_RELEASE_STORE_PASSWORD=xx
+MYAPP_RELEASE_KEY_PASSWORD=xx
+//替换xx为第一步中设置的密钥和存储密码
+</source>
+*修改android/app/build.gradle文件中的签名配置
+<source>
+...
+android { 
+  ... 
+  defaultConfig { 
+    ... 
+  } 
+  signingConfigs { 
+    release { 
+        storeFile file(MYAPP_RELEASE_STORE_FILE) 
+        storePassword MYAPP_RELEASE_STORE_PASSWORD 
+        keyAlias MYAPP_RELEASE_KEY_ALIAS 
+        keyPassword MYAPP_RELEASE_KEY_PASSWORD 
+    } 
+  } 
+  buildTypes { 
+    release { 
+      ... 
+      signingConfig signingConfigs.release 
+    } 
+  }
+}
+</source>
+*进入android目录执行如下语句
+<source>
+$ ./gradlew assembleRelease
+</source>
+*等待一段时间打包成功后检查一下文件
+<source>
+android/app/build/outputs/apk/app-release.apk
+</source>
+apk打包成功，下一次打包时需要删除这个apk包

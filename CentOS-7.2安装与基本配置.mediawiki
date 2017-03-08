@@ -1,0 +1,26 @@
+1.将拷有CentOS的光盘放入驱动，如果光盘放入驱动前电脑已经开启，而且在放入光盘后电脑没有反应，需重启电脑，进入一个选择界面：
+:::<div style="text-align: center;">Install CentOS 7   #安装CentOS 7</div>
+:::<div style="text-align: center;">Test this media & install CentOS  7   #测试安装文件并安装CentOS  7</div>
+:::<div style="text-align: center;">Troubleshooting   #修复故障</div>
+:选择第一个，回车，等待一段时间，即可进入到CentOS的基本配置.
+
+2.进入基本配置的界面，选择语言.
+
+3.点击 SYSTEM（系统） 中的  INSTALLTION DESTINATION（安装位置），进入磁盘分区界面，选择仅有的磁盘，点击左上角的Done，回到主界面.
+
+4.点击 Date & Time（日期和时间以及时区），时区选择完后点击右上角的Done，回到主界面.
+
+5.点击 Network & Host Name（网络和主机名），检查是否连接好网线，选择所接网线：em1或者em2，属性选择ON，再点击Done，回到主界面.
+
+6.点击 Begin Installation（开始安装），在安装过程中，点击 Root Password（ROOT密码），设置Root密码，Done.
+
+7.安装完成后，点击右下角的 Reboot（重启），进入系统选择界面，选择第一个，回车，即可进入Linux的登录界面.
+
+8.localhost login（账号）输入 root.
+
+9.Password输入之前设置的 Root密码，若出现 [root@localhost ~]# ，即登录成功.
+
+
+
+
+

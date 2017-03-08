@@ -1,0 +1,702 @@
+==Python标准库概览1==
+===操作系统接口===
+* os模块提供了很多与操作系统交互的函数:
+<source lang="python">
+import os
+os.getcwd()  # 返回当前工作目录
+ # 'C:\\Python35'
+
+os.chdir('/server/accesslogs')  # 更改当前工作目录
+os.system('mkdir today')  # 在系统中运行shell命令mkdir
+ # 0
+</source>
+* 在使用一些像os这样的大型模块时，内置的<code>dir()</code>和<code>help()</code>函数非常有用:
+<source lang="python">
+import os
+dir(os)  # <returns a list of all module functions>
+help(os)  # <returns an extensive manual page created from the module's docstrings>
+</source>
+* 针对日常的文件和目录管理任务，shutil模块提供了一个易于使用的高级接口:
+<source lang="python">
+import shutil
+shutil.copyfile('data.db', 'archive.db')  # 'archive.db'
+shutil.move('/build/executables', 'installdir')  # 'installdir'
+</source>
+
+===文件通配符===
+* glob模块提供了一个函数用于从目录通配符搜索中生成文件列表:
+<source lang="python">
+import glob
+glob.glob('*.py')  # ['primes.py', 'random.py', 'quote.py']
+</source>
+
+===命令行参数===
+* 通用工具脚本经常调用命令行参数。这些命令行参数以列表形式存储于sys模块的argv变量。例如在命令行中执行<code>python demo.py one two three</code>后可以得到以下输出结果:
+<source lang="python">
+import sys
+print(sys.argv)  # ['demo.py', 'one', 'two', 'three']
+</source>
+
+===错误输出重定向===
+* sys还有stdin，stdout和stderr属性，即使在stdout被重定向时，后者也可以用于显示警告和错误信息：
+<source lang="python">
+import sys
+sys.stderr.write('Warning, log file not found starting a new one\n')  # Warning, log file not found starting a new one
+</source>
+
+===字符串正则匹配===
+* re模块为高级字符串处理提供了正则表达式工具。对于复杂的匹配和处理，正则表达式提供了简洁、优化的解决方案：
+<source lang="python">
+import re
+re.findall(r'\bf[a-z]*', 'which foot or hand fell fastest')  # ['foot', 'fell', 'fastest']
+re.sub(r'(\b[a-z]+) \1', r'\1', 'cat in the the hat')  # 'cat in the hat'
+</source>
+* 字符串方法最好用：
+<source lang="python">
+'tea for too'.replace('too', 'two')  # 'tea for two'
+</source>
+
+===数学===
+* math模块为浮点运算提供了对底层C函数库的访问:：
+<source lang="python">
+import math
+math.cos(math.pi / 4.0)  # 0.70710678118654757
+math.log(1024, 2)  # 10.0
+</source>
+* random 提供了生成随机数的工具:：
+<source lang="python">
+import random
+random.choice(['apple', 'pear', 'banana'])  # 'apple'
+random.sample(range(100), 10)   # sampling without replacement  # [30, 83, 16, 4, 8, 81, 41, 50, 18, 33]
+random.random()  # 0.17970987693706186
+random.randrange(6)  # 在range(6)里面随机选择一个整数
+</source>
+
+===互联网访问===
+* 有几个模块用于访问互联网以及处理网络通信协议，urllib.request用于处理从urls取回的数据，smtplib用于发送电子邮件:
+<source lang="python">
+from urllib.request import urlopen
+for line in urlopen('http://tycho.usno.navy.mil/cgi-bin/timer.pl'):
+    line = line.decode('utf-8')
+    if 'EST' in line or 'EDT' in line:  # 寻找东部时间
+        print(line)
+
+<BR>Nov. 25, 09:43:32 PM EST
+
+ # 需要在localhost运行一个邮件服务器
+import smtplib
+server = smtplib.SMTP('localhost')
+server.sendmail('soothsayer@example.org', 'jcaesar@example.org',
+"""To: jcaesar@example.org
+From: soothsayer@example.org
+
+Beware the Ides of March.
+""")
+server.quit()
+</source>
+
+===日期和时间===
+* datetime模块为日期和时间处理同时提供了简单和复杂的方法。支持日期和时间算法的同时，实现的重点放在更有效的处理和格式化输出。该模块还支持时区处理。
+<source lang="python">
+ # dates are easily constructed and formatted
+from datetime import date
+now = date.today()
+now  # datetime.date(2003, 12, 2)
+now.strftime("%m-%d-%y. %d %b %Y is a %A on the %d day of %B.")  # '12-02-03. 02 Dec 2003 is a Tuesday on the 02 day of December.'
+
+ # dates support calendar arithmetic
+birthday = date(1964, 7, 31)
+age = now - birthday
+age.days  # 14368
+</source>
+
+===数据压缩===
+* 以下模块直接支持通用的数据打包和压缩格式：zlib，gzip，bz2，lzma，zipfile以及tarfile。
+<source lang="python">
+import zlib
+s = b'witch which has which witches wrist watch'
+len(s)  # 41
+t = zlib.compress(s)
+len(t)  # 37
+zlib.decompress(t)  # b'witch which has which witches wrist watch'
+zlib.crc32(s)  # 226805979
+</source>
+
+===性能测量===
+* Python提供了一个用来测试同一问题不同实现方法之间的性能差异的测量工具。
+<source lang="python">
+from timeit import Timer
+Timer('t=a; a=b; b=t', 'a=1; b=2').timeit()  # 0.57535828626024577
+Timer('a,b = b,a', 'a=1; b=2').timeit()  # 0.54962537085770791
+</source>
+
+===质量管理===
+* doctest模块用来测试代码，它会扫描模块并根据代码中的文档字符串执行测试。
+<source lang="python">
+def average(values):
+    """Computes the arithmetic mean of a list of numbers.
+
+    >>> print(average([20, 30, 70]))
+    40.0
+    """
+    return sum(values) / len(values)
+
+import doctest
+doctest.testmod()  # 自动验证嵌入式测试
+</source>
+* unittest模块，一个单元测试框架。
+<source lang="python">
+import unittest
+
+class TestStatisticalFunctions(unittest.TestCase):
+
+    def test_average(self):
+        self.assertEqual(average([20, 30, 70]), 40.0)
+        self.assertEqual(round(average([1, 5, 7]), 1), 4.3)
+        with self.assertRaises(ZeroDivisionError):
+            average([])
+        with self.assertRaises(TypeError):
+            average(20, 30, 70)
+
+unittest.main()
+</source>
+
+==Python标准库概览2==
+* 第二部分包含了支持专业编程工作所需的更高级的模块，这些模块很少出现在小脚本中。
+===输出格式===
+* reprlib模块为大型的或深度嵌套的容器缩写显示提供了repr()函数的一个定制版本:
+<source lang="python">
+import reprlib
+reprlib.repr(set('supercalifragilisticexpialidocious'))  # "{'a', 'c', 'd', 'e', 'f', 'g', ...}"
+</source>
+* pprint模块为内置和用户定义的对象提供了一种解释器更可读、更精确的控制打印的方式。当输出超过一行的时候，"pretty printer"添加断行和标识符，使得数据结构显示的更清晰：
+<source lang="python">
+import pprint
+t = [[[['black', 'cyan'], 'white', ['green', 'red']], [['magenta',
+    'yellow'], 'blue']]]
+
+pprint.pprint(t, width=30)
+
+[[[['black', 'cyan'],
+   'white',
+   ['green', 'red']],
+  [['magenta', 'yellow'],
+   'blue']]]
+</source>
+* textwrap模块格式化文本段落，以适应设定的屏宽:
+<source lang="python">
+import textwrap
+doc = """The wrap() method is just like fill() except that it returns
+a list of strings instead of one big string with newlines to separate
+the wrapped lines."""
+
+print(textwrap.fill(doc, width=40))
+
+The wrap() method is just like fill()
+except that it returns a list of strings
+instead of one big string with newlines
+to separate the wrapped lines.
+</source>
+
+===模板===
+* String模块包括一个通用的Template类，有适合用户编辑的简化语法。这允许用户在不改变程序的情况下定制程序。
+* 格式使用$为开头的Python合法标识（数字、字母和下划线）作为占位符。
+<source lang="python">
+from string import Template
+t = Template('${village}folk send $$10 to $cause.')
+t.substitute(village='Nottingham', cause='the ditch fund')
+
+'Nottinghamfolk send $10 to the ditch fund.'
+</source>
+* 当占位符在字典或关键字参数中没有被提供时，substitute()方法就会抛出一个 KeyError 异常。当用户提供的数据不完整时，使用 safe_substitute()方法可能更适合。如果数据不完整，它就不会改变占位符:
+<source lang="python">
+t = Template('Return the $item to $owner.')
+d = dict(item='unladen swallow')
+t.substitute(d)
+
+Traceback (most recent call last):
+  ...
+KeyError: 'owner'
+
+t.safe_substitute(d)  # 'Return the unladen swallow to $owner.'
+</source>
+* 模板子类可以指定一个自定义分隔符，批量重命名示例如下：
+<source lang="python">
+import time, os.path
+photofiles = ['img_1074.jpg', 'img_1076.jpg', 'img_1077.jpg']
+class BatchRename(Template):
+    delimiter = '%'
+fmt = input('Enter rename style (%d-date %n-seqnum %f-format):  ')
+ # Enter rename style (%d-date %n-seqnum %f-format):  Ashley_%n%f
+
+t = BatchRename(fmt)
+date = time.strftime('%d%b%y')
+for i, filename in enumerate(photofiles):
+    base, ext = os.path.splitext(filename)
+    newname = t.substitute(d=date, n=i, f=ext)
+    print('{0} --> {1}'.format(filename, newname))
+
+img_1074.jpg --> Ashley_0.jpg
+img_1076.jpg --> Ashley_1.jpg
+img_1077.jpg --> Ashley_2.jpg
+</source>
+
+===二进制数据记录布局===
+* struct模块为可变长度的二进制记录格式提供了pack()和unpack()函数。下面的示例演示了在不使用zipfile模块的情况下如何迭代一个ZIP文件的头信息。
+<source lang="python">
+import struct
+
+with open('myfile.zip', 'rb') as f:
+    data = f.read()
+
+start = 0
+for i in range(3):
+    start += 14
+    fields = struct.unpack('<IIIHH', data[start:start+16])
+    crc32, comp_size, uncomp_size, filenamesize, extra_size = fields
+
+    start += 16
+    filename = data[start:start+filenamesize]
+    start += filenamesize
+    extra = data[start:start+extra_size]
+    print(filename, hex(crc32), comp_size, uncomp_size)
+
+    start += extra_size + comp_size     # 跳到下一个标题
+</source>
+
+===多线程===
+* 下面的代码显示了高级模块threading如何在主程序运行的同时运行任务:
+<source lang="python">
+import threading, zipfile
+
+class AsyncZip(threading.Thread):
+    def __init__(self, infile, outfile):
+        threading.Thread.__init__(self)
+        self.infile = infile
+        self.outfile = outfile
+    def run(self):
+        f = zipfile.ZipFile(self.outfile, 'w', zipfile.ZIP_DEFLATED)
+        f.write(self.infile)
+        f.close()
+        print('Finished background zip of:', self.infile)
+
+background = AsyncZip('mydata.txt', 'myarchive.zip')
+background.start()
+print('The main program continues to run in foreground.')
+
+background.join()    # Wait for the background task to finish
+print('Main program waited until background was done.')
+</source>
+* 应用程序使用Queue对象进行线程间的通信和协调更容易设计，可读性更强，更可靠。
+
+===日志===
+* logging模块提供了完整和灵活的日志系统。它最简单的用法是记录信息并发送到一个文件或sys.stderr:
+<source lang="python">
+import logging
+logging.debug('Debugging information')
+logging.info('Informational message')
+logging.warning('Warning:config file %s not found', 'server.conf')
+logging.error('Error occurred')
+logging.critical('Critical error -- shutting down')
+</source>
+* 输出如下：
+<source lang="python">
+WARNING:root:Warning:config file server.conf not found
+ERROR:root:Error occurred
+CRITICAL:root:Critical error -- shutting down
+</source>
+
+===弱引用===
+* Python自动进行内存管理，在最后一个引用消失后，内存会很快释放。有时需要跟踪对象来做一些事，仅仅为跟踪它们创建引用也会使其长期存在。
+* weakref模块提供了无需创建引用的对象跟踪工具，一旦对象不再存在，它自动从弱引用表上删除并触发weakref对象回调。
+* 典型的应用包括捕获难以构造的对象:
+<source lang="python">
+import weakref, gc
+class A:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return str(self.value)
+
+a = A(10)                   # 创建一个引用
+d = weakref.WeakValueDictionary()
+d['primary'] = a            # 不创建引用
+d['primary']                # 获取对象，如果它还是活跃的
+ # 返回 10
+
+del a                       # 删除一个引用
+gc.collect()                # 马上运行垃圾回收
+ # 返回 0
+
+d['primary']                # 自动删除条目
+ # 返回结果如下
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+    d['primary']            # 自动删除条目
+  File "C:/python35/lib/weakref.py", line 46, in __getitem__
+    o = self.data[key]()
+KeyError: 'primary'
+</source>
+
+===列表工具===
+* array模块提供了一个类似列表的array()对象，它仅仅是存储数据，更为紧凑。以下的示例演示了一个存储双字节无符号整数的数组而非存储16字节 Python整数对象的普通列表:
+<source lang="python">
+from array import array
+a = array('H', [4000, 10, 700, 22222])
+sum(a)  # 26932
+a[1:3]  # array('H', [10, 700])
+</source>
+* collections模块提供了类似列表的deque()对象，它从左边append和pop更快，但是在中间查询更慢。这些对象更适用于队列实现和广度优先的树搜索:
+<source lang="python">
+from collections import deque
+d = deque(["task1", "task2", "task3"])
+d.append("task4")
+print("Handling", d.popleft())  # Handling task1
+</source>
+<source lang="python">
+unsearched = deque([starting_node])
+def breadth_first_search(unsearched):
+    node = unsearched.popleft()
+    for m in gen_moves(node):
+        if is_goal(m):
+            return m
+        unsearched.append(m)
+</source>
+* 除了替代列表实现，该库还提供了bisect这样的模块以排序存储列表:
+<source lang="python">
+import bisect
+scores = [(100, 'perl'), (200, 'tcl'), (400, 'lua'), (500, 'python')]
+bisect.insort(scores, (300, 'ruby'))
+scores  # [(100, 'perl'), (200, 'tcl'), (300, 'ruby'), (400, 'lua'), (500, 'python')]
+</source>
+* heapq 提供了基于正规链表的堆实现。最小值始终保持在最前位置，这在希望循环访问最小元素但不想执行完整的列表排序时非常有用:
+<source lang="python">
+from heapq import heapify, heappop, heappush
+data = [1, 3, 5, 7, 9, 2, 4, 6, 8, 0]
+heapify(data)                      # 用堆排序重新对列表排序
+heappush(data, -5)                 # 添加一个新条目
+[heappop(data) for i in range(3)]  # [-5, 0, 1]
+</source>
+
+===十进制浮点数算法===
+* decimal模块提供了一个Decimal数据类型用于浮点数计算。用十进制浮点数和二进制浮点数给70分电话费计算5%的税得到不同的结果：
+<source lang="python">
+from decimal import *
+round(Decimal('0.70') * Decimal('1.05'), 2)  # Decimal('0.74')
+round(.70 * 1.05, 2)  # 0.73
+</source>
+* 高精度使decimal可以执行不适合二进制浮点数的模运算和等值测试：
+<source lang="python">
+Decimal('1.00') % Decimal('.10')  # Decimal('0.00')
+1.00 % 0.10  # 0.09999999999999995
+
+sum([Decimal('0.1')]*10) == Decimal('1.0')  # True
+sum([0.1]*10) == 1.0  # False
+</source>
+* decimal模块提供了需要尽可能高精度的算法：
+<source lang="python">
+getcontext().prec = 36
+Decimal(1) / Decimal(7)  # Decimal('0.142857142857142857142857142857142857')
+</source>
+
+==其它常用模块==
+===base64===
+* Base64是一种用64个字符来表示任意二进制数据的方法。
+<source lang="python">
+import base64
+encoded = base64.b64encode(b'data to be encoded')
+encoded  # b'ZGF0YSB0byBiZSBlbmNvZGVk'
+data = base64.b64decode(encoded)
+data  # b'data to be encoded'
+</source>
+
+===hashlib===
+* 这个模块为许多不同的安全散列和消息摘要算法实现了通用接口。
+* 例如，获取字节字符串<code>b'Nobody inspects the spammish repetition'</code>的MD5摘要：
+<source lang="python">
+import hashlib
+m = hashlib.md5()
+m.update(b"Nobody inspects")
+m.update(b" the spammish repetition")
+m.digest()  # b'\xbbd\x9c\x83\xdd\x1e\xa5\xc9\xd9\xde\xc9\xa1\x8d\xf0\xff\xe9'
+m.digest_size  # 16
+m.block_size  # 64
+</source>
+
+===itertools===
+* itertools模块提供了用于操作迭代对象的函数。
+* 无限迭代函数<code>count(start, [step])</code>、<code>cycle(p)</code>、<code>repeat(elem [,n])</code>：
+<source lang="python">
+import itertools
+natuals = itertools.count(3, 2)
+for n in natuals:
+    print(n)
+ # 输出
+3
+5
+7
+9
+...
+
+import itertools
+cs = itertools.cycle('ABC') # 注意字符串也是序列的一种
+for c in cs:
+    print(c)
+ # 输出
+'A'
+'B'
+'C'
+'A'
+'B'
+'C'
+...
+
+ns = itertools.repeat('A', 3)
+for n in ns:
+    print(n)
+ # 输出
+A
+A
+A
+</source>
+* <code>chain()</code>可以把一组迭代对象串联起来，形成一个更大的迭代器：
+<source lang="python">
+for c in itertools.chain('abc', 'xyz'):
+    print(c)
+ # 输出
+a
+b
+c
+x
+y
+z
+</source>
+* <code>groupby(iterable[, keyfunc])</code>把迭代器中相邻的重复元素挑出来放在一起：
+<source lang="python">
+for key, group in itertools.groupby('AAABBBCCAAA'):
+    print(key, list(group))
+ # 输出
+A ['A', 'A', 'A']
+B ['B', 'B', 'B']
+C ['C', 'C']
+A ['A', 'A', 'A']
+
+ # 要忽略大小写分组，可以让元素'A'和'a'都返回相同的key：
+for key, group in itertools.groupby('AaaBBbcCAAa', lambda c: c.upper()):
+    print(key, list(group))
+ # 输出
+A ['A', 'a', 'a']
+B ['B', 'B', 'b']
+C ['c', 'C']
+A ['A', 'A', 'a']
+</source>
+
+===HTML Parser===
+* html.parser模块可以解析HTML和XHTML：
+<source lang="python">
+from html.parser import HTMLParser
+
+class MyHTMLParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        print("Encountered a start tag:", tag)
+
+    def handle_endtag(self, tag):
+        print("Encountered an end tag :", tag)
+
+    def handle_data(self, data):
+        print("Encountered some data  :", data)
+
+parser = MyHTMLParser()
+parser.feed('<html><head><title>Test</title></head>'
+            '<body><h1>Parse me!</h1></body></html>')
+
+ # 输出
+Encountered a start tag: html
+Encountered a start tag: head
+Encountered a start tag: title
+Encountered some data  : Test
+Encountered an end tag : title
+Encountered an end tag : head
+Encountered a start tag: body
+Encountered a start tag: h1
+Encountered some data  : Parse me!
+Encountered an end tag : h1
+Encountered an end tag : body
+Encountered an end tag : html
+</source>
+
+===socket===
+* 这个模块提供对socket接口的访问，<code>socket.socket(family=AF_INET, type=SOCK_STREAM, proto=0, fileno=None)</code>函数返回一个socket对象有各种方法来实现各种socket系统调用。
+* TCP服务器，示例1：
+<source lang="python">
+# TCP服务端程序
+import socket
+
+HOST = ' '                 # ' '表示服务器主机所有可用的地址
+PORT = 50007              # 可指定任意的非系统占用或预留的接口
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:  # 调用socket对象并命名为s
+    s.bind((HOST, PORT))  # 绑定地址（HOST, PORT）到socket
+    s.listen(1)           # 开始TCP监听，1为允许的最大连接数
+    conn, addr = s.accept()  # 允许客户端连接，conn是一个新的socket对象，可用于在这个连接上发送和接收数据，addr是绑定到连接的另一端（客户端）的socket的地址
+    with conn:
+        print('Connected by', addr)
+        while True:  # 通信循环
+            data = conn.recv(1024)  # 接收数据，指定缓冲区最大值为1024
+            if not data: break
+            conn.sendall(data)  # 持续发送报文，直到数据发送完毕或发生错误
+
+
+ # TCP客户端程序
+import socket
+
+HOST = 'daring.cwi.nl'    # 远程主机地址
+PORT = 50007              # 指定和服务端相同的端口
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))  # 连接服务器
+    s.sendall(b'Hello, world')  # 发送数据到服务器
+    data = s.recv(1024)  # 接收服务器返回的数据
+print('Received', repr(data))
+</source>
+
+* TCP服务器，示例2：给客户端输入的内容加上时间戳前缀
+<source lang="python">
+ # TCP服务端程序
+from socket import *
+from time import ctime
+
+HOST = ' '
+PORT = 21568
+BUFSIZ = 1024
+ADDR = (HOST, PORT)
+
+tcpSerSock = socket(AF_INET, SOCK_STREAM)
+tcpSerSock.bind(ADDR)
+tcpSerSock.listen(5)
+
+while True:
+    print('waiting for connection...')
+    tcpCliSock, addr = tcpSerSock.accept()  # 创建新的socket对象后，此socket接收TCP报文，主socket（tcpSerSock）继续等待其它连接。但这个程序是单线程，tcpCliSock的连接关闭后tcpSerSock才能接受下一个连接
+    print('...connected from:', addr)
+
+    while True:
+	data = tcpCliSock.recv(BUFSIZ)
+	if not data:
+            break
+	tcpCliSock.send('[%s] %s'.encode() % (bytes(ctime(), 'utf-8'), data))  # 要将发送内容进行编码成bytes对象
+
+    tcpCliSock.close()
+tcpSerSock.close()  # 释放与此连接相关的资源，但并不一定立即关闭连接。如果想及时关闭连接，可以在close()之前调用shutdown()
+
+
+ # TCP客户端程序
+from socket import *
+HOST = '127.0.0.1'
+PORT = 21568
+BUFSIZ = 1024
+ADDR = (HOST, PORT)
+
+tcpCliSock = socket(AF_INET, SOCK_STREAM)
+tcpCliSock.connect(ADDR)
+
+while True:
+    data = input('> ')
+    if not data:
+	break
+    tcpCliSock.send(data.encode())
+    data = tcpCliSock.recv(BUFSIZ)
+    if not data:
+	break
+    print(data.decode('utf-8'))  # 解码
+
+tcpCliSock.close()
+</source>
+
+* UDP服务器，示例：
+<source lang="python">
+ # UDP服务端程序
+from socket import *
+from time import ctime
+
+HOST = ' '
+PORT = 21567
+BUFSIZ = 1024
+ADDR = (HOST, PORT)
+
+udpSerSock = socket(AF_INET, SOCK_DGRAM)
+udpSerSock.bind(ADDR)
+ # UDP无连接，不再监听连接
+while True:
+    print('waiting for message...')
+    data, addr = udpSerSock.recvfrom(BUFSIZ)  # 接收地址为addr的客户端发送的数据
+    udpSerSock.sendto('[%s] %s'.encode() % (bytes(ctime(), 'utf-8'), data), addr)  # 要指定接收数据的客户端地址addr
+    print('...received from and returned to:', addr)
+
+udpSerSock.close()
+
+
+ # UDP客户端程序
+from socket import *
+
+HOST = 'localhost'
+PORT = 21567
+BUFSIZ = 1024
+ADDR = (HOST, PORT)
+
+udpCliSock = socket(AF_INET, SOCK_DGRAM)
+
+while True:
+    data = input('> ')
+    if not data:
+	break
+    udpCliSock.sendto(data.encode(), ADDR)    # 无连接，要指定发送给谁（ADDR）
+    data, ADDR = udpCliSock.recvfrom(BUFSIZ)  # 从服务器接收数据
+    if not data:
+	break
+    print(data.decode())
+
+udpCliSock.close()
+</source>
+
+===socketserver===
+* 这个模块简化了编写网络服务器的方式。
+* 用此模块实现socket模块中的TCP示例2:
+<source lang="python">
+ # 服务端程序
+from socketserver import (TCPServer as TCP, StreamRequestHandler as SRH)
+from time import ctime
+
+HOST = ' '
+PORT = 21567
+ADDR = (HOST, PORT)
+
+class MyRequestHandler(SRH):  # 继承StreamRequestHandler类
+    def handle(self):  # 重写StreamRequestHandler类的handle方法
+	print('...connected from:', self.client_address)
+	self.wfile.write('[%s] %s'.encode() % (bytes(ctime(), 'utf-8'), self.rfile.readline()))  # 对与socket对象关联的wfile文件进行写入操作
+
+tcpServ = TCP(ADDR, MyRequestHandler)  # TCPServer类实例化，传入服务器地址及请求处理器类
+print('waiting for connection...')
+tcpServ.serve_forever()  # 持续处理请求，直到有shutdown()调用
+
+
+ # 客户端程序
+from socket import *
+
+HOST = 'localhost'
+PORT = 21567
+BRFSIZ = 1024
+ADDR = (HOST, PORT)
+
+while True:  # SocketServer的请求处理程序默认只是接受连接及请求，然后断开连接；这使得无法在程序执行过程期间一直保持连接，每次向服务器发送消息时都需要创建一个新的socket
+    tcpCliSock = socket(AF_INET, SOCK_STREAM)
+    tcpCliSock.connect(ADDR)
+    data = input('> ')
+    if not data:
+	break
+    tcpCliSock.send('%s\r\n'.encode() % data.encode())  # 换行符对应服务端的self.rfile.readline()，如没有换行符，服务端接收到的内容没有分行，无法处理并返回给客户端，客户端就一直处于等待状态
+    data = tcpCliSock.recv(BRFSIZ)
+    if not data:
+	break
+    print(data.decode().strip())
+    tcpCliSock.close()
+</source>

@@ -1,0 +1,195 @@
+==CoffeeScript==
+#CoffeeScript 是一门编译到 JavaScript 的语言<br/>
+#CoffeeScript在编译时为每条语句加上';'，因此在代码中不需要写';'.
+#CoffeeScript中的注释采用#
+#CoffeeScript中对空白敏感,任何需要({})的场合下，可以用缩进代替
+
+===作用域===
+<source lang=coffeescript>
+  foo = "bar"
+</source>
+::会编译成<br />
+<source lang=javascript>
+(function() {
+  var foo;
+  foo = "bar";
+}).call(this);
+</source>
+任何的代码都会使用*Immediate Function*包装，这样foo成为了本地变量，并且，可以通过call指定的this引用全局对象
+
+<br/>
+<source lang=coffeescript>
+outer = 1
+change = ->
+  inner = -1
+  outer = 10
+inner = change()
+</source>
+-&gt;是函数定义的简写方式，之后我们会探讨
+
+<br/>
+编译后的js如下：<br>
+<source lang=javascript>
+var change, inner, outer;
+
+  outer = 1;
+
+  change = function() {
+    var inner;
+    inner = -1;
+    return outer = 10;
+  };
+
+  inner = change();
+</source>
+
+===赋值===
+<source lang=coffeescript>
+target = "world"
+alert "hello, #{target}"
+</source>
+
+数组也可以分行
+<source lang=coffeescript>
+arr = [
+  1
+  2
+]
+</source>
+也可以解构赋值(Destructuring)
+<source lang=coffeescript>
+obj = {a:"foo", b:"bar"}
+{a, b} = obj
+arr = [1, 2]
+[a, b] = arr
+</source>
+对象
+<source>
+kids =
+  brother:
+    name: "Max"
+    age:  11
+  sister:
+    name: "Ida"
+    age:  9
+
+//编译后-------------------------------------------编译后
+
+kids = {
+  brother: {
+    name: "Max",
+    age: 11
+  },
+  sister: {
+    name: "Ida",
+    age: 9
+  }
+};
+loadrun: song.join(" ... ")
+</source>
+===函数===
+函数通过一组可选的圆括号包裹的参数, 一个箭头, 一个函数体来定义. 一个空的函数像是这样:  -&gt;
+<source>
+square = (x) -> x * x
+cube   = (x) -> square(x) * x
+
+//编译后-------------------------------------------------------编译后
+
+var cube, square;
+
+square = function(x) {
+  return x * x;
+};
+
+cube = function(x) {
+  return square(x) * x;
+};
+</source>
+一些函数函数参数会有默认值, 当传入的参数的不存在 (null 或者 undefined) 时会被使用.
+<source>
+fill = (container, liquid = "coffee") ->
+  "Filling the #{container} with #{liquid}..."
+
+//编译后--------------------------------------------编译后
+
+var fill;
+
+fill = function(container, liquid) {
+  if (liquid == null) {
+    liquid = "coffee";
+  }
+  return "Filling the " + container + " with " + liquid + "...";
+};
+</source>
+
+===if, else, unless 和条件赋值===
+if/else 表达式可以不用圆括号和花括号就写出来. 就像函数和其他块级表达式那样, 多行的条件可以通过缩进来表明. 另外还有一个顺手的后缀形式, 在行尾使用 if or unless.
+<source lang=coffeescript>
+mood = greatlyImproved if singing
+
+if happy and knowsIt
+  clapsHands()
+  chaChaCha()
+else
+  showIt()
+
+date = if friday then sue else jill
+
+//编译后----------------------------------------------编译后
+
+var date, mood;
+
+if (singing) {
+  mood = greatlyImproved;
+}
+
+if (happy && knowsIt) {
+  clapsHands();
+  chaChaCha();
+} else {
+  showIt();
+}
+
+date = friday ? sue : jill;
+</source>
+
+===循环和推导式===
+可以使用CoffeeScript将大多数的循环写成基于数组、对象或范围的推导式(comprehensions)。 推导式替代（编译为）for循环，并且可以使用可选的子句和数组索引值。 不同于for循环，数组的推导式是表达式，可以被返回和赋值。
+<source>
+// 吃午饭.
+eat food for food in ['toast', 'cheese', 'wine']
+
+// 精致的五道菜.
+courses = ['greens', 'caviar', 'truffles', 'roast', 'cake']
+menu i + 1, dish for dish, i in courses
+
+// 注重健康的一餐.
+foods = ['broccoli', 'spinach', 'chocolate']
+eat food for food in foods when food isnt 'chocolate'
+
+//编译后----------------------------------------------编译后
+
+var courses, dish, food, foods, i, _i, _j, _k, _len, _len1, _len2, _ref;
+
+_ref = ['toast', 'cheese', 'wine'];
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+  food = _ref[_i];
+  eat(food);
+}
+
+courses = ['greens', 'caviar', 'truffles', 'roast', 'cake'];
+
+for (i = _j = 0, _len1 = courses.length; _j < _len1; i = ++_j) {
+  dish = courses[i];
+  menu(i + 1, dish);
+}
+
+foods = ['broccoli', 'spinach', 'chocolate'];
+
+for (_k = 0, _len2 = foods.length; _k < _len2; _k++) {
+  food = foods[_k];
+  if (food !== 'chocolate') {
+    eat(food);
+  }
+}
+</source>

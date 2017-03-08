@@ -1,0 +1,51 @@
+== 异常处理 ==
+# 在swift中，任何一个遵守ErrorType protocol的类型，都可以用来描述错误
+# ErrorType是个空protocol（协议），它功能很单一，就是用来告诉编译器，某个类型用来表示错误
+----
+=== 如何建造异常类型？===
+# 在 Swift 中， enum 是最好的方法建立属于你自己的异常类型，你只要在你的 enum 中确认新的ErrorType
+<source lang="swift">
+enum MyError: ErrorType {  
+  case NotExist
+  case OutOfRange
+}
+</source>
+----
+=== 如何抛出异常 ===
+# 在抛出异常之前，我们需要在函数或方法的返回箭头 -> 前使用throws来标明将会抛出异常
+<source lang="swift">
+func myMethodRetrunString() throws -> String
+
+// No return, we can just add throws in the end
+func myMethodRetrunNothing() throws
+
+// 声明之后， 我们需要在函数或者方法里扔出异常，很简单使用throw 就可以了
+func myMethod() throws
+  //...
+  // item is an optional value
+  guard let item = item else {
+    // need throws the error out
+    throw MyError.NotExist
+  }
+  // do with item
+}
+</source>
+----
+=== 如何获取并处理异常？===
+<source lang="swift">
+// 通过 do-catch 获取处理异常, try 需要手动处理异常
+do {
+    try functionWillThrowError()
+  } catch MyError.NotExist {
+    // deal with not exist
+  } catch MyError.OutOfRange {
+    // deal with not exist
+  }
+
+// try!：告诉系统调用没有异常，如果出现异常，程序会崩溃
+try! functionWillThrowError()
+
+// try? 出现异常返回nil，没有异常返回对应的值（返回的结果是个可选类型）
+let result = try? functionWillThrowError() 
+</source>
+----

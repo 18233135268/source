@@ -1,0 +1,76 @@
+连接数据库 SQLite3，返回值为数据库，用 row_factory 代表数据库中的行，这样就可以通过字典而不是元组的形式访问行。 
+```python
+def connect_db():
+    """Connects to the specific database."""
+    rv = sqlite3.connect(app.config['DATABASE'])
+    rv.row_factory = sqlite3.Row
+    return rv
+```
+Row : sqlite3 中定义 的一个类
+row_factory：为其中的一个性能属性对象(property对象)
+```python
+row_factory = property(lambda self: object(), lambda self, v: None, lambda self: None)
+```
+property：为一个定义性能的类，如果用做装饰器的话会被用来定义新的或者修改已存在的性能的
+property的初始化是这样式儿的：
+```python
+def __init__(self, fget=None, fset=None, fdel=None, doc=None)
+    pass
+```
+----
+初始化数据库
+```python
+def init_db():
+    """Initializes the database."""
+    db = get_db()
+    with app.open_resource('schema.sql', mode='r') as f:
+        db.cursor().executescript(f.read())
+    db.commit()
+```
+首先要打开应用的资源文件，这里使用 with 语句，open_resource() 函数第一个参数为打开的资源文件名，第二个参数为只读形式。
+执行文件中的内容，然后提交。executescript() 函数是属于 Cursor 类的，因此在执行前要初始化为db.cursor()。
+----
+设置初始化数据库的优雅命令行
+```python
+@app.cli.command('initdb')
+def initdb_command():
+    """Creates the database tables."""
+    init_db()
+    print('Initialized the database.')
+```
+可以通过 flask initdb 命令来初始化数据库，这个是通过 cli 对象(AppGroup 类) 来实现的。
+----
+创建数据库连接
+```python
+def get_db():
+    """Opens a new database connection if there is none yet for the
+    current application context.
+    """
+    if not hasattr(g, 'sqlite_db'):
+        g.sqlite_db = connect_db()
+    return g.sqlite_db
+```
+其中很重要的一个概念是 g 对象，g 即globals的意思，用来做全局对象，可以在代码的任意地方访问,用于安全的暂存信息。
+----
+断开数据库连接
+Flask 提供了一个装饰器 teardown_appcontext， 每次应用环境销毁时都会执行。
+```python
+@app.teardown_appcontext
+def close_db(error):
+    """Closes the database again at the end of the request."""
+    if hasattr(g, 'sqlite_db'):
+        g.sqlite_db.close()
+```
+在这个函数中依旧根据创建数据库连接时的 g 对象进行数据库连接的断开。
+teardown_appcontext 函数如下：
+```python
+@setupmethod
+def teardown_appcontext(self, f):
+    self.teardown_appcontext_funcs.append(f)
+    return f
+```
+在调用 teardown_appcontext 时为什么要和 setupmethod 装饰器一起作用呢？
+setupmethod 确保所有的初始化函数必须在 web 应用程序开始提供服务之前被调用。如果在已经提供服务之后被调用，则报错。
+因此如果在 web 应用程序开始提供服务之前没有注册应用环境销毁的函数，将会报错。
+----
+

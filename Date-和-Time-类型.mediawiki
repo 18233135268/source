@@ -1,0 +1,162 @@
+* MySQL 用标准输出格式为给定的日期和时间类型取回值，但它尝试为用户提供的输入值解释各种格式。
+* 在 year-month-day 规则中，日期部分必须给定。
+* 两位年份的日期是不明确的，因为不知道是哪个世纪。MySQL 用以下规则解释这种情况：
+** 70-99 年份转换为 1970-1999。
+** 00-69 年份转换为 2000-2069。
+* 如果值用在数字上下文中，MySQL 自动将日期和时间转换为数字，反过来也一样。
+* 默认情况下，当 MySQL 遇到一个超出范围的日期或时间类型的值，它为该类型将值转换为 0 值。例外情况是超出范围的 TIME 值将修改为 TIME 范围相应的端点。
+* 可以通过设置 SQL 模式来让 MySQL 支持更多确切的日期。比如可以通过启用 ALLOW_INVALID_DATES 模式来使 MySQL 接受 '2009-11-31' 类型的日期。这在你想存储一个可能错误的值（比如用户在 web 表单中输入）时很有用。在这种模式下， MySQL 仅核实月份范围是从 1 到 12，天的范围是从 1 到 31。
+* MySQL 允许你在 DATE 或 DATETIME 列中存储天或者月份和天是 0 的日期。这在你需要存储出生日期却可能不知道具体日期的情况。这种情况，仅仅存储日期为 '2009-00-00' 或 '2009-01-00'，如果这样存储了，在使用 DATE_SUB() 或 DATE_ADD() 这种需要完整日期的函数时将不能得到正确的结果。启用 NO_ZERO_IN_DATE 模式，将不允许存储天或月份为 0 的日期。
+* MySQL 允许存储一个 0 值的 '0000-00-00' 作为虚拟日期。这在某些情况下比使用 NULL 更方便，也使用更少的数据和索引空间。可以启用 NO_ZERO_DATE 模式来禁止存储 '0000-00-00'。
+* “Zero” 日期或时间值通过 Connector/ODBC 使用时将自动转换为 NULL，因为 ODBC 不能处理这样的值。
+
+==DATE、DATETIME 和 TIMESTAMP 类型==
+* 这三个类型是相关的。
+* DATE：MySQL 用 'YYYY-MM-DD' 格式检索和显示。支持的范围从 '1000-01-01' 到 '9999-12-31'。
+* DATETIME：MySQL 用 'YYYY-MM-DD HH:MM:SS' 格式来检索和显示。支持的范围从 '1000-01-01 00:00:00' to '9999-12-31 23:59:59'。
+* TIMESTAMP：包含日期和时间部分，范围从 '1970-01-01 00:00:01' UTC 到 '2038-01-19 03:14:07' UTC。
+* DATETIME 和 TIMESTAMP 的值可以包含小数部分，达毫秒级别（6位）。值中的任何小数部分插入 DATETIME 和 TIMESTAMP 列中都被保存而不会丢弃。有小数部分的格式是 'YYYY-MM-DD HH:MM:SS[.fraction]'，DATETIME 值的范围是从 '1000-01-01 00:00:00.000000' 到 '9999-12-31 23:59:59.999999'，TIMESTAMP 值是从 '1970-01-01 00:00:01.000000' 到 '2038-01-19 03:14:07.999999'。
+* MySQL 在存储时将 TIMESTAMP 从当前时区转换为 UTC 时区，检索时再从 UTC 转换为当前时区（只在此类型生效）。默认的，每个连接的当前时区是服务器的时间。可以基于每个连接设置时区。只要时区设置保持不变，取回的时区和存储时就一样。
+* 无效的 DATE, DATETIME, 或 TIMESTAMP 值将转换为相应类型的 0 值。
+* 注意日期值的某个属性在 MySQL 中的解释：
+** 对于值指定为字符串，MySQL 允许不拘束的格式，这时任何标点符号可用做日期部分和时间部分之间的分隔符。某些情况下这是有欺骗性的。比如 '10:11:12' 因为 : 可能会被认为是时间值，但用于日期上下文中时它将解释为年 '2010-11-12'。值 '10:45:15' 将转换为 '0000-00-00'，因为 '45' 不是有效的月份。在日期部分、时间部分和小数秒部分唯一可识别的分隔符是小数点。
+** 服务器需要月份和天的值是有效的，不只是各自在 1 到 12 和1 到 31 范围内。禁用严格模式时，'2004-04-31' 这样的无效日期将转换为 '0000-00-00' 并产生一个警告。启用严格模式时，无效日期将报错。启用 ALLOW_INVALID_DATES 模式后将允许这样的日期。
+** MySQL 不接受包含无效日期的 TIMESTAMP 值以及在天或月份列中包含 0 的TIMESTAMP 值。这个规则的唯一例外情况是特别的 0 值：'0000-00-00 00:00:00'。
+** '''注意'''：MySQL 可以在 SQL 模式  MAXDB 启用时运行。这种情况下，TIMESTAMP 与 DATETIME 相同。如果创建一个表时这个模式是启用状态，TIMESTAMP 列将创建为 DATETIME 列。
+
+==TIME 类型==
+* MySQL 用 'HH:MM:SS' 格式检索和显示 TIME 值（用 'HHH:MM:SS' 表示大的值）。TIME 范围可以从 '-838:59:59' 到 '838:59:59'。小时部分可能很大，因为 TIME 不仅可以用于一天的时间（小于 24 小时），也可以用于表示经过的时间或两个事件之间的时间间隔（可能大于 24 小时，甚至是负数）。
+* MySQL 识别几种格式的 TIME 值，其中一些可以包含毫秒级别（6位）的小数秒部分。
+* '''注意'''分配缩写值给 TIME 列的情况。
+** MySQL 依照一天的时间来解释带有冒号的缩写 TIME 值。例如，'11:12' 代表 '11:12:00', 而不是 '00:11:12'。
+** MySQL 假定最右边两位是秒来解释不带有冒号的缩写 TIME 值（也就是依照经过的时间而不是一天的时间）。例如：你可能以为 '1112' 和 1112 意思是 '11:12:00'，但实际上 MySQL 却解释为 '00:11:12'。类似的，'12' 和 12 解释为 '00:00:12'。
+* 在时间部分和小数秒部分之间唯一承认的分隔符是小数点。
+* 默认情况下，超出 TIME 范围但在其它方面有效的值，则修改为这个范围内的极值。比如，'-850:00:00' 和 '850:00:00' 转换为 '-838:59:59' 和 '838:59:59'。无效的 TIME 值则转换为 '00:00:00'。注意，因为 '00:00:00' 本身就是一个有效的 TIME 值，就无法从存储在表中的 '00:00:00' 值判断，它是否是由原始值指定而成的 '00:00:00' 或者它是否是无效的。* MySQL 用标准输出格式为给定的日期和时间类型取回值，但它尝试为用户提供的输入值解释各种格式。
+* 在 year-month-day 规则中，日期部分必须给定。
+* 两位年份的日期是不明确的，因为不知道是哪个世纪。MySQL 用以下规则解释这种情况：
+** 70-99 年份转换为 1970-1999。
+** 00-69 年份转换为 2000-2069。
+* 如果值用在数字上下文中，MySQL 自动将日期和时间转换为数字，反过来也一样。
+* 默认情况下，当 MySQL 遇到一个超出范围的日期或时间类型的值，它为该类型将值转换为 0 值。例外情况是超出范围的 TIME 值将修改为 TIME 范围相应的端点。
+* 可以通过设置 SQL 模式来让 MySQL 支持更多确切的日期。比如可以通过启用 ALLOW_INVALID_DATES 模式来使 MySQL 接受 '2009-11-31' 类型的日期。这在你想存储一个可能错误的值（比如用户在 web 表单中输入）时很有用。在这种模式下， MySQL 仅核实月份范围是从 1 到 12，天的范围是从 1 到 31。
+* MySQL 允许你在 DATE 或 DATETIME 列中存储天或者月份和天是 0 的日期。这在你需要存储出生日期却可能不知道具体日期的情况。这种情况，仅仅存储日期为 '2009-00-00' 或 '2009-01-00'，如果这样存储了，在使用 DATE_SUB() 或 DATE_ADD() 这种需要完整日期的函数时将不能得到正确的结果。启用 NO_ZERO_IN_DATE 模式，将不允许存储天或月份为 0 的日期。
+* MySQL 允许存储一个 0 值的 '0000-00-00' 作为虚拟日期。这在某些情况下比使用 NULL 更方便，也使用更少的数据和索引空间。可以启用 NO_ZERO_DATE 模式来禁止存储 '0000-00-00'。
+* “Zero” 日期或时间值通过 Connector/ODBC 使用时将自动转换为 NULL，因为 ODBC 不能处理这样的值。
+
+==为 DATETIME 和 TIMESTAMP 自动初始化和更新==
+* TIMESTAMP 和 DATETIME 列可以自动初始化和更新到当前的日期和时间（当前的时间戳）。
+* 对于表中的任何 TIMESTAMP 和 DATETIME 列，可以分配当前时间戳作为其默认值，自动更新值， 或两者都有：
+** 对于插入的没有为列指定值的行来说，一个自动初始化的列被设置为当前时间戳。
+** 当行中任何其它列的值从其当前值发生变更后，自动更新的列将自动更新到当前时间戳。若所有其它列都设置为其当前值，自动更新的列保持不变。为了防止自动更新的列在其它列变更时发生更新，显式的将其设置为其当前值。若要在即使其它列不变时也更新一个自动更新的列，就显式的将其设置为其应有的值。
+* 另外，可以通过指定给它一个 NULL 值来初始化或更新任何 TIMESTAMP 列为当前日期或时间，除非它已经定义为 NULL 属性而允许 NULL 值了。
+* 若要指定自动属性，在列定义中使用 DEFAULT CURRENT_TIMESTAMP 和 ON UPDATE CURRENT_TIMESTAMP 子句。子句的顺序不重要，若两者都在列定义中，任一个都有可能首先执行。任何 CURRENT_TIMESTAMP 的同义词都有和其一样的含义，它们是 CURRENT_TIMESTAMP(), NOW(), LOCALTIME, LOCALTIME(), LOCALTIMESTAMP, 和 LOCALTIMESTAMP()。
+* 使用 DEFAULT CURRENT_TIMESTAMP 和 ON UPDATE CURRENT_TIMESTAMP 是特定于 TIMESTAMP 和 DATETIME 的。DEFAULT 子句也可用于指定一个常数默认值，比如：<code>DEFAULT 0</code> 或 <code>DEFAULT '2000-01-01 00:00:00'</code>。
+* '''注意'''：使用 <code>DEFAULT 0</code>时，会不会产生警告或报错取决于是否启用了严格的 SQL 模式或 NO_ZERO_DATE 模式。SQL 模式 TRADITIONAL 包含严格模式和 NO_ZERO_DATE 模式。
+* TIMESTAMP 或 DATETIME 列定义可以为默认值和自动更新的值指定当前时间戳，为一个指定了就不能为另一个指定，或者两个都不指定。不同的列可以有不同自动属性的组合。以下规则描述这些可能性：
+** 有 DEFAULT CURRENT_TIMESTAMP 和 ON UPDATE CURRENT_TIMESTAMP 的列，其默认值具有当前时间戳，并且将自动更新为当前时间戳，比如：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  dt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+</source>
+** 具有 DEFAULT 子句 但没有 ON UPDATE CURRENT_TIMESTAMP 子句的列，此列具有给定的默认值，但不会自动更新为当前时间戳。默认值取决于 DEFAULT 子句是指定的 CURRENT_TIMESTAMP 还是指定的常量值，若指定为 CURRENT_TIMESTAMP，则默认值是当前时间戳：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  dt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+</source>
+若指定为常量值，则默认值就是给定值。下例中，列完全没有自动属性：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT 0,
+  dt DATETIME DEFAULT 0
+);
+</source>
+** 具有 ON UPDATE CURRENT_TIMESTAMP 子句并且用 DEFAULT 子句指定了常量值的列，列将自动更新到当前时间戳并且具有给定的常量默认值：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
+  dt DATETIME DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP
+);
+</source>
+** 具有 ON UPDATE CURRENT_TIMESTAMP 子句但没有 DEFAULT 子句的列，将自动更新到当前时间戳，但当前时间戳并不是其默认值。TIMESTAMP 有一个默认值为 0，除非用 NULL 属性定义，这种情况下默认值是 NULL。
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts1 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,     -- default 0
+  ts2 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP -- default NULL
+);
+</source>
+DATETIME 的默认值为 NULL，除非用 NOT NULL 属性定义，这种情况下默认值是 0:
+<source lang='mysql'>
+CREATE TABLE t1 (
+  dt1 DATETIME ON UPDATE CURRENT_TIMESTAMP,         -- default NULL
+  dt2 DATETIME NOT NULL ON UPDATE CURRENT_TIMESTAMP -- default 0
+);
+</source>
+
+* TIMESTAMP 和 DATETIME 列没有自动属性，除非明确的进行指定，有这些例外：默认情况下，如果没有明确的指定，第一个 TIMESTAMP 列具有DEFAULT CURRENT_TIMESTAMP 和 ON UPDATE CURRENT_TIMESTAMP 属性。若想要禁止第一个 TIMESTAMP 列的自动属性，使用这些策略之一：
+** 启用 explicit_defaults_for_timestamp 系统变量。如果启用了这个变量，指定自动初始化和更新的 DEFAULT CURRENT_TIMESTAMP 和 ON UPDATE CURRENT_TIMESTAMP 子句是可用的，但未分配给任何 TIMESTAMP 列，除非明确的包含在列的定义中。
+** 可选的，如果 explicit_defaults_for_timestamp 是禁用的（默认情况），执行下列任一操作：
+*** 在列的定义中用 DEFAULT 子句来指定一个常量默认值。
+*** 指定 NULL 属性。这是因为列允许 NULL 值，意思是你不能通过设置列为 NULL 来指定给列当前时间戳。指定 NULL 来将列设置为 NULL。
+* 考虑这些表的定义：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts1 TIMESTAMP DEFAULT 0,
+  ts2 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP);
+CREATE TABLE t2 (
+  ts1 TIMESTAMP NULL,
+  ts2 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP);
+CREATE TABLE t3 (
+  ts1 TIMESTAMP NULL DEFAULT 0,
+  ts2 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP);
+</source>
+** 三个表的定义中，第一个 TIMESTAMP 列都没有自动初始化和更新。
+** 三个表的不同之处是 ts1 列怎样处理 NULL 值。对于 t1,ts1 来说是 NOT NULL 并且给它分配一个 NULL 值则将其设置为当前时间戳。t2 和 t3 的 ts1 列允许 NULL 并且给它分配一个 NULL 值则将其设置为 NULL。
+** t2 和 t3 的不同之处在于其 ts1 的默认值。对 t2 来说，ts1 定义为允许 NULL，所以在缺乏一个明确的 DEFAULT 子句的情况下其默认值也是 NULL。对 t3 来说，ts1 允许 NULL，但有一个明确的默认值 0。
+* 如果一个 TIMESTAMP 或 DATETIME 列定义的任何地方包含一个小数秒精度值，在列的定义中必须自始至终使用同一个精度值。这是被允许的：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+);
+</source>
+以下是不允许的：
+<source lang='mysql'>
+CREATE TABLE t1 (
+  ts TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(3)
+);
+</source>
+
+===TIMESTAMP 初始化和 NULL 属性===
+* 默认情况下，TIMESTAMP 列是 NOT NULL 的，不能包含 NULL 值和通过分配 NULL 来指定当前时间戳。要允许一个 TIMESTAMP 列可以包含 NULL，用 NULL 属性来显式的声明。这种情况下，默认值也变为 NULL，除非通过 DEFAULT 子句指定一个不同的默认值来重写。DEFAULT NULL 可以用来显式的将 NULL 指定为默认值。（对于不使用 NULL 属性声明的 TIMESTAMP 列，DEFAULT NULL 是无效的）。如果一个 TIMESTAMP 列允许 NULL 值，分配给其 NULL 则将其设置为 NULL，而不是当前时间戳。
+* 以下的表中有几个允许 NULL 值的 TIMESTAMP 列：
+<source lang='mysql'>
+CREATE TABLE t
+(
+  ts1 TIMESTAMP NULL DEFAULT NULL,
+  ts2 TIMESTAMP NULL DEFAULT 0,
+  ts3 TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
+);
+</source>
+* 允许使用 NULL 值的 TIMESTAMP 列在插入时不呈现当前时间戳，除了以下几种情况之一：
+** 它的默认值定义为 CURRENT_TIMESTAMP 并且没有为这个列指定值时。
+** CURRENT_TIMESTAMP 或者任何它的同义词，比如 NOW() 明确的插入到列时。
+* 换句话说，仅当它的定义包含 DEFAULT CURRENT_TIMESTAMP 时，TIMESTAMP 列将定义为允许 NULL 值自动初始化为当前时间戳。
+<source lang='mysql'>
+CREATE TABLE t (ts TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP);
+</source>
+* 如果 TIMESTAMP 列允许 NULL 值但其定义中不包含 DEFAULT CURRENT_TIMESTAMP，必须明确的插入对应当前日期和时间的值。假定下面的表有这些定义：
+<source lang='mysql'>
+CREATE TABLE t1 (ts TIMESTAMP NULL DEFAULT '0000-00-00 00:00:00');
+CREATE TABLE t2 (ts TIMESTAMP NULL DEFAULT NULL);
+</source>
+* 在任一个表中设置 TIMESTAMP 列为插入时的当前时间戳，就明确的分配给它那个值，例如：
+<source lang='mysql'>
+INSERT INTO t1 VALUES (NOW());
+INSERT INTO t2 VALUES (CURRENT_TIMESTAMP);
+</source>

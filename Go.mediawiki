@@ -1,0 +1,150 @@
+Q:切片在中间切的时候的容量问题
+
+A： 切片在中间切的话，起始地址为第一个开始切的元素，只能访问到从该地址到最后的元素，在这个地址之前的元素将访问不到
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s := []int{2, 3, 5, 7, 11, 13}
+	printSlice(s)
+
+	// Slice the slice to give it zero length.
+	s = s[:0]
+	printSlice(s)
+
+	// Extend its length.
+	s = s[:4]
+	printSlice(s)
+
+	// Drop its first two values.     //例如这里，cap(s)=4
+
+	s = s[2:]
+	printSlice(s)
+}
+
+func printSlice(s []int) {
+	fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+}
+```
+
+----
+Q:Goroutines代码解读<br>
+A：goroutine是一个由Go runtime管理的轻量级的线程（协程），go关键字可以启动一个新的goroutine运行，在下面的例子中，
+在main函数中分别调用两次say函数，其中一个由go关键字另起一个goroutine，所以两个函数调用在不同的线路中运行，所以输出结果会没有什么规律
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func say(s string) {
+	for i := 0; i < 5; i++ {
+		time.Sleep(100 * time.Millisecond)
+		fmt.Println(s)
+	}
+}
+
+func main() {
+	go say("world")
+	say("hello")
+}
+
+/*输出为
+world
+hello
+hello
+world
+world
+hello
+hello
+world
+world
+hello
+
+Program exited.
+*/
+```
+----
+
+Q:代码讲解<br>
+A:主函数中首先创建两个channal，然后定义一个匿名函数并通过go调用，匿名函数作用为输出从c通道中得到的10个值，最后将0输入quit通道，调用
+匿名函数后，又调用fibonacci(c, quit)，下面来看此函数，在函数中，将x，y初始化为0，1，然后进入一个无限循环，循环体中首先是select语句
+，第一个case语句将x送入通道c，然后对x，y重新赋值；第二季个将quit通道中的值输出，接着打印“quit”，退出循环。函数运行时，首先匿名函数要输出c通道的值，但此时c通道中没有值，此通道阻塞，进行fibonacci(c, quit)函数，将x送入c通道，接着匿名函数输出，然后x，y重新赋值，下一条case语句，quit通道为空，阻塞，重新进入循环体，循环往复。直到匿名函数中循环体结束，0进入quit通道中，跳出循环体，结束
+
+```go
+package main
+
+import "fmt"
+
+func fibonacci(c, quit chan int) {
+	x, y := 0, 1
+	for {
+		select {
+		case c <- x:
+			x, y = y, x+y
+		case <-quit:
+			fmt.Println("quit")
+			return
+		}
+	}
+}
+
+func main() {
+	c := make(chan int)
+	quit := make(chan int)
+	go func() {
+		for i := 0; i < 10; i++ {
+			fmt.Println(<-c)
+		}
+		quit <- 0
+	}()
+	fibonacci(c, quit)
+}
+
+/*输出为
+0
+1
+1
+2
+3
+5
+8
+13
+21
+34
+quit
+
+Program exited.
+*／
+```
+
+
+----
+Q:Println()和Printf()有什么区别？
+
+A:Println()没有什么特殊作用，只是普通的输出；而Printf()有格式化的作用，例如：
+   fmt.Println(4)
+   fmt.Println(a,b,c)
+   fmt.Printf("now you have  %g  problems.", math.sqrt(7))
+----
+Q:Go当中存在double和float类型吗？
+
+A:double类型不存在，但存在float类型，不过在使用float类型的时候，需要写清楚是32位的还是64位的，例如：
+    var s float32=343.4665
+----
+Q:既然var自带初始化器，那为何还要存在“在定义变量的时候在变量名后面加上类型”这种表达形式呢？
+
+A:加上类型可以更加清晰，比如int有int，int8，int16，unint等等类型，float存在32位和64位的类型
+----
+Q:对变量的赋值
+
+A:":="只能用在函数中，函数外面需要用var或者type
+----
+A:fallthrough语句
+
+Q:Go里面switch默认相当于每个case最后带有break，匹配成功后不会自动向下执行其他case，而是跳出整个switch, 但是可以使用fallthrough强制执行后面的case代码

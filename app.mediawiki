@@ -1,0 +1,103 @@
+----
+== app ==
+=== app ===
+# app 模块是为了控制整个应用的生命周期而设计的
+<source lang="javascript">
+var app = require('app')
+app.on('window-all-closed', function () {
+  app.quit() // 当最后一个窗口被关闭时退出应用
+})</source>
+=== 事件列表 ===
+==== will-finish-launching ====
+* 当应用程序完成基本的启动的时候被触发。
+* 在 Windows 和 Linux 中 will-finish-launching 事件与 ready 事件是相同的
+* 在 macOS 中，这个时间相当于 NSApplication 中的 applicationWillFinishLaunching 提示 
+* 在这里可以为 open-file 和 open-url 设置监听器，并启动崩溃报告和自动更新
+==== ready ====
+* 当 Electron 完成初始化时被触发
+==== window-all-closed ====
+* 当所有的窗口都被关闭时触发
+* 这个事件仅在应用还没有退出时才能触发，如果用户按了 Cmd + Q ,或者调用了 app.quit() , Electron 将会先尝试关闭所有的窗口，而不在触发 window-all-closed
+==== before-quit ====
+* 在应用程序开始关闭它的窗口的时候被触发
+* 调用 event.preventDefault() 将会阻止终止应用程序的默认行为
+==== quit ====
+* 当应用程序正在退出时触发
+==== open-file macOS ====
+* 当用户想要在应用中打开一个文件时触发
+* open-file 事件常常在应用已经打开并且系统想要再次使用应用打开文件时被触发
+* open-file 也会在一个文件被拖入 dock 且应用还没有运行的时候被触发
+* 当我们想要处理这个事件，我们应该调用 event.preventDefault()
+==== open-url macOS ====
+* 当用户想要在应用中打开一个 url 的时候被触发， URL 格式必须要提前标识才能被你的应用打开
+* 当我们想要处理这个事件，我们应该调用 event.preventDefault()
+==== activate macOS ====
+* 当应用被激活时，常用于点击应用的 dock 图标的时候
+==== browser-window-blur ====
+* 当一个 BrowserWindow 失去焦点的时候触发
+==== browser-window-focus ====
+* 当一个 BrowserWindow 获得焦点的时候触发
+==== browser-window-created ====
+* 当一个 BrowserWindow 被创建的时候触发
+==== certificate-error ====
+* 当对 url 验证  certificate 证书失败的时候触发
+* 如果需要信任这个证书，需要阻止默认行为 event.preventDefault() 并且调用 callback(true)
+<source lang="javascript">
+session.on('certificate-error', function (event, webContents, url, error, certificate, callback) {
+  if (url === 'https://github.com') {
+    // 验证逻辑。
+    event.preventDefault()
+    callback(true)
+  } else {
+    callback(false)
+  }
+})
+</source>
+==== select-client-certificate ====
+* 当一个客户端认证被请求的时候被触发
+<source lang="javascript">
+app.on('select-certificate', function (event, host, url, list, callback) { // url 指的是请求客户端认证的网页地址 
+  event.preventDefault() // 防止应用自动使用第一个证书进行验证
+  callback(list[0]) // 调用时需要传入一个证书列表中的证书
+})
+</source>
+==== login ====
+* 当 webContents 要进行一次 HTTP 登陆验证时被触发
+* 默认情况下， Electron 会取消所有的验证行为
+<source lang="javascript">
+app.on('login', function (event, webContents, request, authInfo, callback) {
+  event.preventDefault() // 组织默认的行为
+  callback('username', 'secret') // 进行验证
+})
+</source>
+==== cpu-process-crashed ====
+* 当 GPU 进程崩溃时触发
+=== 一些常用的方法 ===
+==== app.quit() ====
+* 当仕途关闭所有的窗口时调用
+==== app.hide() ====
+* 针对 macOS 系统的命令 隐藏所有的应用窗口，不是最小化
+==== app.show() ====
+* 针对 macOS 系统的命令 隐藏后重新显示所有的窗口
+==== app.exit(exitCode) ====
+* 带着 exitCode 退出应用
+* 所有的窗口会被立刻关闭，不会询问用户
+==== app.getAppPath() ====
+* 返回当前应用的文件路径
+==== app.getPath(name) ====
+* 返回一个与 name 参数相关的特殊文件夹或文件路径，当失败时抛出一个 Error
+==== app.setPath(name, path) ====
+* 重写某个 name 的路径为 path , path 可以是一个文件夹或者一个文件，具体的和 name 的类型有关
+==== app.getVersion ====
+* 返回当前应用程序的 package.json 文件中的名称
+==== app.setName(name) ====
+* 重写当前应用的名字
+==== app.getLocale() ====
+* 返回当前应用程序的语言
+==== app.dock.setIcon(image) ====
+* 针对 macOS 系统，设置应用在 dock 中显示的图标
+==== app.dock.setBadge(text) ====
+* 针对 macOS 系统，设置应用在 dock 中显示的字符串
+==== app.dock.getBadge(text) ====
+* 针对 macOS 系统，返回应用在 dock 中显示的字符串
+----

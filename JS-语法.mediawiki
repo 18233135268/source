@@ -1,0 +1,2 @@
+#[[JavaScript基础语法]]
+#[[JavaScript Depth]]

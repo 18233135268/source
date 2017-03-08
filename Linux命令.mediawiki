@@ -1,0 +1,159 @@
+== 概述 ==
+该页面整理学习的 Linux 命令。
+----
+== 命令列表 ==
+=== top ===
+# 显示计算机资源使用情况
+例：top <br>
+<source lang="text">
+top - 11:36:33 up 1 day, 22:09,  3 users,  load average: 0.00, 0.01, 0.05
+Tasks:  85 total,   2 running,  83 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :  3882508 total,  2796372 free,   128212 used,   957924 buff/cache
+KiB Swap:  2621436 total,  2621436 free,        0 used.  3468644 avail Mem 
+
+  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND                                                                      
+    1 root      20   0   43892   6480   3904 S  0.0  0.2   0:03.00 systemd                                                                      
+    2 root      20   0       0      0      0 S  0.0  0.0   0:00.00 kthreadd                                                                     
+    3 root      20   0       0      0      0 S  0.0  0.0   0:00.26 ksoftirqd/0                                                                  
+    6 root      20   0       0      0      0 S  0.0  0.0   0:00.00 kworker/u2:0                                                                 
+    7 root      rt   0       0      0      0 S  0.0  0.0   0:00.00 migration/0                                                                  
+    8 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcu_bh                                                                       
+    9 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcuob/0                                                                      
+   10 root      20   0       0      0      0 S  0.0  0.0   0:01.56 rcu_sched    
+</source>
+----
+=== ps ===
+作用：进一步显示计算机当前使用情况
+# -e 显示所有进程
+# -f 全格式
+# -r 只显示正在运行的进程
+* ps u //显示进程所有者及详细信息
+<source>
+[root@localhost ~]# ps u
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root      1992  0.0  0.0 115588  2224 pts/0    Ss+  8月09   0:00 -bash
+root     26930  0.0  0.0 115380  2088 pts/1    Ss+  10:46   0:00 -bash
+root     26977  0.0  0.0 115380  2036 tty1     Ss+  10:49   0:00 -bash
+root     28380  0.0  0.0 115380  2012 pts/2    Ss   11:48   0:00 -bash
+root     28422  0.0  0.0 139500  1628 pts/2    R+   12:05   0:00 ps u
+</source>
+* ps aux  //显示所有用户的进程
+<source>
+[root@localhost ~]# ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.1  43892  6480 ?        Ss   8月09   0:03 /usr/lib/systemd/systemd --switched-root --system --deserialize 21
+root         2  0.0  0.0      0     0 ?        S    8月09   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S    8月09   0:00 [ksoftirqd/0]
+root         6  0.0  0.0      0     0 ?        S    8月09   0:00 [kworker/u2:0]
+root         7  0.0  0.0      0     0 ?        S    8月09   0:00 [migration/0]
+root         8  0.0  0.0      0     0 ?        S    8月09   0:00 [rcu_bh]
+root         9  0.0  0.0      0     0 ?        S    8月09   0:00 [rcuob/0]
+root        10  0.0  0.0      0     0 ?        S    8月09   0:01 [rcu_sched]
+root        11  0.0  0.0      0     0 ?        R    8月09   0:01 [rcuos/0]
+root        12  0.0  0.0      0     0 ?        S    8月09   0:00 [watchdog/0]
+root        13  0.0  0.0      0     0 ?        S<   8月09   0:00 [khelper]
+root        14  0.0  0.0      0     0 ?        S    8月09   0:00 [kdevtmpfs]
+</source>
+* ps axjf //树形图
+<source>
+[root@localhost ~]# ps axjf
+ PPID   PID  PGID   SID TTY      TPGID STAT   UID   TIME COMMAND
+    0     2     0     0 ?           -1 S        0   0:00 [kthreadd]
+    2     3     0     0 ?           -1 S        0   0:00  \_ [ksoftirqd/0]
+    2     6     0     0 ?           -1 S        0   0:00  \_ [kworker/u2:0]
+    2     7     0     0 ?           -1 S        0   0:00  \_ [migration/0]
+    2     8     0     0 ?           -1 S        0   0:00  \_ [rcu_bh]
+    2     9     0     0 ?           -1 S        0   0:00  \_ [rcuob/0]
+    2    10     0     0 ?           -1 S        0   0:01  \_ [rcu_sched]
+    2    11     0     0 ?           -1 R        0   0:01  \_ [rcuos/0]
+    2    12     0     0 ?           -1 S        0   0:00  \_ [watchdog/0]
+    2    13     0     0 ?           -1 S<       0   0:00  \_ [khelper]
+    2    14     0     0 ?           -1 S        0   0:00  \_ [kdevtmpfs]
+    2    15     0     0 ?           -1 S<       0   0:00  \_ [netns]
+    2    16     0     0 ?           -1 S<       0   0:00  \_ [perf]
+    2    17     0     0 ?           -1 S<       0   0:00  \_ [writeback]
+</source>
+* ps -ef //显示所有进程
+<source>
+[root@localhost ~]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 8月09 ?       00:00:03 /usr/lib/systemd/systemd --switched-root --system --deserialize 21
+root         2     0  0 8月09 ?       00:00:00 [kthreadd]
+root         3     2  0 8月09 ?       00:00:00 [ksoftirqd/0]
+root         6     2  0 8月09 ?       00:00:00 [kworker/u2:0]
+root         7     2  0 8月09 ?       00:00:00 [migration/0]
+root         8     2  0 8月09 ?       00:00:00 [rcu_bh]
+root         9     2  0 8月09 ?       00:00:00 [rcuob/0]
+root        10     2  0 8月09 ?       00:00:01 [rcu_sched]
+root        11     2  0 8月09 ?       00:00:01 [rcuos/0]
+</source>
+----
+=== grep ===
+作用：全局正则表达式输出 global regular expression print
+# ps -ef | grep flask  //查找指定进程
+<source>
+(venv) [root@localhost workspace]# ps -ef | grep flask
+root     28426  1992  0 12:12 pts/0    00:00:00 grep --color=auto flask
+</source>
+# grep -r content .  //在当前路径下递归搜索与 content 相关的词条
+----
+=== kill ===
+作用： 结束进程
+# kill -9 PID
+----
+=== ip ===
+作用： 显示IP地址及MAC地址等
+# ip addr show
+<source>
+[root@localhost workspace]# ip addr show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 08:00:27:7a:c1:0c brd ff:ff:ff:ff:ff:ff
+    inet 10.0.0.41/24 brd 10.0.0.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe7a:c10c/64 scope link 
+       valid_lft forever preferred_lft forever
+</source>
+----
+=== df ===
+# 显示磁盘空间占用情况
+----
+=== df -h ===  
+# 显示已挂载的分区列表
+=== touch ===
+作用：改变文件的时间，不加任何参数时会新建一个空文件
+# touch [选项] filename   //http://linux.die.net/man/1/touch
+----
+=== mv ===
+作用：移动文件或目录
+# mv [选项] 源文件或目录  目标文件或目录                  //http://linux.die.net/man/1/mv
+----
+=== mkdir ===
+作用： 创建文件夹
+# mkdir directoryname  //http://linux.die.net/man/1/mkdir
+----
+=== yum ===
+作用：下载器
+# yum install packageName  //安装指定包
+----
+=== sudo ===
+作用：以其他身份执行命令，预设用户为root
+----
+== 开启防火墙端口 ==
+# firewall-cmd --zone=public --add-port=5000/tcp --permanent       //开启了防火墙的5000端口
+当开启失败时，可能是 python 出错了，因为 firewall 用的是 python2 
+(venv) [root@restful untitled]# which firewall-cmd
+/usr/bin/firewall-cmd
+
+(venv) [root@restful untitled]#  vi /usr/bin/firewall-cmd
+只需修改 python -> python2 即可
+#!/usr/bin/python2 -Es
+== 关于 yum ==
+yum 也依赖于 python2， 当使用出现错误时考虑是不是路径未指向python2
+

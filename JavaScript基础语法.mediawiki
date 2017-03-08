@@ -1,0 +1,499 @@
+==JS基础语法==
+===基本数据类型===
+#Number//数字
+#String//字符串
+#Boolean//布尔值，true或false
+#Null//代表一个空的值
+#Undefined//未定义或无法识别
+#Object//对象
+----
+====数值====
+*在JavaScript中所有的number都是浮点型.所以 1===1.0 为true.
+*isNaN()函数 是is Not a Number 的缩写，用于判断是不是number型，若是，返回false,否则返回true.
+----
+=====数值常量=====
+*<pre>Infinity                      表示正无穷大</pre>
+*<pre>Number.MAX_VALUE              JavaScript中可表示的最大数</pre>
+*<pre>Number.MIN_VALUE              JavaScript中可表示的最小数</pre>
+*<pre>Number.NEGATIVE_INFINITY      一个表示负无穷大的值</pre>
+*<pre>Number.POSITIVE_INFINITY      一个表示正无穷大的值</pre>
+----
+=====Math对象的部分属性=====
+*<pre>Math.PI                 π值</pre>
+*<pre>Math.random()           返回一个伪随机数</pre>
+*<pre>Math.abs(x)              返回x的绝对值</pre>
+*<pre>Math.pow(x,y)            返回x的y次幂</pre>
+*<pre>Math.round(x)            将x取值为最接近的整数值</pre>
+----
+====字符串的用法====
+:: 字符串要么被'''单引号'''引起来，要么被'''双引号'''引起来。'''单引号''''''''引起'''''来的字符串可以'''包含双引号'''。同样，'''双引号''''''''引起来'''''的字符串也可以'''包含单引号'''。当面对字符串中存在单引号或双引号的情况，如"I'm "doujiang"",可以通过转义符\来表示，即"I\'m \"doujiang\""。
+=====转义序列=====
+*<pre>\b                 退格符</pre>
+*<pre>\t                 水平制表符</pre>
+*<pre>\n                 换行符</pre>
+*<pre>\v                 垂直制表符</pre>
+*<pre>\f                 换页符</pre>
+*<pre>\r                 回车符</pre>
+*<pre>\\                 反斜杠</pre>
+=====字符串方法和属性=====
+*<pre>Str.substring(arg0,arg1)          获取Str字符串arg0到arg1-1的字符串</pre>
+*<pre>Str.slice(arg0)                   获取Str字符串arg0以后的字符串</pre>
+*<pre>Str.sub(arg0,arg1)                获取Str字符串arg0开始后arg1个字符</pre>
+*<pre>Str.concat(arg0)                  Str字符串后面连接arg0字符串</pre>
+*<pre>Str.toUpperCase()                 把Str字符串全部大写</pre>
+*<pre>Str.toLowerCase()                 把Str字符串全部小写</pre>
+----
+===函数===
+====创建函数的两种方法====
+*方法一
+<source lang="JavaScript">
+function 函数名(形参){
+  ...
+}
+</source>
+function代表将要定义一个函数，函数名在命名时要注意与关键字的冲突问题，{...}是函数体，因为要通过函数运算得到一个值，所以要用到return语句。
+*方法二
+<source lang="JavaScript">
+var 函数名 = function(形参){
+  ...
+}
+</source>
+function(形参)作为一个无名函数赋值给了函数名则函数名作为一个变量会调用到这个函数。这两种方式其实并无差别，只是只是第一种的函数体后不加；而第二种加。
+
+在定义好了一个函数后，如果想在保存这个函数的基础上对这个函数进行修改，可以定义一个新的函数名赋值，即var 新函数名=旧函数名。如此之后就可以修改旧函数而不影响新函数。
+
+由于JavaScript允许传入任意个数的参数而不影响调用，因此传入的参数比定义的参数多也没有问题，虽然函数内部并不需要这些参数；当然如果传入的少了也没有问题，函数会适时输出undefined。那么我们要如何对我们自己传入的实参进行检查呢？
+====argument和rest====
+argument类似数组但它不是一个数组，它的作用对象是我们传入的所有参数。argument可以获取我们传入的所有参数并且可以通过类似argument[0]的方式获得特定位置的实参值。它可用于判断参数的个数，防止多传或少传了参数；还可以为一个函数传入任意数目的参数；也可用arguments获取所有参数。通过argument.length可以得到argument中元素的个数，即实参的总个数。
+
+与argument有一定区别的，rest作为一个真正的数组，它负责收集没有对应传参的实参，并编为数组，可以对rest进行数组操作。
+<source lang="JavaScript">
+function foo(a, b, ...rest) {
+    console.log('a = ' + a);
+    console.log('b = ' + b);
+    console.log(rest);
+}
+</source>
+如此定义函数后，传入的没有对应形参的实参就会被收入到rest参数的数组中，并且可以对其进行统一的数组操作。
+====变量作用域====
+*在函数体内部申明的变量，叫做局部变量，局部变量只能用于函数体内部，在函数体外不可引用。
+*不同函数体内部的同名变量相互独立，互不影响。
+*由于JavaScript的函数可以嵌套，此时，内部函数可以访问外部函数定义的变量，反过来则不行：
+<source lang="JavaScript">
+function foo() {
+    var x = 1;
+    function bar() {
+        var y = x + 1; // bar可以访问foo的变量x!
+    }
+    var z = y + 1; // ReferenceError! foo不可以访问bar的变量y!
+}
+</source>
+*如果内部函数定义了与外部函数重名的变量，则内部函数的变量将“屏蔽”外部函数的变量。
+*JavaScript的函数定义有个特点，它会先扫描整个函数体的语句，把所有申明的变量“提升”到函数顶部
+<source lang="JavaScript">
+function foo() {
+    var x = 'Hello, ' + y;
+    alert(x);
+    var y = 'Bob';
+}
+
+foo();
+</source>
+语句var x = 'Hello, ' + y并不会报错，alert输出的结果是Hello, undefined，说明JavaScript引擎自动提升了变量y的声明，但不会提升变量y的赋值。
+
+===参考数据类型===
+#Array
+#Date
+#RegExp
+----
+====Array（数组）====
+=====创建数组的两种方法=====
+*使用中括号直接定义，如：<code>var myArray = [];</code>
+*使用new关键之，数组元素作为参数，如：<code>Var myArray = new Array(); // Array后面的括号可有可无</code>
+=====数组添加和删除元素=====
+'''1.使用concat()函数：'''
+<source lang="JavaScript">
+var fArray = ["hello",4,5];
+var sArray = [23,45];
+var newArray = fArray.concat(sArray);
+</source>
+'''2.使用join()函数：'''
+<source lang="JavaScript">
+var star = ["Polaris","Deneb","Vega","Altair"];
+var starString = star.join();
+alert(starString);
+</source>
+::join()函数返回一个字符串，本例中输出为：Polaris,Deneb,Veag,Altair
+'''3.使用有参数join(arg0)函数：'''
+<source lang="JavaScript">
+var star = ["Polaris","Deneb","Vega","Altair"];
+var starString = star.join("*");
+alert(starString);
+</source>
+::join()函数返回一个字符串，本例中输出为：Polaris*Deneb*Veag*Altair
+::'''注:'''join()是一种不需要创建完整for语句查看数组内容的方法。
+'''4.使用push()和pop()添加和删除元素'''
+*push(arg0)在数组'''最后'''添加一个元素arg0;
+*pop()弹出数组的'''最后'''一个元素;
+'''5.使用unshift()和shift()添加和删除元素'''
+*unshift(arg0)在数组'''最前'''添加一个元素arg0;
+*shift()在数组'''最前'''删除一个元素;
+----
+=====获取数组一部分的函数slice(arg0)=====
+<source lang="JavaScript">
+var star = ["Polaris","Deneb","Vega","Altair"];
+var starString = star.slice(2);
+</source>
+=====为数组排序sort（）=====
+*排序为按'''字典序'''排列，并且返回为字符串形式。
+----
+====Date(日期)====
+=====Date对象的创建方法=====
+*var now= new Date()                 这种方式创建的Date对象会直接读取系统的时间
+*var now= new Date(2016, 8, 2, 9, 35, 30, 000)    这种方式创建的Date对象有固定的时间，参数对应分别是年月日时分秒毫秒
+=====Date对象的get方法=====
+*<pre>1.getDate()                    返回月中的某</pre>
+*<pre>2.getDay()                     返回星期中的某天</pre>
+*<pre>3.getFullYear()                返回四位数年份表示</pre>
+*<pre>4.getHours()                   返回日期中的小时</pre>
+*<pre>5.getMilliseconds()            返回日期中的毫秒</pre>
+*<pre>6.getMinutes()                 返回日期中的分钟</pre>
+*<pre>7.getMonth()                   返回日期中的月</pre>
+*<pre>8.getSeconds()                 返回日期中的秒</pre>
+*<pre>9.getTime()                    返回自1970年1月1日起的毫秒</pre>
+*<pre>10.getTimezoneOffset()         返回UTC和本地时间之间的差值所对应的分钟数</pre>
+=====Date对象的set方法=====
+*<pre>1.setDate()                     设置月中的某天</pre>
+*<pre>2.setFullYear()                 设置日期中的四位数年份</pre>
+*<pre>3.setHours()                    设置日期中的小时</pre>
+*<pre>4.setMilliseconds()             设置日期中的毫秒</pre>
+*<pre>5.setMinutes()                  设置日期中分钟</pre>
+*<pre>6.setMonth()                    设置日期中的月</pre>
+*<pre>7.setSeconds()                  设置日期中的秒</pre>
+*<pre>8.setTime()                     使用自1970年1月1日起的毫秒数设置时间</pre>
+=====Date对象将日期转换成不同格式字符串=====
+*<pre>1.toLocaleDateString()         返回客户端的年月日</pre>
+*<pre>2.toLocaleTimeString()         返回客户端的时分秒</pre>
+*<pre>3.toLocaleString()             等于 上面两个 字符串连接</pre>
+*<pre>4.toGMTString()                返回GMT英文格式日期</pre>
+*<pre>5.toString()                   </pre>
+*<pre>6.toISOString()　　　　　　　 　返回ISO格式日期</pre>
+*<pre>7.toDateString()               </pre>
+*<pre>8.toUTCString()                </pre>
+*<pre>9.toTimeString()               </pre>
+====RegExp(正则表达式)====
+=====正则表达式的作用=====
+*正则表达式即为字符串定制的一个标准，在正则表达式中用字符来描述字符以筛选出符合要求的字符串，所谓表达式也就是由使用者规定一个模板，再看对照字符串是否符合这个模板。许多特殊字符要跟在常用字符序列后才能发挥作用。
+=====常用特殊字符=====
+<pre>^				在输入的开始处设置锚		 
+$				在输入的末尾处设置锚		
+.				匹配任何字符
+*  			        匹配前面的字符零次或者更多次。可将其看作通配符
++				匹配前面的字符一次或者跟多次
+？				匹配前面的字符零次或者一次		
+()    			        将圆括号内的匹配放置到一个组内，稍后使用		
+{n}			        匹配前面的字符n次	
+{n,} 			        匹配前面的字符至少n次				
+{n,m}   			匹配前面的字符至少n次，但不超过m次			
+[]                              定义一个字符类来匹配括号内的任何字符。这个字符可以使用0~9来匹配任何数字或者a~z来匹配任何字母
+[^]                 	        在字符类内部使用一个插入符号取消了那个字符类，即那个类中的字符不能再匹配中出现	
+\	                        通常用作转义字符，即反斜线符号后面无论跟着什么都只能当做文字字符，而不具备特殊含义。同时也被用来定义特殊字符</pre>
+=====常用字符序列=====
+*<pre>\b 		字边界</pre>
+*<pre>\B		非字边界</pre>
+*<pre>\c         	与另一个字符一起使用时的控制字符。eg.\cA是Control-A的转义序列</pre>
+*<pre>\d	        数字</pre>	
+*<pre>\D	        非数字</pre>	
+*<pre>\n	        换行</pre>	
+*<pre>\r	        回车</pre>
+*<pre>\s	        单个空白字符，如空格或制表符</pre>	
+*<pre>\S	        单个非空白符</pre>
+*<pre>\t	        制表符</pre>	
+*<pre>\w	        任何字母数字字符，可以是数字或字母</pre>
+*<pre>\W	        任何非字母数字字符</pre>
+===操作符与表达式===
+====一元操作符====
+<pre>delete                       删除一个属性</pre>
+<pre>void                         返回为定义</pre>
+<pre>typeof                       返回表示数据类型的字符串</pre>
+<pre>++                           自增一个数</pre>
+<pre>--                           自减一个数</pre>
+<pre>+                            将操作数转换为数字</pre>
+<pre>-                            操作数求负</pre>
+<pre>~                            按位求反</pre>
+<pre>！                           逻辑非</pre>
+=====delete操作符=====
+*取得一个对象的属性或者一个数组的索引，删除它或者将其变成未定义。
+=====typeof操作符=====
+*返回给定操作数的变量类型字符串。
+===变量类型===
+::JavaScript中的变量不是强类型的。所以不用预先指定变量的保存类型，并可以通过简单的再分配改变保存在变量中的数据类型。
+===Object（对象）===
+'''简介：'''<br />
+#属性特性
+#*wirtable attribute(可写),表明可否更改该属性的值
+#*enumerable attribute(可枚举),表明是否可以通过for/in循环返回该属性
+#*configuration attribute(可配置),表明是否可删除或修改该属性
+#对象特性
+#*prototeye(原型)，指向另一个对象，本对象的属性继承自它的原型对象
+#*class(类)，是一个标识对象类型的字符串
+#*extensible flag(扩展标记)，指明了是否可以向该对象添加新属性
+====创建对象====
+*通过对象直接量
+<code>var empty = {};</code>
+*通过new关键字
+<code>var o = new Object();</code>
+*通过Object.create()
+<code>var o1 = Object.create(null)     //创建一个和o一样的空对象</code>
+====继承====
+从原型对象继承
+<source lang=JavaScript>
+function inherit(p){
+   if(p==null)throw TypeError();    //p是一个对象，但不能是null
+   if(Object.create)                //如果Object.create()存在
+      return Object.create(p);      //直接使用它
+   var t = typeof p;                //否则进行进一步检测
+   if(t !== "object"&& t!=="function")
+      throw TypeError();            
+   function f(){};                  //定义一个空构造函数
+   f.prototype = p;                 //将其原型属性设置为p
+   return new f();                  //使用f()创建p的继承对象        
+}
+
+var o = {}     //o从Object.prototype继承对象方法
+o.x = 1;       //给o定义一个属性x
+var p = inherit(o);    //p继承o和Object.prototype
+p.y = 2;        //给p定义一个属性y
+var q = inherit(p)     //q继承p、o和Object.prototype
+q.z =3;        //给q定义一个属性z
+var s = q.toString();  //toString继承自Object.prototype
+q.x + q.y      //=>3:x和y分别继承自o和p
+</source>
+===闭包 ===
+====以函数作为返回值====
+<source lang=JavaScript>
+function lazy_sum(arr) {
+    var sum = function () {
+        return arr.reduce(function (x, y) {
+            return x + y;
+        });
+    }
+    return sum;
+}         //当我们调用lazy_sum()时，返回的并不是求和结果，而是求和函数；
+var f = lazy_sum([1, 2, 3, 4, 5]);    // function sum()
+   //调用函数f时，才真正计算求和的结果
+f();     // 15；调用函数f时，才真正计算求和的结果
+</source>
+注意，当我们调用lazy_sum()时，每次调用都会返回一个新的函数，即使传入相同的参数
+<source lang=JavaScript>
+var f1 = lazy_sum([1, 2, 3, 4, 5]);
+var f2 = lazy_sum([1, 2, 3, 4, 5]);
+f1 === f2;   // false
+</source>
+注意，返回的函数并没有立刻执行，而是直到调用了f()才执行。我们来看一个例子：
+<source lang=JavaScript>
+function count() {
+    var arr = [];
+    for (var i=1; i<=3; i++) {
+        arr.push(function () {
+            return i * i;
+        });
+    }
+    return arr;
+}
+var results = count();
+var f1 = results[0];
+var f2 = results[1];
+var f3 = results[2];
+</source>
+在上面的例子中，每次循环，都创建了一个新的函数，然后，把创建的3个函数都添加到一个Array中返回了。
+你可能认为调用f1()，f2()和f3()结果应该是1，4，9，但实际结果是：
+<source lang=JavaScript>
+f1(); // 16
+f2(); // 16
+f3(); // 16
+</source>
+全部都是16！原因就在于返回的函数引用了变量i，但它并非立刻执行。等到3个函数都返回时，它们所引用的变量i已经变成了4，因此最终结果为16。
+返回闭包时牢记的一点就是：返回函数不要引用任何循环变量，或者后续会发生变化的变量。
+====封装私有变量====
+在面向对象的程序设计语言里，比如Java和C++，要在对象内部封装一个私有变量，可以用private修饰一个成员变量。
+在没有class机制，只有函数的语言里，借助闭包，同样可以封装一个私有变量。
+<source lang=JavaScript>
+'use strict';
+function create_counter(initial) {
+    var x = initial || 0;
+    return {
+        inc: function () {
+            x += 1;
+            return x;
+        }
+    }
+}
+
+var c1 = create_counter();
+c1.inc(); // 1
+c1.inc(); // 2
+c1.inc(); // 3
+
+var c2 = create_counter(10);
+c2.inc(); // 11
+c2.inc(); // 12
+c2.inc(); // 13
+</source>
+在返回的对象中，实现了一个闭包，该闭包携带了局部变量x，并且，从外部代码根本无法访问到变量x。换句话说，闭包就是携带状态的函数，并且它的状态可以完全对外隐藏起来。
+====将多参数函数变为单参数函数====
+例如：要计算x^y可以用Math.pow(x, y)函数，不过考虑到经常计算x^2或x^3，我们可以利用闭包创建新的函数pow2和pow3
+<source lang=JavaScript>
+function make_pow(n) {
+    return function (x) {
+        return Math.pow(x, n);
+    }
+}
+
+// 创建两个新函数:
+var pow2 = make_pow(2);
+var pow3 = make_pow(3);
+
+pow2(5); // 25
+pow3(7); // 343
+</source>
+===代码规范===
+====JavaScript错误====
+try 语句测试代码块的错误。
+
+catch 语句处理错误。
+
+throw 语句创建自定义错误。
+示例
+<source lang=JavaScript>
+function myFunction(){
+	try{ 
+                var x=document.getElementById("demo").value;
+		if(x=="")    throw "NULL";
+		if(isNaN(x)) throw "NOT A NUMBER";
+	}
+	catch(err){
+		var y=document.getElementById("mess");
+		y.innerHTML="mistake：" + err ;
+	}
+}
+</source>
+====JavaScript调试====
+:*在浏览器内置调试工具中用 console.log() 方法在调试窗口上打印 JavaScript 值
+:*用debugger 关键字停止执行 JavaScript，并调用调试函数
+:*设置断点，每个断点上，都会停止执行 JavaScript 代码，以便于检查 JavaScript 变量的值
+====JavaScript变量提升====
+JavaScript 中，函数及变量的声明都将被提升到函数的最顶部。
+
+JavaScript 中，变量可以在使用后声明，也就是变量可以先使用再声明。
+
+以下两种方法是一样的：
+<source lang=JavaScript>
+x = 5; // 变量 x 设置为 5
+console.log(x);
+var x; // 声明 x
+</source>
+
+<source lang=JavaScript>
+var x; // 声明 x
+x = 5; // 变量 x 设置为 5
+console.log(x);
+</source>
+注意：变量提升只是声明变量提升，变量的初始化不会提升。
+====JavaScript 严格模式(use strict)====
+"use strict" 指令在 JavaScript 1.8.5 (ECMAScript5) 中新增。
+它是一个字面量表达式，在 JavaScript 旧版本中会被忽略。
+"use strict" 的目的是指定代码在严格条件下执行。
+严格模式下的限制（以下情况会报错）：
+:*不允许使用未声明的变量例如
+::
+<code>
+"use strict";
+x = 3.14;
+</code>
+
+注意：对象也是变量，以下情况出错:
+::
+<code>
+"use strict";
+x = {p1:10, p2:20};
+</code>
+:*不允许删除变量或对象
+::
+<code>
+"use strict";
+var x = 3.14;
+delete x; 
+</code>
+:*不允许删除函数
+::
+<code>
+"use strict";
+function x(p1, p2) {}; 
+delete x;    
+</code>
+:*不允许变量重名
+::
+<code>
+"use strict";
+function x(p1, p1) {}; 
+</code>
+:*不允许使用八进制
+::
+<code>
+"use strict";
+var x = 010;  
+</code>
+:*不允许使用转义字符
+::
+<code>
+"use strict";
+var x = \010;  
+</code>
+:*不允许只对属性赋值
+::
+<code>
+"use strict";
+var obj = {};
+Object.defineProperty(obj, "x", {value:0, writable:false});
+obj.x = 3.14; 
+</code>
+:*不允许对一个使用getter方法读取的属性进行赋值
+::
+<code>
+"use strict";
+var obj = {get x() {return 0} };
+
+obj.x = 3.14;            // 报错
+</code>
+:*由于一些安全原因，在作用域 eval() 创建的变量不能被调用
+::
+<code>
+"use strict";
+eval ("var x = 2");
+alert (x);               // 报错
+</code>
+:*禁止this关键字指向全局对象
+<source lang=JavaScript>
+function f(){
+	return !this;
+} 
+// 返回false，因为"this"指向全局对象，"!this"就是false
+
+function f(){ 
+	"use strict";
+	return !this;
+} 
+// 返回true，严格模式下，this的值为undefined，所以"!this"为true。  
+</source>
+因此，使用构造函数时，如果忘了加new，this不再指向全局对象，而是报错。
+====说明====
+规范的代码通常包括以下几个方面:
+*变量和函数的命名规则
+**变量名推荐使用驼峰法来命名(camelCase)
+**全局变量为大写 (UPPERCASE )
+**常量 (如 PI) 为大写 (UPPERCASE )
+*空格，缩进，注释的使用
+**通常运算符 ( = + - * / ) 前后需要添加空格
+**通常使用 4 个空格符号来缩进代码块
+

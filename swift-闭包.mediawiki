@@ -1,0 +1,142 @@
+== 闭包 ==
+=== 简介 ===
+# 闭包可以捕获及存储声明时所在上下文中的任意常量和变量的引用，运行时系统负责这些被存储引用的内存管理
+# 闭包是引用类型
+# 闭包分类
+## 全局函数，有函数名但不捕获任何变量
+## 嵌套函数，有函数名，并可以捕获其封闭函数域内值的闭包
+## 闭包表达式，匿名，可以捕获其定义时的上下文中变量或常量值
+# 闭包表达式特点
+## 根据上下文，推导参数、返回值类型
+## 单表达式可省略 return 
+## 参数名简写
+## Trailing 语法
+----
+== 闭包表达式 ==
+基本语法<br>
+<nowiki>{</nowiki> (''parameters'') -> ''return type'' in <br>
+&nbsp;&nbsp;&nbsp;&nbsp;''<nowiki>statements</nowiki>'' <br>
+} <br>
+
+<source lang="swift">
+reversed = names.sort({ (s1: String, s2: String) -> Bool in
+    return s1 > s2  // 如果为 true，s1 排序在 s2 前
+})
+</source>
+----
+=== 上下文推导 ===
+推导参数类型、返回值：<br>
+<source lang="swift">
+reversed = names.sort( { s1, s2 in return s1 > s2 } )
+</source>
+----
+=== 单语句闭包 ===
+<source lang="swift">
+reversed = names.sort( { s1, s2 in s1 > s2 } )
+</source>
+----
+=== 参数名简写 ===
+<source lang="swift">
+reversed = names.sort( { $0 > $1 } )
+</source>
+----
+=== Trailing 闭包 ===
+# 当闭包为函数最后一个参数时才能使用
+# 函数声明中要使用 closure 关键字
+# 闭包为函数唯一参数，调用函数时，可省略 ()
+<source lang="swift">
+func someFunctionThatTakesAClosure(closure: () -> Void) {
+    // ...
+}
+ 
+someFunctionThatTakesAClosure() {
+    // 闭包实现不在函数 () 内
+}
+
+// 仍然可以使用普通语法
+someFunctionThatTakesAClosure({
+    // 闭包实现在函数 () 内
+})
+
+reversed = names.sort() { $0 > $1 }
+// 省略 ()
+reversed = names.sort { $0 > $1 }
+
+let strings = numbers.map {
+    (number) -> String in
+    var number = number
+    var output = ""
+    while number > 0 {
+        output = digitNames[number % 10]! + output
+        number /= 10
+    }
+    return output
+}
+</source>
+----
+=== 变量捕获 ===
+# 闭包可捕获上下文中常量、变量
+# 闭包可在函数内修改捕获的变量
+# 被捕获的变量，即使定义其的上下文不存在时，闭包仍可访问
+<source lang="swift">
+func makeIncrementer(forIncrement amount: Int) -> () -> Int {
+    var runningTotal = 0
+    func incrementer() -> Int {
+        runningTotal += amount
+        return runningTotal
+    }
+    return incrementer
+}
+
+let incrementByTen = makeIncrementer(forIncrement: 10)
+incrementByTen() // return 10
+incrementByTen() // return 20
+
+let incrementBySeven = makeIncrementer(forIncrement: 7) // 创建了新的 runningTotal 变量
+incrementBySeven() // return 7
+incrementByTen() // return 30
+</source>
+----
+=== 非逃逸闭包 ===
+逃逸闭包：闭包作为参数传递给函数，但是在函数执行完毕后才执行：<br>
+<source lang="swift">
+var completionHandlers: [() -> Void] = []
+func someFunctionWithEscapingClosure(completionHandler: () -> Void) {
+    completionHandlers.append(completionHandler)
+}
+</source>
+@noescape：不允许闭包逃逸：<br>
+<source lang="swift">
+func someFunctionWithNonescapingClosure(@noescape closure: () -> Void) {
+    closure()
+}
+</source>
+----
+=== 自动闭包 ===
+# 自动生成
+# 不接受参数
+# 被调用时，返回包含的语句
+# 延迟执行
+示例：<br>
+<source lang="swift">
+var customersInLine = ["Chris", "Alex", "Ewa", "Barry", "Daniella"]
+ 
+let customerProvider = { customersInLine.removeAtIndex(0) } // 自动闭包， {} 中代码不会在此执行
+print(customersInLine.count) // 5
+ 
+print("Now serving \(customerProvider())!") // Now serving Chris!
+print(customersInLine.count) // 4
+
+// 为达到上述效果的普通写法
+func serveCustomer(customerProvider: () -> String) {
+    print("Now serving \(customerProvider())!")
+}
+serveCustomer( { customersInLine.removeAtIndex(0) } )
+
+// 自动闭包写法
+func serveCustomer(@autoclosure customerProvider: () -> String) {
+    print("Now serving \(customerProvider())!")
+}
+serveCustomer(customersInLine.removeAtIndex(0)) // 省略了 { }
+</source>
+----

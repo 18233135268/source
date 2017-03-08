@@ -1,0 +1,171 @@
+== JavaScript Depth ==
+
+=== 回调函数 === 
+==== 概念 ====
+顾名思义，回调函数及回头调用，预定义一些函数，但不规定内部的实现细节，当需要实现时再明确执行内容，类似于Java中的接口，只规定方法名，但不明确具体实现的细节，当实现这个接口时再明确
+==== 自定义回调函数 ====
+<source lang='javascript'>
+function func(callback) { //这里的callback只是预定义这里需要实现一个与a, b相关的功能，但不明确具体是什么功能
+    var a = 1;
+    var b = 2;
+    callback(a, b);
+}
+</source>
+当需要实现回调函数时<br>
+<source lang='javascript'>
+func(function(a, b) { //这里的function(a, b) {...}即为上述callback真正要实现的功能，作为一个参数传入func函数，且这里的a, b参数与上述定义中的a, b参数无关，可以用任意字母代替，但调用这两个参数时应该一致
+    console.log(a + b);
+});
+</source>
+这样写也可以<br>
+<source lang='javascript'>
+func(function(c, d) {
+    console.log(c + d);
+});
+</source>
+=== Array相关重要函数 ===
+==== forEach ====
+对数组的遍历，参数是一个回调函数<br>
+<code>> ['a', 'b', 'c'].forEach(function (x, i) { console.log(i+'.'+x) }) //x：数组中遍历到的每一个元素，i：相对应的下标</code><br>
+<code>0.a</code><br><code>1.b</code><br><code>2.c</code>
+==== map ====
+对数组的遍历，参数是一个回调函数，与forEach不同的是，map函数返回一个数组<br>
+<code>> ['a', 'b', 'c'].map(function (x, i) { return i+'.'+x }) //x：数组中遍历到的每一个元素，i：相对应的下标</code><br>
+<code>[ '0.a', '1.b', '2.c' ]</code>
+==== every ====
+检查数组里的每一个元素的类型，参数是一个回调函数<br>
+<code>> ['a', 'b'].every(function (x) { return typeof x === 'string' }) //x：数组中遍历到的每一个元素</code><br>
+<code>true</code>
+=== 作用域 ===
+javascript语言可以看做没有块级作用域，只有函数作用域<br>
+如：在if\for等语句块中
+<source lang='javascript'>
+...
+if(true) {
+    var name = 'Tom';
+} 
+console.log('hello: ' + name); //hello: Tom，能访问到以上if() {}块中的变量
+...
+</source>
+在function语句块中
+<source lang='javascript'>
+function fun1() {
+    var name = 'Tom';
+    function fun2() {  
+        var name = 'Tony';
+        return name;
+    }
+    console.log(fun2()); //Tony
+}
+console.log(fun1()); //Tom
+
+</source>
+函数体内部，局部变量的优先级比同名的全局变量高。
+<source lang='javascript'>
+    var x = 1;    //定义全局变量 x
+    function check(){
+        var x = 100;    //定义局部变量x
+        console.log( x );       //这里会弹出 100
+    }
+    check();
+    console.log( x );    //这里会弹出1
+</source>
+
+函数中声明的变量在函数中都有定义。
+看下面的例子
+<source lang='javascript'>
+    var x = 1;
+    function f(){
+        alert( x );        //弹出 'undefined'，而不是1
+        var x = 'a';
+        alert( x );        //弹出 'a'
+    }
+    f();
+    //变量x在整个f函数中都可以使用，在函数f内局部变量x在整个函数体内都有定义,所以在整个f函数体内隐藏了同名的全局变量x。
+    //这里之所以会弹出'undefined'是因为，第一个执行alert(x)时，局部变量x仍未被初始化。
+</source>
+还有一点就是全局变量都是Window对象的属性
+
+<source lang='javascript'>
+    var x = 100 ;
+    alert( window.x );//弹出100
+    alert(x);
+</source>
+=== try和catch语句 ===
+try...catch语句将能引发错误的代码放在try块中，并且对应一个响应，然后有异常被抛出。<br>
+==== 语法 ====
+<source lang='javascript'>
+try {
+   try_statements
+}
+[catch (exception_var_1 if condition_1) { // non-standard
+   catch_statements_1
+}]
+...
+[catch (exception_var_2) {
+   catch_statements_2
+}]
+[finally {
+   finally_statements
+}]
+</source>
+下面是对上面的字符注释：
+      try_statements    需要被执行的语句；<br>
+      exception_var_1、exception_var_2    如果在try语句中有异常抛出时执行的语句；<br>
+      condition_1     条件表达式；<br>
+      exception_var_1、 exception_var_2    用来保存抛出对象的变量根据相关catch子句；<br>
+      finally_statements    在try语句块之后执行的语句块.无论是否有异常抛出或捕获这些语句都将执行.<br>
+一共有三种try的声明形式：
+      1.try...catch
+      2.try...finally
+      3.try...catch...finally
+catch语句中包含要执行的语句吗，当try抛出异常时，控制立即转向catch的子句，反之，catch将跳过。<br>
+finally子句在try块和catch块之后执行但是在下一个try声明之前执行. 无论是否有异常抛出或着是否被捕获它总是执行。<br>
+==== 例子 ====
+=====嵌套try-block=====
+<source lang='javascript'>
+try {
+  try {
+    throw new Error("oops");
+  }
+  catch (ex) {
+    console.error("inner", ex.message);
+  }
+  finally {
+    console.log("finally");
+  }
+}
+catch (ex) {
+  console.error("outer", ex.message);
+}
+
+// Output:
+// "inner" "oops"
+// "finally"
+</source>
+<source lang='javascript'>
+try {
+  try {
+    throw new Error("oops");
+  }
+  catch (ex) {
+    console.error("inner", ex.message);
+    throw ex;
+  }
+  finally {
+    console.log("finally");
+  }
+}
+catch (ex) {
+  console.error("outer", ex.message);
+}
+
+// Output:
+// "inner" "oops"
+// "finally"
+// "outer" "oops"
+</source>
+从上面的代码我们可以对比出，任何给定的异常只会被离它最近的封闭catch块捕获一次。当然，在“内部”块抛出的任何新异常（因为catch块里的代码也可以抛出异常），将会被“外部”块所捕获。
+
+
+

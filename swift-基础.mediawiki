@@ -1,0 +1,646 @@
+== 基本语法 ==
+=== 变量 & 常量 ===
+let: 声明常量<br>
+var: 声明变量<br>
+<source lang="swift">
+let maximumNumberOfLoginAttempts = 10 // 自动类型推导为整型
+var currentLoginAttempt = 0
+let pi = 3.14159 // 自动类型推导为 Double，默认行为；不会推导为 Float
+
+var welcomeMessage: String = "Welcome on board!"// 带类型声明
+var red, green, blue: Double
+
+let minValue = UInt8.min  // UInt8.min Swift 内建 Unsigned Int 8-bits 最小值
+let maxValue = UInt8.max
+
+let orangesAreOrange = true
+let turnipsAreDelicious = false
+</source>
+----
+=== 基本数据类型 ===
+# Int 整型
+## 32位操作系统，长度为 32-bits
+## 64位操作系统，长度为 64-bits
+# UInt 无符号整型
+## 32位操作系统，长度为 32-bits
+## 64位操作系统，长度为 64-bits
+# Float 32-bits 浮点数
+# Double 64-bits 浮点数
+# Bool 布尔
+<source lang="swift">
+typealias AudioSample = UInt16          // 别名，类似 C typedef
+var maxAmplitudeFound = AudioSample.min // maxAmplitudeFound: 0
+</source>
+----
+=== String & Characters ===
+# '''String 是值，不是引用'''<br>
+# 完整的 Unicode 支持 <br>
+<source lang="swift">
+let catCharacters: [Character] = ["C", "a", "t", "!"]
+let catString = String(catCharacters)
+
+for character in "Dog!".characters { // String.characters 返回 Character 数组
+    print(character)
+}
+
+var instruction = "look over"
+instruction += "there"    // instruction -> "look over there"
+let exclamationMark: Character = "!"
+instruction.append(exclamationMark)
+
+let multiplier = 3
+let message = "\(multiplier) times 2.5 is \(Double(multiplier) * 2.5)" // \(var or const) 会转换为 String
+
+var word = "cafe"
+print("the number of characters in \(word) is \(word.characters.count)") // 字符计数
+
+for codeUnit in catString.utf8 { // 获取 UTF-8 编码
+    print("\(codeUnit) ", terminator: "")
+}
+
+for codeUnit in catString.utf16 { // 获取 UTF-16 编码
+    print("\(codeUnit) ", terminator: "")
+}
+
+for scalar in dogString.unicodeScalars { // Unicode 编码
+    print("\(scalar.value) ", terminator: "")
+}
+
+</source>
+----
+=== 数值表示法 ===
+<source lang="swift">
+let decimalInteger = 17           // 默认十进制表示法
+let binaryInteger = 0b10001       // 0b 二进制表示法
+let octalInteger = 0o21           // 0o 八进制表示法
+let hexadecimalInteger = 0x11     // 0x 十六进制表示法
+
+let exponentDouble = 1.21875e2    // 1.21875 * 100 (e2: 10 的 2 次方)
+let hexadecimalDouble = 0xFp2     // 15 * 4 (p2: 2 的 2 次方)
+
+let cannotBeNegative: UInt8 = -1  // error: unsigned 类型不能存储负数
+let tooBig: Int8 = Int8.max + 1   // error: 超出表示范围
+</source>
+----
+=== 类型转换 ===
+# 整型、浮点型之间必须显示转换
+# 非 Bool 类型不能自动转换为 Bool 类型
+<source lang="swift">
+let twoThousand: UInt16 = 2000
+let one: UInt8 = 1
+let twoThousandAndOne = twoThousand + UInt16(one) // UInt8，UInt16 两种类型，不会自动选择 UInt16
+
+let three = 3
+let pointOneFourOneFiveNine = 0.14159
+let pi = Double(three) + pointOneFourOneFiveNine
+let integerPi = Int(pi)
+
+let i = 1
+if i {
+    // i != 0 不能自动转换为 true；
+}
+</source>
+----
+=== 元组(tuple) ===
+元组：将多个值变为一个复合值<br>
+<source lang="swift">
+let http404Error = (404, "Not Found") // 类型为：(Int, String)
+let (statusCode, statusMessage) = http404Error // statusCode:Int; statusMessage:String
+let (justTheStatusCode, _) = http404Error // 只使用元组中特定值，_ 代表变量被丢弃
+
+let http200Status = (statusCode: 200, description: "OK") // 定义时，直接声明子域变量名
+print("The status code is \(http200Status.statusCode)") 
+</source>
+----
+=== Optionals & nil ===
+# 一个 Optional 变量要么有值，要么为 nil
+# Optional 变量声明没有初始化时，默认为 nil
+<source lang="swift">
+var surveyAnswer: String? // nil
+surveyAnswer = "hello"
+</source>
+----
+=== 运算符 ===
+'''赋值(=)没有返回值'''<br>
+<source lang="swift">
+if x = y { // 编译错误
+}
+</source>
+String 类型可以执行 + 操作<br>
+<source lang="swift">
+let hell0 = "hello, " + "world"
+</source>
+浮点数可做模运算<br>
+<source lang="swift">
+8 % 2.5   // 0.5
+</source>
+元组比较按从左至右顺序，依次比较各域<br>
+<source lang="swift">
+(1, "zebra") < (2, "apple")   // 1 < 2，所以结果为 true
+(3, "apple") < (3, "bird")    // 3 == 3, apple < bird，所以结果为 true
+</source>
+a ?? b<br>
+<source lang="swift">
+let defaultColorName = "red"
+var userDefinedColorName: String?   // nil
+// a ?? b 中，a 必须是 optional；b 类型要于 a 类型相同；
+// a != nil 时，返回 a；否则返回 b
+var colorNameToUse = userDefinedColorName ?? defaultColorName // colorNameTuUse: red;
+</source>
+区间操作：<br>
+<source lang="swift">
+for index in 1...5 { // index 范围 [1,5]
+    print("\(index) times 5 is \(index * 5)")
+}
+
+for index in 1..<5 { // index 范围 [1,5)
+    print("\(index) times 5 is \(index * 5)")
+}
+</source>
+----
+== Collections ==
+# var : mutable
+# let : immutable
+=== 数组 ===
+# '''数组是值，不是引用'''<br>
+# 存储同种类型数据
+# 有序
+<source lang="swift">
+var someInts = [Int]() // 定义 Int 数组
+someInts.append(3)
+someInts = []
+
+var shoppingList: [String] = ["Eggs", "Milk"] // 直接定义
+
+var threeDoubles = [Double](count: 3, repeatedValue: 0.0) // threeDoubles -> [0.0, 0.0, 0.0]
+var anotherThreeDoubles = [Double](count: 3, repeatedValue: 2.5) // // anotherThreeDoubles -> [2.5, 2.5, 2.5]
+var sixDoubles = threeDoubles + anotherThreeDoubles // sixDoubles -> [0.0, 0.0, 0.0, 2.5, 2.5, 2.5]
+</source>
+数组基本操作：<br>
+<source lang="swift">
+var shoppingList = ["Eggs", "Milk"] // count: 2；自动类型推导: [String]
+if shoppingList.isEmpty {
+    shoppingList.append("Flour")
+} else {
+    shoppingList.append("Meat")
+} // count: 3
+shoppingList += ["Baking Powder"] // count: 4
+shoppingList += ["Chocolate Spread", "Cheese", "Butter"] // count: 7
+shoppingList[0] = "Six eggs" // count: 7
+shoppingList[4...6] = ["Bananas", "Apples"] // count:6; [4,6] 只替换两个元素，最后一个元素被清除
+shoppingList[shoppingList.count] = "error" // error!
+
+for item in shoppingList {
+    print(item)
+}
+
+for (index, value) in shoppingList.enumerate() {
+    print("Item \(index + 1): \(value)")
+}
+</source>
+----
+=== 集合 ===
+# 只能 hashable 类型数据
+# 存储同种类型数据
+# 无序
+# 相等值只能存储一个，比较使用： a.hashValue == b.hashValue
+<source lang="swift">
+var letters = Set<Character>()
+letters.insert("a")
+letters = []
+
+var favoriteGenres: Set<String> = ["Rock", "Classical", "Hip hop"] // 数组常量中定义
+var favoriteGenres: Set = ["Rock", "Classical", "Hip hop"] // 自动类型推导必须加 Set，否则认为是数组
+
+if let removedGenre = favoriteGenres.remove("Rock") {
+    print("\(removedGenre)? I'm over it.")
+} else {
+    print("I never much cared for that.")
+}
+
+if favoriteGenres.contains("Funk") {
+    print("I get up on the good foot.")
+} else {
+    print("It's too funky in here.")
+}
+
+for genre in favoriteGenres {
+    print("\(genre)")
+}
+
+for genre in favoriteGenres.sort() {
+    print("\(genre)")
+}
+</source>
+----
+=== 映射 ===
+# '''映射是值，不是引用'''<br>
+# keys: 类型相同
+# values: 类型相同
+# 不包含重复 keys
+# 无序
+<source lang="swift">
+var namesOfIntegers = [Int: String]()
+namesOfIntegers[16] = "sixteen"
+namesOfIntegers = [:] // 空映射
+
+var airports: [String: String] = ["YYZ": "Toronto Pearson", "DUB": "Dublin"]
+
+if let airportName = airports["DUB"] {
+    print("The name of the airport is \(airportName).")
+} else {
+    print("That airport is not in the airports dictionary.")
+}
+
+if let oldValue = airports.updateValue("Dublin Airport", forKey: "DUB") {
+    print("The old value for DUB was \(oldValue).")
+}
+
+for (airportCode, airportName) in airports {
+    print("\(airportCode): \(airportName)")
+}
+
+for airportCode in airports.keys {
+    print("Airport code: \(airportCode)")
+}
+
+for airportName in airports.values {
+    print("Airport name: \(airportName)")
+}
+
+let airportCodes = [String](airports.keys)
+
+let airportNames = [String](airports.values)
+</source>
+----
+== 控制逻辑 ==
+# fallthrough 关键字
+# break,continue,return,throw 和其他语言基本一致
+# break,continue 可配合 label 使用
+=== For-In ===
+<source lang="swift">
+let base = 3
+let power = 10
+var answer = 1
+for _ in 1...power { // 不需要使用遍历值
+    answer *= base
+}
+</source>
+----
+=== While ===
+与其他语言一样
+<source lang="swift">
+var square = 0
+var diceRoll = 0
+while square < finalSquare {
+    //...
+}
+</source>
+----
+=== Repeat-While ===
+<source lang="swift">
+repeat {
+    // 这里的代码至少执行一遍；C/C++/Java do-while
+} while square < finalSquare
+</source>
+----
+=== If-Else ===
+'''非 Bool 类型不能自动转 Bool,这与 C/C++/Java/Objective-C 不同'''<br>
+<source lang="swift">
+temperatureInFahrenheit = 90
+if temperatureInFahrenheit <= 32 {
+    print("It's very cold. Consider wearing a scarf.")
+} else if temperatureInFahrenheit >= 86 {
+    print("It's really warm. Don't forget to wear sunscreen.")
+} else {
+    print("It's not that cold. Wear a t-shirt.")
+}
+</source>
+----
+=== Switch ===
+这个控制逻辑比C/C++/Java/Objective-C灵活的多：<br>
+''' 没有默认 fallthrough 行为 '''<br>
+<source lang="swift">
+let someCharacter: Character = "e"
+switch someCharacter {
+case "a", "e", "i", "o", "u":
+    print("\(someCharacter) is a vowel")
+case "b", "c", "d", "f", "g", "h", "j", "k", "l", "m",
+     "n", "p", "q", "r", "s", "t", "v", "w", "x", "y", "z":
+    print("\(someCharacter) is a consonant")
+default:
+    print("\(someCharacter) is not a vowel or a consonant")
+}
+
+let approximateCount = 62
+var naturalCount: String
+switch approximateCount {
+case 0:
+    naturalCount = "no"
+case 1..<5:
+    naturalCount = "a few"
+case 5..<12:
+    naturalCount = "several"
+case 12..<100:
+    naturalCount = "dozens of"
+case 100..<1000:
+    naturalCount = "hundreds of"
+default:
+    naturalCount = "many"
+}
+
+let somePoint = (1, 1)
+switch somePoint {
+case (0, 0):
+    print("(0, 0) is at the origin")
+case (_, 0): // 忽略第一维度值，仅比较第二维度值
+    print("(\(somePoint.0), 0) is on the x-axis")
+case (0, _):
+    print("(0, \(somePoint.1)) is on the y-axis")
+case (-2...2, -2...2): // 第一维度，第二维度分别为范围
+    print("(\(somePoint.0), \(somePoint.1)) is inside the box")
+default:
+    print("(\(somePoint.0), \(somePoint.1)) is outside of the box")
+}
+
+let anotherPoint = (2, 0)
+switch anotherPoint {
+case (let x, 0): // 仅比较第二维度，保留第一维度值
+    print("on the x-axis with an x value of \(x)")
+case (0, let y):
+    print("on the y-axis with a y value of \(y)")
+case let (x, y): // default，保留全部维度值
+    print("somewhere else at (\(x), \(y))")
+}
+
+let yetAnotherPoint = (1, -1)
+switch yetAnotherPoint {
+case let (x, y) where x == y: // where 附加条件，当 x == y 时
+    print("(\(x), \(y)) is on the line x == y")
+case let (x, y) where x == -y:
+    print("(\(x), \(y)) is on the line x == -y")
+case let (x, y):
+    print("(\(x), \(y)) is just some arbitrary point")
+}
+
+gameLoop: while square != finalSquare {
+    // ...
+    switch square + diceRoll {
+    case finalSquare:
+        break gameLoop
+    case let newSquare where newSquare > finalSquare:
+        continue gameLoop
+    default:
+        // ...
+    }
+}
+</source>
+----
+=== Guard ===
+<source lang="swift">
+func greet(person: [String: String]) {
+    guard let name = person["name"] else { // guard ：条件判断必须为 true
+        return
+    }
+    
+    guard let location = person["location"] else {
+        return
+    }
+    
+    // ...
+}
+</source>
+----
+=== #available ===
+<source lang="swift">
+if #available(iOS 9, OSX 10.10, *) {
+  // iOS >= 9 or OS X >= 10.10
+} else {
+}
+</source>
+----
+== 函数 ==
+=== 函数的定义和调用 ===
+# 支持 C 风格、Objective-C 风格函数调用
+# 支持多返回值
+<source lang="swift">
+func sayHello(personName: String) -> String {
+    let greeting = "Hello, " + personName + "!"
+    return greeting
+}
+</source>
+<source lang="swift">
+func sayHelloWorld() -> String {//无参函数
+    return "hello, world"
+}
+
+func sayHello(personName: String, alreadyGreeted: Bool) -> String {//多参函数
+    if alreadyGreeted {
+        return sayHelloAgain(personName)
+    } else {
+        return sayHello(personName)
+    }
+}
+
+func sayGoodbye(personName: String) {//无返回值函数
+    print("Goodbye, \(personName)!")
+}
+
+func minMax(array: [Int]) -> (min: Int, max: Int) {//返回值是多个参数时，采用元组类型作为返回参数类型
+    var currentMin = array[0]
+    var currentMax = array[0]
+    for value in array[1..<array.count] {
+        if value < currentMin {
+            currentMin = value
+        } else if value > currentMax {
+            currentMax = value
+        }
+    }
+    return (currentMin, currentMax)
+}
+//返回参数还可以是Optional Tuple Return Types 比如(Int, Int)? 这是optional元组or (Int?, Int?)这是元组里面是optional类型
+func minMax(array: [Int]) -> (min: Int, max: Int)? {
+    if array.isEmpty { return nil }
+    var currentMin = array[0]
+    var currentMax = array[0]
+    for value in array[1..<array.count] {
+        if value < currentMin {
+            currentMin = value
+        } else if value > currentMax {
+            currentMax = value
+        }
+    }
+    return (currentMin, currentMax)
+}
+//通过optional binding来检查返回元组类型的值或空
+if let bounds = minMax([8, -6, 2, 109, 3, 71]) {
+    print("min is \(bounds.min) and max is \(bounds.max)")
+}
+
+</source>
+=== 函数参数 ===
+# 支持默认参数
+# 支持可变参数
+# 参数默认不能修改
+<source lang="swift">
+func someFunction(firstParameterName: Int, secondParameterName: Int) {
+    // ...
+}
+//调用时，第一个参数名不写，第二个以及剩余还有的参数都写
+someFunction(1, secondParameterName: 2)
+
+//有外部参数的写法
+func sayHello(to person: String, and anotherPerson: String) -> String {
+    return "Hello \(person) and \(anotherPerson)!"
+}
+print(sayHello(to: "Bill", and: "Ted"))//有外部参数的调用方法，写上外部参数名称，传进去值
+
+func someFunction(firstParameterName: Int, _ secondParameterName: Int) {//当调用函数时，不想写除去第一个参数的名字，那么在声明时，在名字前加（_）
+    // ...
+}
+someFunction(1, 2)
+
+//有默认值的参数
+func someFunction(parameterWithDefault: Int = 12) {
+    // value of parameterWithDefault is 12
+}
+
+//可变参数，函数最多可以有一个可变形参，而且它必须出现在参数列表的最后，以避免使用多个形参调用函数引发歧义
+func arithmeticMean(numbers: Double...) -> Double {
+    var total: Double = 0
+    for number in numbers {
+        total += number
+    }
+    return total / Double(numbers.count)
+}
+arithmeticMean(1, 2, 3, 4, 5)
+arithmeticMean(3, 8.25, 18.75)
+
+//inout的使用，是为了在函数内部修改参数，在函数结束后，用修改的值替换了原来的值
+func swapTwoInts(inout a: Int, inout _ b: Int) {
+    let temporaryA = a
+    a = b
+    b = temporaryA
+}
+var someInt = 3
+var anotherInt = 107
+swapTwoInts(&someInt, &anotherInt)
+</source>
+=== 函数类型 ===
+<source lang="swift">
+func addTwoInts(a: Int, _ b: Int) -> Int {// 函数类型：(Int, Int)-> Int
+    return a + b
+}
+
+func printMathResult(mathFunction: (Int, Int) -> Int, _ a: Int, _ b: Int) {// 把函数类型用做函数参数
+    print("Result: \(mathFunction(a, b))")
+}
+
+func stepForward(input: Int) -> Int {
+    return input + 1
+}
+func stepBackward(input: Int) -> Int {
+    return input - 1
+}
+func chooseStepFunction(backwards: Bool) -> (Int) -> Int {// 作为函数的返回值类型
+    return backwards ? stepBackward : stepForward
+}
+</source>
+=== 函数的嵌套 ===
+<source lang="swift">
+func chooseStepFunction(backwards: Bool) -> (Int) -> Int {
+    func stepForward(input: Int) -> Int { return input + 1 }
+    func stepBackward(input: Int) -> Int { return input - 1 }
+    return backwards ? stepBackward : stepForward
+}
+</source>
+----
+== 枚举 ==
+=== 枚举的定义 ===
+# Swift的枚举成员在被创建时不会被赋予一个默认的整数值,这与C有很大的区别，取而代之的是不同的枚举成员将要用什么类型以及赋值什么值都是可以自己控制的.
+<source lang="swift">
+enum CompassPoint {// 定义了一个新类型，最好以一个大写字母开头
+    case North
+    case South
+    case East
+    case West // North，South，East和West不是隐式得等于0，1，2和3
+}
+
+enum Planet {// 多个成员值可以出现在同一行上,但必须用逗号隔开
+    case Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune
+}
+</source>
+=== 枚举的使用 ===
+枚举与switch语句的结合<br>
+<source lang="swift">
+var directionToHead = CompassPoint.West
+directionToHead = .South // 因为上边声明变量时，已经知道为CompassPoint，所以这里直接使用(.)
+switch directionToHead {
+case .North:
+    print("Lots of planets have a north")
+case .South:
+    print("Watch out for penguins")
+case .East:
+    print("Where the sun rises")
+case .West: 
+    print("Where the skies are blue")
+}
+
+let somePlanet = Planet.Earth
+switch somePlanet { // 在 switch 中，必须把每个枚举成员都考虑，否则会报编译错误
+case .Earth:
+    print("Mostly harmless")
+default: 
+    print("Not a safe place for humans")
+}
+</source>
+=== 关联值 ===
+关联值可存储额外信息：<br>
+<source lang="swift">
+enum Barcode {
+    case UPCA(Int, Int, Int, Int)
+    case QRCode(String)
+}
+var productBarcode = Barcode.UPCA(8, 85909, 51226, 3)
+</source>
+# 关联值与 switch 语句的结合
+可以在switch的case分支代码中提取每个关联值作为一个常量（用 let 前缀）或者作为一个变量（用 var 前缀）来使用
+<source lang="swift">
+switch productBarcode {
+case .UPCA(let numberSystem, let manufacturer, let product, let check):
+    print("UPC-A: \(numberSystem), \(manufacturer), \(product), \(check).")
+case .QRCode(let productCode):
+    print("QR code: \(productCode).")
+}
+// 如果一个枚举成员的所有关联值被提取为常量，或者它们全部被提取为变量，可以这样写
+switch productBarcode {
+case let .UPCA(numberSystem, manufacturer, product, check):
+    print("UPC-A: \(numberSystem), \(manufacturer), \(product), \(check).")
+case let .QRCode(productCode):
+    print("QR code: \(productCode).")
+}
+</source>
+----
+=== 原始值 ===
+# 作为关联值的替代，枚举成员可以被默认值（称为原始值）预先填充，其中这些原始值具有相同的类型。
+# 原始值可以是字符串，字符，或者任何整型值或浮点型值。每个原始值在它的枚举声明中必须是唯一的。
+<source lang="swift">
+enum ASCIIControlCharacter: Character { //原始值类型为 Character
+    case Tab = "\t" 
+    case LineFeed = "\n" 
+    case CarriageReturn = "\r" 
+} 
+
+enum Planet: Int {//自动递增意味着Planet.Venus的原始值是2，依次类推
+    case Mercury = 1, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune
+}
+
+// 原始值是String，默认值是每个case后面的名字
+enum CompassPoint: String {
+    case North, South, East, West
+}
+let earthsOrder = Planet.Earth.rawValue // earthsOrder-> 3
+ 
+let sunsetDirection = CompassPoint.West.rawValue// sunsetDirection -> "West"
+</source>
+----

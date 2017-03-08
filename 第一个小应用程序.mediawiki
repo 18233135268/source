@@ -1,0 +1,234 @@
+== 一个小的应用程序 ==
+```python
+from flask import Flask
+app = Flask(__name__)
+
+@app.route("/")
+def hello():
+    return "Hello World!"
+
+if __name__ == "__main__":
+    app.run()
+```
+存储为 hello.py 在这段程序中，根据 main 函数，去寻找程序入口，可以找到
+```python
+__main__.py #内容如下：
+
+if __name__ == '__main__':
+    from .cli import main
+    main(as_module=True)
+```
+这段代码导入了cli中的main函数，但是cli又在哪里呢？下面寻找cli
+在 CentOS 上面进入到 flask 源代码目录下，去匹配想要找的 cli
+grep -r cli .  //在当前路径下递归寻找与 cli 有关的内容
+<source lang="Python">
+./app.py:from . import json, cli
+./app.py:    #: the test client that is used with when `test_client` is used.
+./app.py:    test_client_class = None
+./app.py:        #: The click command line context for this application.  Commands
+./app.py:        #: This is an instance of a :class:`click.Group` object.
+./app.py:        self.cli = cli.AppGroup(self.name)
+...
+./cli.py:    flask.cli
+./cli.py:import click
+./cli.py:class NoAppException(click.UsageError)
+</source>
+发现在两个文件中都出现了相关内容，查看后在 cli.py 中找到了 main 函数
+```python
+def main(as_module=False):
+    this_module = __package__ + '.cli'
+    args = sys.argv[1:]
+
+    if as_module:
+        if sys.version_info >= (2, 7):
+            name = 'python -m ' + this_module.rsplit('.', 1)[0]
+        else:
+            name = 'python -m ' + this_module
+
+        # This module is always executed as "python -m flask.run" and as such
+        # we need to ensure that we restore the actual command line so that
+        # the reloader can properly operate.
+        sys.argv = ['-m', this_module] + sys.argv[1:]
+    else:
+        name = None
+
+    cli.main(args=args, prog_name=name)
+
+
+if __name__ == '__main__':
+    main(as_module=True)
+```
+寻找 cli.main() 函数，发现 cli 为一个 FlaskGroup 变量
+```python
+cli = FlaskGroup(help="""\
+This shell command acts as general utility script for Flask applications.
+
+It loads the application configured (either through the FLASK_APP environment
+variable) and then provides commands either provided by the application or
+Flask itself.
+
+The most useful commands are the "run" and "shell" command.
+
+Example usage:
+
+\b
+  %(prefix)s%(cmd)s FLASK_APP=hello.py
+  %(prefix)s%(cmd)s FLASK_DEBUG=1
+  %(prefix)sflask run
+""" % {
+    'cmd': os.name == 'posix' and 'export' or 'set',
+    'prefix': os.name == 'posix' and '$ ' or '',
+})
+```
+所有寻找 FlaskGroup 相关内容，发现它是一个继承自 AppGroup 的类
+```python
+class FlaskGroup(AppGroup):
+```
+找到他的 main 函数，这个函数将 hello.py 实例化为一个APP，最后返回了 Appgroup.main() 函数
+```python
+    def main(self, *args, **kwargs):
+        obj = kwargs.get('obj')
+        if obj is None:
+            obj = ScriptInfo(create_app=self.create_app)
+        kwargs['obj'] = obj
+        kwargs.setdefault('auto_envvar_prefix', 'FLASK')
+        return AppGroup.main(self, *args, **kwargs)
+@click.command('run', short_help='Runs a development server.')
+@click.option('--host', '-h', default='127.0.0.1',
+              help='The interface to bind to.')
+@click.option('--port', '-p', default=5000,
+              help='The port to bind to.')
+@click.option('--reload/--no-reload', default=None,
+              help='Enable or disable the reloader.  By default the reloader '
+              'is active if debug is enabled.')
+@click.option('--debugger/--no-debugger', default=None,
+              help='Enable or disable the debugger.  By default the debugger '
+              'is active if debug is enabled.')
+@click.option('--eager-loading/--lazy-loader', default=None,
+              help='Enable or disable eager loading.  By default eager '
+              'loading is enabled if the reloader is disabled.')
+@click.option('--with-threads/--without-threads', default=False,
+              help='Enable or disable multithreading.')
+@pass_script_info
+def run_command(info, host, port, reload, debugger, eager_loading,
+                with_threads):
+```
+在 AppGroup 类中，并没有发现 main() 函数，但是它继承自 click.Group , click 是 Python 的包，用于创建优雅的命令行
+click 通过 group 来创建一个命令行组，也就是说它可以有各种参数来解决相同类别的不同问题。其中有 run 命令(是不是记得有一个Flask run)，可选参数有很多 info, host, port, reload, debugger, eager_loading, with_threads (是不是记得还有一个Flask run(--host='0.0.0.0'))，他们就是当你运行程序 run 命令的时候的参数，恍然大悟了吧！
+```python
+class AppGroup(click.Group):
+```
+根据 
+```python
+app = Flask(__name__)
+```
+寻找 Flask 类      //  grep -r Flask .
+<source>
+./app.py:class Flask(_PackageBoundObject):
+./app.py:    Usually you create a :class:`Flask` instance in your main module or
+./app.py:        from flask import Flask
+./app.py:        app = Flask(__name__)
+./app.py:        The idea of the first parameter is to give Flask an idea of what
+./app.py:            app = Flask('yourapplication')
+./app.py:            app = Flask(__name__.split('.')[0])
+</source>
+```python
+class Flask(_PackageBoundObject):
+```
+在 app.py 中有 Flask 类,构造函数中进行了一系列的配置，将 URL设定为一个 Map， 并设置在运行程序时属于自己的命令行
+```python
+self.cli = cli.AppGroup(self.name)
+```
+完成对 app 的定义之后，还会有 app.run() ，因此在 Flask 类中去寻找 run() 函数。
+```python
+# 主要定义如下：
+def run(self, host=None, port=None, debug=None, **options):
+        ...   # 这里进行了一系列的配置如 host， port 等
+        try:
+            run_simple(host, port, self, **options)
+        finally:
+            self._got_first_request = False
+```
+可以清晰的看到，其实 run() 函数只做了一件事，那就是 run_simple() 函数,那就定位到这个函数，它存在于 werkzeug.serving
+```python
+def run_simple(hostname, port, application, use_reloader=False,
+               use_debugger=False, use_evalex=True,
+               extra_files=None, reloader_interval=1,
+               reloader_type='auto', threaded=False,
+               processes=1, request_handler=None, static_files=None,
+               passthrough_errors=False, ssl_context=None):
+    ...
+    def inner():
+        try:
+            fd = int(os.environ['WERKZEUG_SERVER_FD'])
+        except (LookupError, ValueError):
+            fd = None
+        srv = make_server(hostname, port, application, threaded,
+                          processes, request_handler,
+                          passthrough_errors, ssl_context,
+                          fd=fd)
+        if fd is None:
+            log_startup(srv.socket)
+        srv.serve_forever()
+    ...
+    if use_reloader:
+       # If we're not running already in the subprocess that is the
+       # reloader we want to open up a socket early to make sure the
+       # port is actually available.
+        if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+            if port == 0 and not can_open_by_fd:
+                raise ValueError('Cannot bind to a random port with enabled '
+                                 'reloader if the Python interpreter does '
+                                 'not support socket opening by fd.')
+            address_family = select_ip_version(hostname, port)
+            s = socket.socket(address_family, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((hostname, port))
+            if hasattr(s, 'set_inheritable'):
+                s.set_inheritable(True)
+            if can_open_by_fd:
+                os.environ['WERKZEUG_SERVER_FD'] = str(s.fileno())
+                s.listen(LISTEN_QUEUE)
+                log_startup(s)
+            else:
+                s.close()
+
+        from ._reloader import run_with_reloader
+        run_with_reloader(inner, extra_files, reloader_interval,
+                          reloader_type)
+    else:
+        inner()
+```
+在这个函数中，先保证端口可用，绑定了 socket 套接字，即绑定了主机和端口，而最终要调用 inner() 函数， inner() 函数主要做了两件事， make_server() 创建一个服务器, serve_forever() 保持HTTP服务一直运行。
+下面解释剩下的部分，将会用到装饰器相关知识
+```python
+@app.route("/")
+def hello():
+    return "Hello World!"
+```
+指定 URL 与函数间的联系，当访问 '/' 目录时会自动调用 hello() 函数，我们来看一下 route() 是如何操作的
+```python
+    def route(self, rule, **options):
+        def decorator(f):
+            endpoint = options.pop('endpoint', None)
+            self.add_url_rule(rule, endpoint, f, **options)
+            return f
+        return decorator
+```
+rule ：URL 名字
+endpoint: Flask 将其设定为视图函数的名字，即对应 hello
+options: 依赖`~werkzeug.routing.Rule` 对象. 默认监听 'GET'
+route() 函数首先根据 add_url_rule() 函数添加路径，然后调用装饰器中与路径匹配的函数 f() 。再分析一下 add_url_rule() 函数
+```python
+ @setupmethod
+    def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
+        ...
+        rule = self.url_rule_class(rule, methods=methods, **options)
+        rule.provide_automatic_options = provide_automatic_options
+        self.url_map.add(rule)
+        ...
+```
+add_url_rule() 函数将路径和函数相对应，加入到 url_map 中
+
+一个 APP 运行参见：http://abirdcfly.github.io/2016/03/31/flask-source/#WSGI-基础
+里面包含了函数的调用关系

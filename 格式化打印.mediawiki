@@ -1,0 +1,38 @@
+* <code>%v</code>：结果是 Print 和 Println 将产生的结果，此外，此格式可打印任何值（arrays, slices, structs， maps）：
+<source lang='go'>
+fmt.Printf("%v\n", timeZone)
+</source>
+输出：
+<source lang='go'>
+map[CST:-21600 PST:-28800 EST:-18000 UTC:0 MST:-25200]
+</source>
+
+* <code>%+v</code>、<code>%#v</code>：
+<source lang='go'>
+type T struct {
+    a int
+    b float64
+    c string
+}
+t := &T{ 7, -2.35, "abc\tdef" }
+fmt.Printf("%v\n", t)
+fmt.Printf("%+v\n", t)
+fmt.Printf("%#v\n", t)
+fmt.Printf("%#v\n", timeZone)
+</source>
+输出：
+<source lang='go'>
+&{7 -2.35 abc   def}
+&{a:7 b:-2.35 c:abc     def}
+&main.T{a:7, b:-2.35, c:"abc\tdef"}
+map[string] int{"CST":-21600, "PST":-28800, "EST":-18000, "UTC":0, "MST":-25200}
+</source>
+
+* <code>%T</code>：打印值的类型：
+<source lang='go'>
+fmt.Printf("%T\n", timeZone)
+</source>
+输出：
+<source lang='go'>
+map[string] int
+</source>

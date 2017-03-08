@@ -1,0 +1,133 @@
+'''Python编码规范'''
+*参考PEP 8 https://www.python.org/dev/peps/pep-0008/
+
+==if==
+*可以有零到多个<code>elif</code>部分，<code>else</code>是可选的。关键字<code>'elif'</code>是<code>'else if'</code>的缩写，<code>if ... elif ... elif ...</code>用于替代其它语言中的<code>switch</code>或<code>case</code>语句。
+<source lang="Python">
+x = int(input("Please enter an integer: "))
+Please enter an integer: 42
+if x < 0:
+    x = 0
+    print('Negative changed to zero')
+elif x == 0:
+    print('Zero')
+elif x == 1:
+    print('Single')
+else:
+    print('More')
+</source>
+
+==for==
+*Python的<code>for</code>语句对任意序列中的子项按序列中的顺序来进行迭代：
+<source lang="Python">
+# Measure some strings:
+words = ['cat', 'window', 'defenestrate']
+for w in words:
+    print(w, len(w))
+
+cat 3
+window 6
+defenestrate 12
+</source>
+*当迭代可变序列时，如需修改被迭代对象，需要注意：
+<source lang="Python">
+for w in words[:]:  # 在原列表的切片复制中进行循环
+    if len(w) > 6:  # 判断w长度是否大于6
+        words.insert(0, w)  # 在words的第一个位置插入w
+
+>>> words
+['defenestrate', 'cat', 'window', 'defenestrate']
+</source>
+===range()===
+*<code>range(start, stop[, step])</code>
+*<code>range</code>函数可以生成等差数值序列'''对象'''：
+<source lang="Python">
+for i in range(5):
+    print(i)
+
+0
+1
+2
+3
+4
+</source>
+*step为可选参数：
+<source lang="Python">
+range(5, 10)
+   5 through 9
+
+range(0, 10, 3)
+   0, 3, 6, 9
+
+range(-10, -100, -30)
+  -10, -40, -70
+</source>
+*迭代链表索引示例：
+<source lang="Python">
+a = ['Mary', 'had', 'a', 'little', 'lamb']
+for i in range(len(a)):
+    print(i, a[i])
+
+0 Mary
+1 had
+2 a
+3 little
+4 lamb
+</source>
+*生成列表示例：
+<source lang="Python">
+list(range(5))
+[0, 1, 2, 3, 4]
+</source>
+===break、continue以及else===
+*<code>break</code>语句用于跳出最近一级的循环：
+*循环可以有一个<code>else</code>子句，它在迭代完整个列表(对于for)或执行条件为<code>false</code>(对于while)时执行，但循环被<code>break</code>中止的情况下不会执行。以下为搜索素数代码示例:
+<source lang="Python">
+for n in range(2, 10):
+    for x in range(2, n):
+        if n % x == 0:
+            print(n, 'equals', x, '*', n//x)
+            break
+    else:  # 当没有找到因数时循环完毕
+        print(n, 'is a prime number')
+
+2 is a prime number
+3 is a prime number
+4 equals 2 * 2
+5 is a prime number
+6 equals 2 * 3
+7 is a prime number
+8 equals 2 * 4
+9 equals 3 * 3
+</source>
+*<code>continue</code>表示循环继续执行下一次迭代：
+<source lang="Python">
+for num in range(2, 10):
+    if num % 2 == 0:
+        print("Found an even number", num)
+        continue  # 
+    print("Found a number", num)
+
+Found an even number 2
+Found a number 3
+Found an even number 4
+Found a number 5
+Found an even number 6
+Found a number 7
+Found an even number 8
+Found a number 9
+</source>
+
+
+
+
+
+
+
+
+
+
+
+==while==
+==迭代器==
+==列表解析==

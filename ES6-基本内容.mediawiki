@@ -1,0 +1,605 @@
+== 块级作用域 ==
+ES6中的let实际上才第一次引入了块级作用域这个概念，ES5只有全局作用域和函数作用域，没有块级作用域，这带来很多不合理的场景:<br>
+<source lang="javascript">
+var tmp = new Date();
+
+function f() {
+  console.log(tmp);
+  if (false) {
+    var tmp = "hello world"; // 变量定义提升: var tmp; ... if (false) tmp = "hello world";
+  }
+}
+
+f(); // undefined
+</source>
+变量泄露为全局变量:<br>
+<source lang="javascript">
+var s = 'hello';
+
+for (var i = 0; i < s.length; i++) {
+  console.log(s[i]);
+}
+
+console.log(i); // 5
+</source>
+ES6引入了块级作用域，明确允许在块级作用域之中声明函数:<br>
+<source lang="javascript">
+// ES6严格模式
+'use strict';
+if (true) {
+  function f() {} // ES5 会报错
+}
+// 不报错
+</source>
+自测，ES5 及 ES6 输出结果是什么？为什么？<br>
+<source lang="javascript">
+function f() { console.log('I am outside!'); }
+(function () {
+  if(false) {
+    // 重复声明一次函数f
+    function f() { console.log('I am inside!'); }
+  }
+
+  f();
+}());
+</source>
+由于ES5跟ES6对于块级作用域这个概念的差别，导致了if中的函数定义这一句作为一个语句块能否被外层读取，块级作用域是封闭的，最终输出的结果很好的体现了块级作用域这一概念。
+----
+==反撇号跟模板字符串==
+反撇号`在键位Esc下方，能跟'和"一样普通地用于表示字符串，但相比之下多了可以向字符串中插入值的功能，代替+运算符的连接作用，反撇号括起来的字符串中可以以${变量名}的形式去插入变量，这样的字符串叫做模板字符串。举个小例子<br>
+<source lang="javascript">
+var name = "豆浆";
+var age  = 3;
+alert(`欢迎，${name}同学，你今年${age}岁了！`);
+</source>
+输出的结果自己体验吧~
+
+${}这个东西叫做占位符，它不仅可以放变量，还有函数或是算数运算等等都可以放进去，即${函数名}，这样子就可以通过函数实时改变需要输出的信息，而且比起用+运算符来连接要更加简洁方便。后排提示，一定要注意使用英文的符号，不能用中文的！
+
+模板字符串不仅仅是用于代替连接作用，还有一些小特性。模板字符串在使用时可以互相嵌套，这种方法被称为模板套构，在模板字符串中如果再次出现反撇号`或是$和{}等符号时跟"和'类似的，要使用转义字符\。模板字符串插值实际上转换为字符串并输出的一个过程。
+
+关于模板字符串的多行显示方式，支持ES6模板字符串的浏览器自然支持字符串不需要\n的换行方式，反撇号具备有'和"的基本功能，所以多行字符串的显示方式是相似的。
+== let/const ==
+=== 基本内容 ===
+# let: 声明变量
+# const: 声明常量
+# let/const: 块级作用域
+# let命令、const命令声明的全局变量，不属于全局对象的属性
+let 示例：<br>
+<source lang="javascript">
+var a = [];
+for (let i = 0; i < 10; i++) {
+  a[i] = function () {
+    console.log(i);
+  };
+}
+a[6](); // 6
+</source>
+var 示例：<br>
+<source lang="javascript">
+var a = [];
+for (var i = 0; i < 10; i++) {
+  a[i] = function () {
+    console.log(i);
+  };
+}
+a[6](); // 10
+</source>
+----
+=== 暂时性死区(TDZ) ===
+只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。对于let不会有变量提升，但是在let所在的语句块会检测有无let，如果调用let变量在声明前的话会报错，即后面所说的暂时性死区。<br>
+<source lang="javascript">
+var tmp = 123;
+
+if (true) {
+  tmp = 'abc'; // ReferenceError
+  let tmp;
+}
+</source>
+上面代码中，存在全局变量tmp，但是块级作用域内let又声明了一个局部变量tmp，导致后者绑定这个块级作用域，所以在let声明变量前，对tmp赋值会报错。在同一语句块中不能对同一let变量，用let又用var定义，函数的形参也不能在函数体内定义为let，默认已经定义好了，再用let也会变为重复声明，同一语句块中同名变量不能反复声明。<br>
+
+ES6明确规定，如果区块中存在let和const命令，这个区块对这些命令声明的变量，从一开始就形成了封闭作用域。凡是在声明之前就使用这些变量，就会报错。
+
+总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为'''“暂时性死区”（temporal dead zone，简称TDZ）'''。
+<source lang="javascript">
+if (true) {
+  // TDZ开始
+  tmp = 'abc'; // ReferenceError
+  console.log(tmp); // ReferenceError
+
+  let tmp; // TDZ结束; 若使用 var 那么由于变量定义提升，开始的 tmp 不会报错
+  console.log(tmp); // undefined
+
+  tmp = 123;
+  console.log(tmp); // 123
+}
+</source>
+----
+===相同作用域内不能重复声明===
+<source lang="javascript">
+// 报错
+function () {
+  let a = 10;
+  var a = 1;
+}
+
+// 报错
+function () {
+  let a = 10;
+  let a = 1;
+}
+</source>
+因此，不能在函数内部重新声明参数。
+<source lang="javascript">
+function func(arg) {
+  let arg; // 报错
+}
+
+function func(arg) {
+  {
+    let arg; // 不报错
+  }
+}
+</source>
+第二段代码不报错因为新创建了一段语句块，新的arg与形参arg不在同一语句块中，没有冲突。
+----
+== 变量的解构赋值 ==
+=== 数组 ===
+基本形式：<br>
+<source lang="javascript">
+let [foo, [[bar], baz]] = [1, [[2], 3]];
+foo // 1
+bar // 2
+baz // 3
+
+let [ , , third] = ["foo", "bar", "baz"];
+third // "baz"
+
+let [x, , y] = [1, 2, 3];
+x // 1
+y // 3
+
+let [head, ...tail] = [1, 2, 3, 4];
+head // 1
+tail // [2, 3, 4]
+
+let [x, y, ...z] = ['a'];
+x // "a"
+y // undefined
+z // []
+</source>
+只要某种数据结构具有Iterator接口，都可以采用数组形式的解构赋值:<br>
+<source lang="javascript">
+function* fibs() {
+  var a = 0;
+  var b = 1;
+  while (true) {
+    yield a;
+    [a, b] = [b, a + b];
+  }
+}
+
+var [first, second, third, fourth, fifth, sixth] = fibs();
+sixth // 5
+</source>
+解构赋值允许指定默认值，ES6内部使用严格相等运算符（===），判断一个位置是否有值：<br>
+<source lang="javascript">
+var [foo = true] = [];
+foo // true
+
+var [x = 1] = [undefined];
+x // 1
+
+var [x = 1] = [null];
+x // null
+</source>
+如果默认值是一个表达式，那么这个表达式是惰性求值的，即只有在用到的时候，才会求值：<br>
+<source lang="javascript">
+function f() {
+  console.log('aaa');
+}
+
+let [x = f()] = [1];
+
+// 等价于：
+
+let x;
+if ([1][0] === undefined) {
+  x = f();
+} else {
+  x = [1][0];
+}
+</source>
+----
+=== 对象的解构赋值 ===
+示例：<br>
+<source lang="javascript">
+var { bar, foo } = { foo: "aaa", bar: "bbb" };
+foo // "aaa"
+bar // "bbb"
+
+//---
+var { foo: baz } = { foo: "aaa", bar: "bbb" };
+baz // "aaa"
+foo // error: foo is not defined
+
+//---
+var obj = {
+  p: [
+    "Hello",
+    { y: "World" }
+  ]
+};
+
+var { p: [x, { y }] } = obj;
+x // "Hello"
+y // "World"
+
+// 解构赋值时，如果等号右边是数值和布尔值，则会先转为对象
+let {toString: s} = 123;
+s === Number.prototype.toString // true
+
+//函数的参数也可以使用解构赋值
+[[1, 2], [3, 4]].map(([a, b]) => a + b);
+
+var map = new Map();
+for (let [key, value] of map) {
+  console.log(key + " is " + value);
+}
+
+const { SourceMapConsumer, SourceNode } = require("source-map");
+</source>
+----
+== 数组扩展 ==
+=== Array.from ===
+Array.from方法用于将两类对象转为真正的数组：类似数组（必须有length属性）的对象（array-like object）和可遍历（iterable）的对象:<br>
+<source lang="javascript">
+function foo() {
+  var args = Array.from(arguments);
+  // ...
+}
+
+Array.from({ length: 3 }); // [undefined, undefined, undefined]
+</source>
+扩展运算符（...）也可以将某些数据结构转为数组;扩展运算符背后调用的是遍历器接口（Symbol.iterator），如果一个对象没有部署这个接口，就无法转换：<br>
+<source lang="javascript">
+function foo() {
+  var args = [...arguments];
+}
+</source>
+Array.from还可以接受第二个参数，作用类似于数组的map方法，用来对每个元素进行处理，将处理后的值放入返回的数组<br>
+<source lang="javascript">
+Array.from(arrayLike, x => x * x); // Array.from(arrayLike).map(x => x * x);
+</source>
+----
+=== Array.of ===
+将一组值，转换为数组：<br>
+<source lang="javascript">
+Array.of(3, 11, 8) // [3,11,8]
+</source>
+----
+=== find/findIndex ===
+<source lang="javascript">
+[1, 4, -5, 10].find((n) => n < 0)
+
+[1, 5, 10, 15].find(function(value, index, arr) {
+  return value > 9;
+}) // 10
+
+[1, 5, 10, 15].findIndex(function(value, index, arr) {
+  return value > 9;
+}) // 2
+</source>
+----
+== 函数扩展 ==
+=== 默认参数 ===
+<source lang="javascript">
+function Point(x = 0, y = 0) {
+  this.x = x;
+  this.y = y;
+}
+
+function fetch(url, { body = '', method = 'GET', headers = {} }){
+  console.log(method);
+}
+
+(function (a, b, c = 5) {}).length // 2 -> 函数的length属性，将返回没有指定默认值的参数个数
+</source>
+如果参数默认值是一个变量，则该变量所处的作用域，与其他变量的作用域规则是一样的，即先是当前函数的作用域，然后才是全局作用域：<br>
+<source lang="javascript">
+var x = 1;
+function f(x, y = x) {
+  console.log(y);
+}
+f(2); // 2
+
+let foo = 'outer';
+function bar(func = x => foo) {
+  let foo = 'inner';
+  console.log(func()); // outer
+}
+bar();
+
+// 参数的默认值不是在定义时执行，而是在运行时执行（即如果参数已经赋值，默认值中
+// 的函数就不会运行）
+function throwIfMissing() {
+  throw new Error('Missing parameter');
+}
+
+function foo(mustBeProvided = throwIfMissing()) {
+  return mustBeProvided;
+}
+foo();
+</source>
+----
+=== rest 参数 ===
+ES6引入rest参数（形式为“…变量名”），用于获取函数的多余参数：<br>
+<source lang="javascript">
+function add(...values) {
+  let sum = 0;
+  for (var val of values) {
+    sum += val;
+  }
+  return sum;
+}
+</source>
+----
+=== 扩展运算符 ===
+扩展运算符（spread）是三个点（…）。它好比rest参数的逆运算，将一个数组转为用逗号分隔的参数序列：<br>
+<source lang="javascript">
+console.log(1, ...[2, 3, 4], 5) // 1 2 3 4 5
+
+[1, 2, …more]
+[...arr1, ...arr2, …arr3]
+[a, ...rest] = list
+[…'hello'] // [ "h", "e", "l", "l", "o" ];能够正确识别32位的Unicode字符;
+</source>
+----
+=== 箭头函数 ===
+# 函数体内的this对象，就是定义时所在的对象，而不是使用时所在的对象
+# 不可以当作构造函数，也就是说，不可以使用new命令，否则会抛出一个错误
+# 不可以使用arguments对象，该对象在函数体内不存在
+# 不可以使用yield命令，因此箭头函数不能用作Generator函数
+<source lang="javascript">
+function foo() {
+  setTimeout(() => {
+    console.log('id:', this.id);
+  }, 100);
+}
+var id = 21;
+foo.call( { id: 42 } ); // id: 42
+
+function Timer () {
+  this.s1 = 0;
+  this.s2 = 0;
+
+  setInterval(() => this.s1++, 1000); // 箭头函数
+ 
+  setInterval(function () { // 普通函数
+    this.s2++;
+  }, 1000);
+}
+var timer = new Timer();
+setTimeout(() => console.log('s1: ', timer.s1), 3100); // s1: 3
+setTimeout(() => console.log('s2: ', timer.s2), 3100); // s2: 0
+
+// ES6 箭头函数 this 指针
+
+// ES6
+function foo() {
+  setTimeout( () => {
+    console.log('id:', this.id);
+  },100);
+}
+
+// ES5
+function foo() {
+  var _this = this;
+
+  setTimeout(function () {
+    console.log('id:', _this.id);
+  }, 100);
+}
+</source>
+嵌套的箭头函数：<br>
+<source lang="javascript">
+const pipeline = (...funcs) =>
+  val => funcs.reduce((a, b) => b(a), val);
+/*
+var pipeline = function(funcs) {
+    return function (val) {
+        // array.reduce(callback [, initialValue])
+        // callback: function(previousValue, currentValue, currentIndex, array)
+        return funcs.reduce(function(a, b) {
+            return b(a);
+        }, val);
+    }
+}
+*/
+const plus1 = a => a + 1;
+const mult2 = a => a * 2;
+const addThenMult = pipeline(plus1, mult2); // function
+addThenMult(5) // val -> 5; result: 12;
+</source>
+----
+=== 尾调用优化 ===
+# 在ES6中，第一次明确规定，所有ECMAScript的实现，都必须部署“尾调用优化”。尾调用（Tail Call）是函数式编程的一个重要概念，本身非常简单，一句话就能说清楚，就是指某个函数的最后一步是调用另一个函数
+# ES6的尾调用优化只在严格模式下开启，正常模式是无效的
+<source lang="javascript">
+function f(x){
+  let y = g(x);  // 最后一步为赋值，所以不是尾调用
+  return y; 
+}
+
+function f(x){
+  return g(x) + 1; // 也属于调用后还有操作，即使写在一行内,所以不是尾调用
+}
+
+function f(x){
+  g(x); // 等价于： g(x); return undefined;
+}
+
+function f(x) {
+  if (x > 0) {
+    return m(x) // 不在最后一行，是最后一步，符合尾调用
+  }
+  return n(x);
+}
+</source>
+尾递归改写：<br>
+<source lang="javascript">
+function factorial(n) {
+  if (n === 1) return 1;
+  return n * factorial(n - 1);
+}
+
+// 改写为：
+
+function factorial(n, total = 1) {
+  if (n === 1) return total;
+  return factorial(n - 1, n * total);
+}
+
+// 或：
+
+function currying(fn, n) { // 柯里化
+  return function (m) {
+    return fn.call(this, m, n);
+  };
+}
+
+function tailFactorial(n, total) {
+  if (n === 1) return total;
+  return tailFactorial(n - 1, n * total);
+}
+
+const factorial = currying(tailFactorial, 1);
+</source>
+----
+== 对象扩展 ==
+ES6允许直接写入变量和函数，作为对象的属性和方法：<br>
+<source lang="javascript">
+var foo = 'bar';
+var baz = {foo}; // baz = {foo: “bar"}
+
+//---
+function f(x, y) {
+  return {x, y};
+}
+
+// 等同于
+
+function f(x, y) {
+  return {x: x, y: y};
+}
+
+//---
+var o = {
+  method() {
+    return "Hello!";
+  }
+};
+
+// 等同于
+
+var o = {
+  method: function() {
+    return "Hello!";
+  }
+};
+
+var obj = {
+  * m(){
+    yield 'hello world';
+  }
+}
+</source>
+应用场景一：
+<source lang="javascript">
+class Point {
+  constructor(x, y) {
+    Object.assign(this, {x, y});
+  }
+}
+
+Object.assign(SomeClass.prototype, {
+  someMethod(arg1, arg2) {
+    ···
+  },
+  anotherMethod() {
+    ···
+  }
+});
+
+function clone(origin) {
+  return Object.assign({}, origin);
+}
+
+function clone(origin) {
+  let originProto = Object.getPrototypeOf(origin);
+  return Object.assign(Object.create(originProto), origin);
+}
+
+const merge =
+  (target, ...sources) => Object.assign(target, …sources);
+</source>
+应用场景二:<br>
+<source lang="javascript">
+const DEFAULTS = {
+  logLevel: 0,
+  outputFormat: 'html'
+};
+
+function processContent(options) {
+  let options = Object.assign({}, DEFAULTS, options);
+}
+</source>
+----
+== Symbol ==
+ES6引入了一种新的原始数据类型Symbol，表示独一无二的值。<br>
+JavaScript语言的第七种数据类型：Undefined、Null、布尔值（Boolean）、字符串（String）、数值（Number）、对象（Object）、Symbol<br>
+<source lang="javascript">
+var s1 = Symbol();
+var s2 = Symbol();
+s1 === s2 // false
+
+var s1 = Symbol("foo");
+var s2 = Symbol("foo");
+s1 === s2 // false
+
+var shapeType = {
+  triangle: Symbol()
+};
+
+function getArea(shape, options) {
+  var area = 0;
+  switch (shape) {
+    case shapeType.triangle:
+      area = .5 * options.width * options.height;
+      break;
+  }
+  return area;
+}
+//---
+var size = Symbol('size');
+
+class Collection {
+  constructor() {
+    this[size] = 0;
+  }
+
+  add(item) {
+    this[this[size]] = item;
+    this[size]++;
+  }
+
+  static sizeOf(instance) {
+    return instance[size];
+  }
+}
+</source>
+----
+== Proxy & Reflect ==
+----
+== class ==
+----

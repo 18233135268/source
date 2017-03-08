@@ -1,0 +1,24 @@
+* <code>DEFAULT value</code> 子句在数据类型定义中为列指定默认值。默认值必须为常量，不能是函数或表达式。意思是不能将列的默认值设置为函数的值（比如函数  NOW() 或 CURRENT_DATE）。有个例外情况是，可以指定 CURRENT_TIMESTAMP 作为 TIMESTAMP 和 DATETIME 列的默认值。
+* BLOB, TEXT, GEOMETRY 和 JSON 列不能指定默认值。
+* 如果列定义中不包含显式的 DEFAULT 值，MySQL 根据以下规则决定默认值：
+** 如果列可以取 NULL 作为值，使用一个显式的 DEFAULT NULL 子句来定义列。
+** 如果列不能取 NULL 作为值，MySQL 没有显式的 DEFAULT 子句定义此列。例外情况：如果列定义为作为 PRIMARY KEY 的一部分但没有显式的为 NOT NULL，MySQL 创建它作为一个 NOT NULL 列（因为 PRIMARY KEY 列必须为 NOT NULL）。
+* 对于数据进入一个没有显式的 DEFAULT 子句的 NOT NULL 列，如果一个 INSERT 或 REPLACE 语句没有为此列包含值，或者一个 UPDATE 语句将此列设置为 NULL，MySQL 根据当时生效的 SQL 模式来处理列：
+** 如果启用了严格的 SQL 模式，事务表发生报错，并且该语句回滚。对于非事务表，发生一个报错，但如果这发生在多行语句的第二行或随后的行中，前面的行将被插入。
+** 如果未启用严格的 SQL 模式，MySQL 将按照此列的数据类型将列设置为其隐式的默认值。
+* 例：假定表 t 进行如下定义：
+<source lang='mysql'>
+CREATE TABLE t (i INT NOT NULL);
+</source>
+这个例子中，i 没有显式的默认值，所以在严格的模式中，以下每一条语句都发生报错且没有行插入表中。当不使用严格模式时，仅第三条语句报错，对于头两条语句来说，隐式的默认值将被插入，但第三条语句将失败，因为不能生成值 DEFAULT(i)：
+<source lang='mysql'>
+INSERT INTO t VALUES();
+INSERT INTO t VALUES(DEFAULT);
+INSERT INTO t VALUES(DEFAULT(i));
+</source>
+* 对于一个给定的表，可以使用 SHOW CREATE TABLE 语句来查看哪列有显式的 DEFAULT 子句。
+* 隐式默认值定义如下：
+** 对于数字类型，默认值是 0，例外情况是对于有 AUTO_INCREMENT 属性声明的整数或浮点类型，默认值是序列中的下一个值。
+** 对于 date 和 time 类型不同于 TIMESTAMP，默认值是该类型的零值。如果启用了 explicit_defaults_for_timestamp 变量，对于 TIMESTAMP 类型来说也是这样。否则，对于表中的第一个 TIMESTAMP 列，默认值是当前日期和时间。
+** 对于除了 ENUM 类型之外的字符串类型，默认值是空字符串。对于 ENUM 来说，默认值是第一个枚举值。
+* 一个整数列定义中的 SERIAL DEFAULT VALUE 是 NOT NULL AUTO_INCREMENT UNIQUE 的同义词。

@@ -1,0 +1,9 @@
+内部学习、培训材料。
+
+Swift: iOS 开发语言；<br>
+NodeJS: JS 服务端开发框架；<br>
+React-Native: React 开发原生 APP；<br>
+Go: google 推出的开发语言。<br>
+Python: Python 3.x 语法。<br>
+
+

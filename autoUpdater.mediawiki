@@ -1,0 +1,19 @@
+----
+== 不同平台的使用 ==
+=== macOS ===
+* 在 macOS 上，autoUpdater 模块依靠的时内置的 Squirrel.Mac,所以不需要依靠其余的设置就可以食用
+=== Windows ===
+* 必须将应用安装到用户的计算机上才可以
+=== Linux ===
+* Linux 下没有任何的自动更新支持
+== 方法列表 ==
+=== autoUpdater.setFeedURL(url) ===
+* 设置检查更新的 url, 并且初始化自动更新。
+* 这个 url 一旦设置就无法更改
+=== autoUpdater.checkForUpdates() ===
+* 向服务端查询现在是否有可用的更新
+* 在调用这个方法之前，必须要先调用 setFeedURL
+=== autoUpdater.quitAndInstall() ===
+* 在下载完成后，重启当前的应用并且安装更新
+* 这个方法应该仅在 update-downloaded 事件触发后被调用
+----

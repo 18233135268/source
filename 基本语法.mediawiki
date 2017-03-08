@@ -1,0 +1,861 @@
+==MySQL基本语法==
+----
+===输入查询===
+在我们连接上数据库后，我们首先要知道关于如何查询的基本知识。<br>
+我们通过使用几个查询，了解输入命令的基本原则。<br>
+
+*这是一个简单的命令，要求服务器告诉它的版本号和当前日期。在mysql>提示输入如下命令并按回车键：
+<source lang="mysql">
+mysql> SELECT VERSION(), CURRENT_DATE;
++--------------+--------------+
+| VERSION()    | CURRENT_DATE |
++--------------+--------------+
+| 5.7.1-m4-log | 2016-07-31   |
++--------------+--------------+
+1 row in set (0.01 sec)
+mysql>
+</source>
+
+===输入命令基本原则===
+*一个命令通常由SQL语句组成，随后跟着一个分号。（有一些例外不需要分号,如QUIT）
+* 当发出一个命令时，mysql将它发送给服务器并显示执行结果，然后显示另一个mysql>显示它准备好接受其它命令。
+* mysql用表格(行和列)方式显示查询输出。第一行包含列的标签，随后的行是查询结果。
+* mysql显示返回了多少行，以及查询花了多长时间，它给你提供服务器性能的一个大致概念。(但并不精确)
+*MySQL是不区分大小写的，但为了规范，关键字及函数名我们习惯用大写，数据库及表的名字用小写。
+*我们也可以在一行上输入多条语句，只需要以一个分号间隔开各语句
+
+*我们也可以mysql用作一个简单的计算器：
+<source lang="mysql">
+mysql> SELECT SIN(PI()/4), (4+1)*5;
++------------------+---------+
+| SIN(PI()/4)      | (4+1)*5 |
++------------------+---------+
+| 0.70710678118655 |      25 |
++------------------+---------+
+1 row in set (0.02 sec)
+</source>
+
+*mysql通过寻找终止分号而不是输入行的结束来决定语句在哪儿结束。我们也可以将较长命令可以输入到多个行中，如下：
+<source lang="mysql">
+mysql> SELECT
+    -> USER()
+    -> ,
+    -> CURRENT_DATE;
++---------------+--------------+
+| USER()        | CURRENT_DATE |
++---------------+--------------+
+| jon@localhost | 2010-08-06   |
++---------------+--------------+
+</source>
+
+*如果你决定不想执行正在输入过程中的一个命令，输入\c取消它
+<source lang="mysql">
+mysql> SELECT
+    -> USER()
+    -> \c
+mysql>
+</source>
+
+===提示符含义===
+*下表显示出可以看见的各个提示符并简述它们所表示的mysql的状态：
+<table border="1" cellpadding="0" id="table1">
+			<tr>
+				<td>
+				<p><strong><span>提示符</span></strong></td>
+				<td width="490">
+				<p><strong><span>含义</span></strong></td>
+			</tr>
+			<tr>
+				<td>
+				<p>
+				<span>mysql&gt;</span></td>
+				<td width="490">
+				<p>准备好接受新命令。</td>
+			</tr>
+			<tr>
+				<td>
+				<p>
+				<span>-&gt;</span></td>
+				<td width="490">
+				<p>等待多行命令的下一行。</td>
+			</tr>
+			<tr>
+				<td>
+				<p>
+				<span>&#39;&gt;</span></td>
+				<td width="490">
+				<p>等待下一行，等待以单引号<span>(</span>“<span>&#39;</span>”<span>)</span>开始的字符串的结束。</td>
+			</tr>
+			<tr>
+				<td>
+				<p>
+				<span>&quot;&gt;</span></td>
+				<td width="490">
+				<p>等待下一行，等待以双引号<span>(</span>“<span>&quot;</span>”<span>)</span>开始的字符串的结束。</td>
+			</tr>
+			<tr>
+				<td>
+				<p>
+				<span>`&gt;</span></td>
+				<td width="490">
+				<p>等待下一行，等待以反斜点<span>(</span>‘<span>`</span>’<span>)</span>开始的识别符的结束。</td>
+			</tr>
+			<tr>
+				<td>
+				<p>
+				<span>/*&gt;</span></td>
+				<td width="490">
+				<p>等待下一行，等待以<span>/*</span>开始的注释的结束。</td>
+			</tr>
+		</table>
+
+
+*知道'>和">提示符的含义很重要，我们可以看下面的代码：
+<source lang="mysql">
+mysql> SELECT * FROM my_table WHERE name = 'Smith AND age < 30;
+    '> '\c
+mysql>
+</source>
+*在这种情况下，你不能只是输入\c，因为mysql把它作为正在收集的字符串的一部分来解释它。相反，应输入关闭的引号字符，然后输入\c
+
+----
+===创建并使用数据库===
+----
+====访问数据库====
+在知道怎样输入命令之后，便可以访问数据库了。<br>
+=====SHOW=====
+*使用SHOW语句可以找出服务器上当前存在什么数据库：
+<source lang="mysql">
+mysql> SHOW DATABASES;
++----------+
+| Database |
++----------+
+| mysql    |
+| test     |
+| tmp      |
++----------+
+</source>
+=====USE=====
+*使用USE语句访问数据库
+<source lang="mysql">
+mysql> USE test
+Database changed
+</source>
+
+*注意，USE，类似QUIT，不需要一个分号。（如果你喜欢，你可以用一个分号终止这样的语句；这无碍）USE语句在使用上也有另外一个特殊的地方：它必须在一个单行上给出。
+
+*可以由MySQL管理员指定用户使用哪个数据库，假定你要使用menagerie数据库，管理员可以执行以下语句：
+<source lang="mysql">
+mysql> GRANT ALL ON menagerie.* TO 'your_mysql_name'@'your_client_host';
+</source>
+*your_mysql_name是分配给你的MySQL用户名，your_client_host是你要连接到服务器的主机名。
+
+====创建并选择数据库====
+
+=====CREATE=====
+*利用CREATE创建数据库,我们就以动物园为例子
+<source lang="mysql">
+mysql> CREATE DATABASE menagerie;
+</source>
+
+*创建数据库并不表示选定并使用它，你必须明确地操作。为了使menagerie成为当前的数据库，使用这个命令：
+<source lang="mysql">
+mysql> USE menagerie
+Database changed
+</source>
+
+*数据库只需要创建一次，但是必须在每次启动mysql会话时在使用前先选择它。
+*也可以在进入MySQL时指定要使用的数据库，只需在连接参数后面提供数据库名字：
+<source lang="mysql">
+shell> mysql -h host -u user -p menagerie
+Enter password: ********
+</source>
+
+====创建表====
+
+*创建数据库是很容易的部分，较难的部分是决定你的数据库结构应该是什么：你需要什么数据库表，各数据库表中有什么样的列。
+
+分析一下，我们需要一个包含每个宠物的记录的表，称之为pet表<br>
+pet表中有用的类型信息：名字、主人、种类，性别、出生和死亡日期<br>
+*使用一个CREATE TABLE语句指定数据库表的布局：
+<source lang="mysql">
+mysql> CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20),
+    -> species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+</source>
+
+*VARCHAR指字符串，适合于列值是变长的列
+*birth和death列应选用DATE数据类。
+
+*使用SHOW TABLES可以看到数据库中包含的表
+<source lang="mysql">
+mysql> SHOW TABLES;
++---------------------+
+| Tables in menagerie |
++---------------------+
+| pet                 |
++---------------------+
+</source>
+=====DESCRIBE=====
+*使用DESCRIBE可以看下你表中每个列的信息
+<source lang="mysql">
+mysql> DESCRIBE pet;
++---------+-------------+------+-----+---------+-------+
+| Field   | Type        | Null | Key | Default | Extra |
++---------+-------------+------+-----+---------+-------+
+| name    | varchar(20) | YES  |     | NULL    |       |
+| owner   | varchar(20) | YES  |     | NULL    |       |
+| species | varchar(20) | YES  |     | NULL    |       |
+| sex     | char(1)     | YES  |     | NULL    |       |
+| birth   | date        | YES  |     | NULL    |       |
+| death   | date        | YES  |     | NULL    |       |
++---------+-------------+------+-----+---------+-------+
+</source>
+
+====将数据装入表中====
+
+*通过LOAD DATA和INSERT语句可以在表中填入内容
+假设表的内容如下表
+<table border="1" cellpadding="0" id="table2">
+				<tr>
+					<td>
+					<p><strong>
+					<span>name</span></strong></td>
+					<td>
+					<p><strong>
+					<span>owner</span></strong></td>
+					<td>
+					<p><strong>
+					<span>species</span></strong></td>
+					<td>
+					<p><strong>
+					<span>sex</span></strong></td>
+					<td>
+					<p><strong>
+					<span>birth</span></strong></td>
+					<td>
+					<p><strong>
+					<span>death</span></strong></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Fluffy</span></td>
+					<td>
+					<p><span>Harold</span></td>
+					<td>
+					<p><span>cat</span></td>
+					<td>
+					<p><span>f</span></td>
+					<td>
+					<p><span>1993-02-04</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Claws</span></td>
+					<td>
+					<p><span>Gwen</span></td>
+					<td>
+					<p><span>cat</span></td>
+					<td>
+					<p><span>m</span></td>
+					<td>
+					<p><span>1994-03-17</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Buffy</span></td>
+					<td>
+					<p><span>Harold</span></td>
+					<td>
+					<p><span>dog</span></td>
+					<td>
+					<p><span>f</span></td>
+					<td>
+					<p><span>1989-05-13</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Fang</span></td>
+					<td>
+					<p><span>Benny</span></td>
+					<td>
+					<p><span>dog</span></td>
+					<td>
+					<p><span>m</span></td>
+					<td>
+					<p><span>1990-08-27</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Bowser</span></td>
+					<td>
+					<p><span>Diane</span></td>
+					<td>
+					<p><span>dog</span></td>
+					<td>
+					<p><span>m</span></td>
+					<td>
+					<p><span>1979-08-31</span></td>
+					<td>
+					<p><span>1995-07-29</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Chirpy</span></td>
+					<td>
+					<p><span>Gwen</span></td>
+					<td>
+					<p><span>bird</span></td>
+					<td>
+					<p><span>f</span></td>
+					<td>
+					<p><span>1998-09-11</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Whistler</span></td>
+					<td>
+					<p><span>Gwen</span></td>
+					<td>
+					<p><span>bird</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+					<td>
+					<p><span>1997-12-09</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+				<tr>
+					<td>
+					<p><span>Slim</span></td>
+					<td>
+					<p><span>Benny</span></td>
+					<td>
+					<p><span>snake</span></td>
+					<td>
+					<p><span>m</span></td>
+					<td>
+					<p><span>1996-04-29</span></td>
+					<td>
+					<p><span>&nbsp;</span></td>
+				</tr>
+			</table>
+=====LOAD DATA=====
+*我们可以创建一个文本文件“pet.txt”，每行包含一个记录，用定位符(tab)把值分开，并且按顺序序给出。空白处使用\N
+*使用LOAD DATA将文本文件“pet.txt”装载到pet表中
+<source lang="mysql">
+mysql> LOAD DATA LOCAL INFILE '/path/pet.txt' INTO TABLE pet
+    -> LINES TERMINATED BY '\r\n';
+</source>
+'/path/pet.txt'是该文本文件的路径，如'D:mysql/pet.txt'<br>
+=====INSERT=====
+*使用INSERT语句,可以一次增加一个新记录
+<source lang="mysql">
+mysql> INSERT INTO pet
+    -> VALUES ('Puffball','Diane','hamster','f','1999-03-30',NULL);
+</source>
+
+====从表检索信息====
+*SELECT语句用来从数据表中检索信息。语句的一般格式是：
+SELECT what_to_select<br>
+FROM which_table<br>
+WHERE conditions_to_satisfy;<br>
+*what_to_select指出你想要看到的内容，可以是列的一个表，或*表示“所有的列”。
+*which_table指出你想要从其检索数据的表。
+*WHERE子句是可选项，如果选择该项，conditions_to_satisfy指定行必须满足的检索条件。
+=====选择所有数据=====
+<source lang="mysql">
+mysql> SELECT * FROM pet;
++----------+--------+---------+------+------------+------------+
+| name     | owner  | species | sex  | birth      | death      |
++----------+--------+---------+------+------------+------------+
+| Fluffy   | Harold | cat     | f    | 1993-02-04 | NULL       |
+| Claws    | Gwen   | cat     | m    | 1994-03-17 | NULL       |
+| Buffy    | Harold | dog     | f    | 1989-05-13 | NULL       |
+| Fang     | Benny  | dog     | m    | 1990-08-27 | NULL       |
+| Bowser   | Diane  | dog     | m    | 1979-08-31 | 1995-07-29 |
+| Chirpy   | Gwen   | bird    | f    | 1998-09-11 | NULL       |
+| Whistler | Gwen   | bird    | NULL | 1997-12-09 | NULL       |
+| Slim     | Benny  | snake   | m    | 1996-04-29 | NULL       |
+| Puffball | Diane  | hamster | f    | 1999-03-30 | NULL       |
++----------+--------+---------+------+------------+------------+
+</source>
+
+=====删除数据=====
+======DELETE======
+<source lang="mysql">
+mysql> DELETE FROM pet; 
+</source>
+
+=====修改数据=====
+有至少两种方法修改数据
+*编辑文件“pet.txt”改正错误，然后使用DELETE和LOAD DATA清空并重新装载表:
+<source lang="mysql">
+mysql> DELETE FROM pet;
+mysql> LOAD DATA LOCAL INFILE '/path/pet.txt' INTO TABLE pet;
+</source>
+======UPDATE======
+
+*可以使用一个UPDATE语句仅修正错误记录：
+<source lang="mysql">
+mysql> UPDATE pet SET birth = '1989-08-31' WHERE name = 'Bowser';
+</source>
+
+=====选择特殊行=====
+<source lang="mysql">
+mysql> SELECT * FROM pet WHERE name = 'Bowser';
++--------+-------+---------+------+------------+------------+
+| name   | owner | species | sex  | birth      | death      |
++--------+-------+---------+------+------------+------------+
+| Bowser | Diane | dog     | m    | 1989-08-31 | 1995-07-29 |
++--------+-------+---------+------+------------+------------+
+</source>
+也可以组合条件，例如：
+<source lang="mysql">
+mysql> SELECT * FROM pet WHERE (species = 'cat' AND sex = 'm')
+    -> OR (species = 'dog' AND sex = 'f');
++-------+--------+---------+------+------------+-------+
+| name  | owner  | species | sex  | birth      | death |
++-------+--------+---------+------+------------+-------+
+| Claws | Gwen   | cat     | m    | 1994-03-17 | NULL  |
+| Buffy | Harold | dog     | f    | 1989-05-13 | NULL  |
++-------+--------+---------+------+------------+-------+
+</source>
+
+=====选择特殊列=====
+我们可以查询有谁拥有宠物，如下：
+<source lang="mysql">
+mysql> SELECT owner FROM pet;
++--------+
+| owner  |
++--------+
+| Harold |
+| Gwen   |
+| Harold |
+| Benny  |
+| Diane  |
+| Gwen   |
+| Gwen   |
+| Benny  |
+| Diane  |
++--------+
+</source>
+*该查询只是简单地检索每个记录的owner列，并且他们中的一些出现多次。为了使输出减到最少，增加关键字DISTINCT检索出每个唯一的输出记录：
+<source lang="mysql">
+mysql> SELECT DISTINCT owner FROM pet;
++--------+
+| owner  |
++--------+
+| Benny  |
+| Diane  |
+| Gwen   |
+| Harold |
++--------+
+</source>
+可以使用一个WHERE子句结合行选择与列选择：
+<source lang="mysql">
+mysql> SELECT name, species, birth FROM pet
+    -> WHERE species = 'dog' OR species = 'cat';
++--------+---------+------------+
+| name   | species | birth      |
++--------+---------+------------+
+| Fluffy | cat     | 1993-02-04 |
+| Claws  | cat     | 1994-03-17 |
+| Buffy  | dog     | 1989-05-13 |
+| Fang   | dog     | 1990-08-27 |
+| Bowser | dog     | 1989-08-31 |
++--------+---------+------------+
+</source>
+=====排序=====
+======ORDER BY======
+我们将动物按日期排序：
+<source lang="mysql">
+mysql> SELECT name, birth FROM pet ORDER BY birth;
++----------+------------+
+| name     | birth      |
++----------+------------+
+| Buffy    | 1989-05-13 |
+| Bowser   | 1989-08-31 |
+| Fang     | 1990-08-27 |
+| Fluffy   | 1993-02-04 |
+| Claws    | 1994-03-17 |
+| Slim     | 1996-04-29 |
+| Whistler | 1997-12-09 |
+| Chirpy   | 1998-09-11 |
+| Puffball | 1999-03-30 |
++----------+------------+
+</source>
+*默认排序是升序，最小的值在第一。要想以降序排序，在你正在排序的列名上增加DESC（降序 ）关键字：
+<source lang="mysql">
+mysql> SELECT name, birth FROM pet ORDER BY birth DESC;
++----------+------------+
+| name     | birth      |
++----------+------------+
+| Puffball | 1999-03-30 |
+| Chirpy   | 1998-09-11 |
+| Whistler | 1997-12-09 |
+| Slim     | 1996-04-29 |
+| Claws    | 1994-03-17 |
+| Fluffy   | 1993-02-04 |
+| Fang     | 1990-08-27 |
+| Bowser   | 1989-08-31 |
+| Buffy    | 1989-05-13 |
++----------+------------+
+</source>
+*我们也可以对多个列进行排序，并且可以按不同的方向对不同的列进行排序
+<source lang="mysql">
+mysql> SELECT name, species, birth FROM pet
+    -> ORDER BY species, birth DESC;
++----------+---------+------------+
+| name     | species | birth      |
++----------+---------+------------+
+| Chirpy   | bird    | 1998-09-11 |
+| Whistler | bird    | 1997-12-09 |
+| Claws    | cat     | 1994-03-17 |
+| Fluffy   | cat     | 1993-02-04 |
+| Fang     | dog     | 1990-08-27 |
+| Bowser   | dog     | 1989-08-31 |
+| Buffy    | dog     | 1989-05-13 |
+| Puffball | hamster | 1999-03-30 |
+| Slim     | snake   | 1996-04-29 |
++----------+---------+------------+
+</source>
+*注意DESC关键字仅适用于在它前面的列名(birth)；不影响species列的排序顺序。
+
+=====日期计算=====
+我们计算动物的年龄，并按姓名排序<br>
+<source lang="mysql">
+mysql> SELECT name, birth, CURDATE(),
+    -> TIMESTAMPDIFF(YEAR,birth,CURDATE()) AS age
+    -> FROM pet ORDER BY name;
++----------+------------+------------+------+
+| name     | birth      | CURDATE()  | age  |
++----------+------------+------------+------+
+| Bowser   | 1989-08-31 | 2003-08-19 |   13 |
+| Buffy    | 1989-05-13 | 2003-08-19 |   14 |
+| Chirpy   | 1998-09-11 | 2003-08-19 |    4 |
+| Claws    | 1994-03-17 | 2003-08-19 |    9 |
+| Fang     | 1990-08-27 | 2003-08-19 |   12 |
+| Fluffy   | 1993-02-04 | 2003-08-19 |   10 |
+| Puffball | 1999-03-30 | 2003-08-19 |    4 |
+| Slim     | 1996-04-29 | 2003-08-19 |    7 |
+| Whistler | 1997-12-09 | 2003-08-19 |    5 |
++----------+------------+------------+------+
+</source>
+*TIMESTAMPDIFF()函数计算当前日期的年和出生日期之间的差。如果当前日期的日历年比出生日期早，则减去一年。
+*YEAR()提取日期的年部分，MONTH()提取日期的月部分，RIGHT()提取日期的MM-DD (日历年)部分的最右面5个字符
+
+我们可以使用一个类似的查询来确定已经死亡动物的死亡年龄：
+<source lang="mysql">
+mysql> SELECT name, birth, death,
+    -> TIMESTAMPDIFF(YEAR,birth,death) AS age
+    -> FROM pet WHERE death IS NOT NULL ORDER BY age;
++--------+------------+------------+------+
+| name   | birth      | death      | age  |
++--------+------------+------------+------+
+| Bowser | 1989-08-31 | 1995-07-29 |    5 |
++--------+------------+------------+------+
+</source>
+
+=====NULL值操作=====
+*NULL意味着“没有值”或“未知值”，为了测试NULL，你不能使用算术比较 操作符例如=、<或!=
+<source lang="mysql">
+mysql> SELECT 1 IS NULL, 1 IS NOT NULL;
++-----------+---------------+
+| 1 IS NULL | 1 IS NOT NULL |
++-----------+---------------+
+|         0 |             1 |
++-----------+---------------+
+</source>
+
+当我们使用IS NULL和IS NOT NULL操作符：
+<source lang="mysql">
+mysql> SELECT 1 = NULL, 1 <> NULL, 1 < NULL, 1 > NULL;
++----------+-----------+----------+----------+
+| 1 = NULL | 1 <> NULL | 1 < NULL | 1 > NULL |
++----------+-----------+----------+----------+
+|     NULL |      NULL |     NULL |     NULL |
++----------+-----------+----------+----------+
+</source>
+*在MySQL中，0或 NULL意味着假而其它值意味着真。布尔运算的默认真值是1。
+*NULL操作的常见错误是不能在定义为NOT NULL的列内插入0或空字符串，但事实并非如此。在NULL表示"没有数值"的地方有数值。使用IS [NOT] NULL则可以很容易地进行测试，如下所示：
+<source lang="mysql">
+mysql> SELECT 0 IS NULL, 0 IS NOT NULL, '' IS NULL, '' IS NOT NULL;
++-----------+---------------+------------+----------------+
+| 0 IS NULL | 0 IS NOT NULL | '' IS NULL | '' IS NOT NULL |
++-----------+---------------+------------+----------------+
+|         0 |             1 |          0 |              1 |
++-----------+---------------+------------+----------------+
+</source>
+*因此完全可以在定义为NOT NULL的列内插入0或空字符串，实际是NOT NULL
+
+=====模式匹配=====
+*SQL模式匹配允许你使用“_”匹配任何单个字符，而“%”匹配任意数目字符(包括零字符)。
+要想找出以“b”开头的名字：
+<source lang="mysql">
+mysql> SELECT * FROM pet WHERE name LIKE 'b%';
++--------+--------+---------+------+------------+------------+
+| name   | owner  | species | sex  | birth      | death      |
++--------+--------+---------+------+------------+------------+
+| Buffy  | Harold | dog     | f    | 1989-05-13 | NULL       |
+| Bowser | Diane  | dog     | m    | 1989-08-31 | 1995-07-29 |
++--------+--------+---------+------+------------+------------+
+</source>
+
+要想找出正好包含5个字符的名字，使用“_”模式字符：
+<source lang="mysql">
+mysql> SELECT * FROM pet WHERE name LIKE '_____';
++-------+--------+---------+------+------------+-------+
+| name  | owner  | species | sex  | birth      | death |
++-------+--------+---------+------+------------+-------+
+| Claws | Gwen   | cat     | m    | 1994-03-17 | NULL  |
+| Buffy | Harold | dog     | f    | 1989-05-13 | NULL  |
++-------+--------+---------+------+------------+-------+
+</source>
+*由MySQL提供的模式匹配也有使用扩展正则表达式，使用REGEXP和NOT REGEXP操作符(或RLIKE和NOT RLIKE，它们是同义词)
+*‘.’匹配任何单个的字符。
+*字符类“[...]”匹配在方括号内的任何字符。例如，“[abc]”匹配“a”、“b”或“c”。为了命名字符的范围，使用一个“-”。“[a-z]”匹配任何字母，而“[0-9]”匹配任何数字
+*“ * ”匹配零个或多个在它前面的字符。例如，“x*”匹配任何数量的“x”字符，“[0-9]*”匹配任何数量的数字，而“.*”匹配任何数量的任何字符。
+*如果REGEXP模式与被测试值的任何地方匹配，模式就匹配(这不同于LIKE模式匹配，只有与整个值匹配，模式才匹配)。
+*为了定位一个模式以便它必须匹配被测试值的开始或结尾，在模式开始处使用“^”或在模式的结尾用“$”。
+为了说明扩展正则表达式如何工作，下面使用REGEXP重写上面所示的LIKE查询：
+<source lang="mysql">
+mysql> SELECT * FROM pet WHERE name REGEXP '^b';
++--------+--------+---------+------+------------+------------+
+| name   | owner  | species | sex  | birth      | death      |
++--------+--------+---------+------+------------+------------+
+| Buffy  | Harold | dog     | f    | 1989-05-13 | NULL       |
+| Bowser | Diane  | dog     | m    | 1989-08-31 | 1995-07-29 |
++--------+--------+---------+------+------------+------------+
+
+mysql> SELECT * FROM pet WHERE name REGEXP 'w';
++----------+-------+---------+------+------------+------------+
+| name     | owner | species | sex  | birth      | death      |
++----------+-------+---------+------+------------+------------+
+| Claws    | Gwen  | cat     | m    | 1994-03-17 | NULL       |
+| Bowser   | Diane | dog     | m    | 1989-08-31 | 1995-07-29 |
+| Whistler | Gwen  | bird    | NULL | 1997-12-09 | NULL       |
++----------+-------+---------+------+------------+------------+
+
+mysql> SELECT * FROM pet WHERE name REGEXP '^.....$';
++-------+--------+---------+------+------------+-------+
+| name  | owner  | species | sex  | birth      | death |
++-------+--------+---------+------+------------+-------+
+| Claws | Gwen   | cat     | m    | 1994-03-17 | NULL  |
+| Buffy | Harold | dog     | f    | 1989-05-13 | NULL  |
++-------+--------+---------+------+------------+-------+
+
+mysql> SELECT * FROM pet WHERE name REGEXP '^.{5}$';
++-------+--------+---------+------+------------+-------+
+| name  | owner  | species | sex  | birth      | death |
++-------+--------+---------+------+------------+-------+
+| Claws | Gwen   | cat     | m    | 1994-03-17 | NULL  |
+| Buffy | Harold | dog     | f    | 1989-05-13 | NULL  |
++-------+--------+---------+------+------------+-------+
+</source>
+*其中“{n}”为“重复n次”操作符
+
+=====计数行=====
+*COUNT(*)函数可以计算行数
+如果你想要知道每个主人有多少宠物，你可以使用COUNT( )函数：
+<source lang="mysql">
+mysql> SELECT owner, COUNT(*) FROM pet GROUP BY owner;
++--------+----------+
+| owner  | COUNT(*) |
++--------+----------+
+| Benny  |        2 |
+| Diane  |        2 |
+| Gwen   |        3 |
+| Harold |        2 |
++--------+----------+
+</source>
+*使用GROUP BY对每个owner的所有记录分组
+*若使用COUNT( )，你不必检索整个表。例如，当只对狗和猫进行时，可以：
+<source lang="mysql">
+mysql> SELECT species, sex, COUNT(*) FROM pet
+    -> WHERE species = 'dog' OR species = 'cat'
+    -> GROUP BY species, sex;
++---------+------+----------+
+| species | sex  | COUNT(*) |
++---------+------+----------+
+| cat     | f    |        1 |
+| cat     | m    |        1 |
+| dog     | f    |        1 |
+| dog     | m    |        2 |
++---------+------+----------+
+</source>
+
+=====使用1个以上的表=====
+pet表追踪你有哪个宠物，但如果你想要记录其它相关信息，你需要另外的表。<br>
+分析后，event表的CREATE TABLE语句应为：
+<source lang="mysql">
+mysql> CREATE TABLE event (name VARCHAR(20), date DATE,
+    -> type VARCHAR(15), remark VARCHAR(255));
+</source>
+假如表中数据如下：
+<table border="1" cellpadding="0" id="table4">
+			<tr>
+				<td>
+				<p><strong>
+				<span>name</span></strong></td>
+				<td>
+				<p><strong>
+				<span>date</span></strong></td>
+				<td>
+				<p><strong>
+				<span>type</span></strong></td>
+				<td>
+				<p><strong>
+				<span>remark</span></strong></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Fluffy</span></td>
+				<td>
+				<p><span>1995-05-15</span></td>
+				<td>
+				<p><span>litter</span></td>
+				<td>
+				<p><span>4 kittens, 3 female, 1 
+				male</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Buffy</span></td>
+				<td>
+				<p><span>1993-06-23</span></td>
+				<td>
+				<p><span>litter</span></td>
+				<td>
+				<p><span>5 puppies, 2 female, 3 
+				male</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Buffy</span></td>
+				<td>
+				<p><span>1994-06-19</span></td>
+				<td>
+				<p><span>litter</span></td>
+				<td>
+				<p><span>3 puppies, 3 female</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Chirpy</span></td>
+				<td>
+				<p><span>1999-03-21</span></td>
+				<td>
+				<p><span>vet</span></td>
+				<td>
+				<p><span>needed beak straightened</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Slim</span></td>
+				<td>
+				<p><span>1997-08-03</span></td>
+				<td>
+				<p><span>vet</span></td>
+				<td>
+				<p><span>broken rib</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Bowser</span></td>
+				<td>
+				<p><span>1991-10-12</span></td>
+				<td>
+				<p><span>kennel</span></td>
+				<td>
+				<p><span>&nbsp;</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Fang</span></td>
+				<td>
+				<p><span>1991-10-12</span></td>
+				<td>
+				<p><span>kennel</span></td>
+				<td>
+				<p><span>&nbsp;</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Fang</span></td>
+				<td>
+				<p><span>1998-08-28</span></td>
+				<td>
+				<p><span>birthday</span></td>
+				<td>
+				<p><span>Gave him a new chew toy</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Claws</span></td>
+				<td>
+				<p><span>1998-03-17</span></td>
+				<td>
+				<p><span>birthday</span></td>
+				<td>
+				<p><span>Gave him a new flea 
+				collar</span></td>
+			</tr>
+			<tr>
+				<td>
+				<p><span>Whistler</span></td>
+				<td>
+				<p><span>1998-12-09</span></td>
+				<td>
+				<p><span>birthday</span></td>
+				<td>
+				<p><span>First birthday</span></td>
+			</tr>
+		</table>
+采用 LOAD DATA装载记录<br>
+假如现在需要统计生小动物时各动物的年龄，利用上面的操作我们无法实现，因为此时需要查询两个表<br>
+我们可以利用下面的语句：
+<source lang="mysql">
+mysql> SELECT pet.name,
+    -> TIMESTAMPDIFF(YEAR,birth,date) AS age,
+    -> remark
+    -> FROM pet INNER JOIN event
+    ->   ON pet.name = event.name
+    -> WHERE event.type = 'litter';
++--------+------+-----------------------------+
+| name   | age  | remark                      |
++--------+------+-----------------------------+
+| Fluffy |    2 | 4 kittens, 3 female, 1 male |
+| Buffy  |    4 | 5 puppies, 2 female, 3 male |
+| Buffy  |    5 | 3 puppies, 3 female         |
++--------+------+-----------------------------+
+</source>
+
+关于该查询要注意的几件事情：
+*FROM子句列出两个表，因为查询需要从两个表提取信息。
+*当从多个表组合(联结)信息时，你需要指定一个表中的记录怎样能匹配其它表的记录。这很简单，因为它们都有一个name列。查询使用WHERE子句基于name值来匹配2个表中的记录。
+*因为name列出现在两个表中，当引用列时，你一定要指定哪个表。把表名附在列名前即可以实现。
+----
+*你不必有2个不同的表来进行联结。如果你想要将一个表的记录与同一个表的其它记录进行比较，可以将一个表联结到自身。例如，为了在你的宠物之中繁殖配偶，你可以用pet联结自身来进行相似种类的雄雌配对
+<source lang="mysql">
+mysql> SELECT p1.name, p1.sex, p2.name, p2.sex, p1.species
+    -> FROM pet AS p1 INNER JOIN pet AS p2
+    ->   ON p1.species = p2.species AND p1.sex = 'f' AND p2.sex = 'm';
++--------+------+--------+------+---------+
+| name   | sex  | name   | sex  | species |
++--------+------+--------+------+---------+
+| Fluffy | f    | Claws  | m    | cat     |
+| Buffy  | f    | Fang   | m    | dog     |
+| Buffy  | f    | Bowser | m    | dog     |
++--------+------+--------+------+---------+
+</source>
+*在这个查询中，我们为表名指定别名以便能引用列并且使得每一个列引用与哪个表实例相关联更直观。

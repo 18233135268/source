@@ -1,0 +1,99 @@
+==numeric 类型概述==
+* M 为 integer 类型指定最大宽度。最大显示宽度为255。显示宽度和一个类型包含的值的范围无关。对于浮点和定点类型，M 是可以存储的数字的总数。
+* 如果为 numeric 列指定<code>ZEROFILL</code>，MySQL 自动为这列添加<code>UNSIGNED</code>属性。
+* numeric 数据类型允许<code>UNSIGNED</code>属性也允许<code>SIGNED</code>属性。但这些数据类型默认是有符号的，所以<code>SIGNED</code>属性是无效果的。
+* <code>SERIAL</code>是<code>BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE</code>的别名。
+* 在一个 integer 列的定义中中<code>SERIAL DEFAULT VALUE</code>是<code>NOT NULL AUTO_INCREMENT UNIQUE</code>的别名。
+* '''注意：'''当在 integer 值之间使用减法时，如果其中一个是无符号的，运算结果就是无符号的，除非<code>NO_UNSIGNED_SUBTRACTION</code>SQL 模式是激活的。
+* <code>BIT[(M)]</code>：位字段类型。M 是每个值位的数量，从1到64。如果 M 省略，则默认为 1。
+* <code>TINYINT[(M)] [UNSIGNED] [ZEROFILL]</code>：非常小的整数，有符号范围从 -128 到 127，无符号范围从 0 到 255.
+* <code>BOOL</code>, <code>BOOLEAN</code>：这两个类型是<code>TINYINT(1)</code>的同义词。0 的值被认为是 false，非 0 的值被认为是 true。
+* ture 和 false 的值是 1 和 0 的别名。
+* <code>SMALLINT[(M)] [UNSIGNED] [ZEROFILL]</code>：一个小整数。有符号范围从 -32768 到 32767，无符号范围从 0 到 65535。
+* <code>MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL]</code>：中等大小的整数。有符号范围从 -8388608 到 8388607，无符号范围从 0 到 16777215。
+* <code>INT[(M)] [UNSIGNED] [ZEROFILL]</code>：正常大小整数。有符号范围从 -2147483648 到 2147483647，无符号范围从 0 到 4294967295。
+* <code>INTEGER[(M)] [UNSIGNED] [ZEROFILL]</code>：这个类型是 <code>INT</code>的同义词。
+* <code>BIGINT[(M)] [UNSIGNED] [ZEROFILL]</code>：大整数。有符号范围从 -9223372036854775808 到 9223372036854775807，无符号范围从 0 到 18446744073709551615。
+* 关于<code>BIGINT</code>列的一些应该注意的东西：
+** 所有算术是通过使用有符号<code>BIGINT</code>或<code>DOUBLE</code>值，所以除非有大的功能要实现，否则不应该使用超过 63 位的无符号大整数。如果这么做了，结果中的最后一个数字可能因为在将一个<code>BIGINT</code>值转换为<code>DOUBLE</code>时的四舍五入错误而发生错误。
+MySQL 可以在以下情况下处理<code>BIGINT</code>：
+*** 当使用整数在<code>BIGINT</code>列存储大的无符号值。
+*** 在<code>MIN(col_name)</code> 或 <code>MAX(col_name)</code>中，col_name 引用的<code>BIGINT</code>列时。
+*** 当操作的两个数都是整数时使用操作符（+、-、*等）。
+** 总是可以在一个<code>BIGINT</code>列中通过使用一个字符串来存储精确的整数值。
+** 当操作的的两个数都是整数值时，操作符+、_、*使用<code>BIGINT</code>算术。意思是，当两个大整数做乘法时，在结果大于 9223372036854775807 时可能可到意想不到的结果。
+* <code>DECIMAL[(M[,D])] [UNSIGNED] [ZEROFILL]</code>：一个填充的精确的定点数。M 是数字的总数（精度），D 是小数点后的数字。小数点和负号不计入 M 的数量，如果 D 是 0 ，值没有小数点或小数部分。对于<code>DECIMAL</code>来说 M 的最大值是 65。小数点后 D 支持的最大数量是30。如果 D 省略了，默认是 0。如果 M 省略了，默认是 10。所有基本运算（加减乘除）在<code>DECIMAL</code>列中为 65 位数精度。
+* <code>DEC[(M[,D])] [UNSIGNED] [ZEROFILL], NUMERIC[(M[,D])] [UNSIGNED] [ZEROFILL], FIXED[(M[,D])] [UNSIGNED] [ZEROFILL]</code>：这些类型是<code>DECIMAL</code>的同义词。<code>FIXED</code>同义词可用于与其它数据库系统的兼容性。
+* <code>FLOAT[(M,D)] [UNSIGNED] [ZEROFILL]</code>：一个小浮点数（单精度）。M 是数字的总数，D 是小数点后数字的数量。若 M 和 D 省略了，值存储在硬件允许的范围内。一个单精度浮点数精确到约 7 位小数。使用<code>FLOAT</code>可能导致意想不到的问题，因为在 MySQL 中所有计算用双精度完成。
+* <code>DOUBLE[(M,D)] [UNSIGNED] [ZEROFILL]</code>：正常大小浮点数（双精度）。M 是数字的总数，D 是小数点后数字的数量。若 M 和 D 省略了，值存储在硬件允许的范围内。双精度浮点数精确到小数点后 15 位。
+* <code>DOUBLE PRECISION[(M,D)] [UNSIGNED] [ZEROFILL], REAL[(M,D)] [UNSIGNED] [ZEROFILL]</code>：这两个类型是<code>DOUBLE</code>的同义词。例外情况：若<code>REAL_AS_FLOAT</code>模式是激活的，<code>REAL</code>是<code>FLOAT</code>的同义词而不是<code>DOUBLE</code>的。
+* <code>FLOAT(p) [UNSIGNED] [ZEROFILL]</code>：浮点数。p 代表位的精度，但 MySQL 仅使用它来决定结果类型是使用<code>FLOAT</code>还是<code>DOUBLE</code>。若 p 是从 0 到 24，数据类型变为省略了 M 或 D 的值的<code>FLOAT</code>。若 p 是从 25 到 53，数据类型变为省略了 M 或 D 的值的<code>DOUBLE</code>。结果的范围和之前描述的单精度<code>FLOAT</code>和双精度<code>DOUBLE</code>数据类型一致。
+
+==日期和时间类型概述==
+* 对于<code>TIME</code>, <code>DATETIME</code>, 和 <code>TIMESTAMP</code>的值 MySQL 允许小数秒，高达微秒（6位数）精度。定义包含小数秒部分的列，使用语法<code>type_name(fsp)</code>，type_name 是<code>TIME</code>, <code>DATETIME</code>, 或 <code>TIMESTAMP</code>，fsp 是小数秒精度。例：
+<source lang='mysql'>
+CREATE TABLE t1 (t TIME(3), dt DATETIME(6));
+</source>
+若给定了 fsp 的值，范围必须是从 0 到 6。值为 0 表示没有小数部分。若省略，默认精度是 0。
+* 在表中任何<code>TIMESTAMP</code> 或 <code>DATETIME</code>列可以自动初始化和更新属性。
+** <code>DATE</code>：日期，支持的范围从 '1000-01-01' 到 '9999-12-31'。MySQL 以 'YYYY-MM-DD' 格式显示<code>DATE</code>值，但允许使用字符串或数字将值分配到<code>DATE</code>列中。
+** <code>DATETIME[(fsp)]</code>：日期和时间的组合。支持的范围从 '1000-01-01 00:00:00.000000' 到 '9999-12-31 23:59:59.999999'。MySQL 以 'YYYY-MM-DD HH:MM:SS[.fraction]' 格式显示<code>DATETIME</code>值，但允许使用字符串或数字将值分配到<code>DATE</code>列中。可选的 fsp 的值范围从 0 到 6，可指定小数秒的精度。为<code>DATETIME[(fsp)]</code>列自动初始化以及更新到当前日期和时间，可以使用<code>DEFAULT</code> 和 <code>ON UPDATE</code>定义子句来定义。
+** <code>TIMESTAMP[(fsp)]</code>：时间戳，范围从'1970-01-01 00:00:01.000000' UTC 到 '2038-01-19 03:14:07.999999' UTC。一个<code>TIMESTAMP</code>不能表示值'1970-01-01 00:00:00'，因为这表示从新纪元过了 0 秒，0 值为保留值代表 '0000-00-00 00:00:00'，0<code>TIMESTAMP</code>值。可选的 fsp 的范围及默认情况同上。
+** 服务器处理<code>TIMESTAMP</code>定义的方式取决于系统变量<code>explicit_defaults_for_timestamp</code>的值。默认情况下，这个值是无效的，服务器用如下方式处理<code>TIMESTAMP</code>：
+*** 除非另有说明，如果没有明确的指定值，表中的第一个<code>TIMESTAMP</code>列定义为自动设置为最近的修改的日期、时间值。这使得<code>TIMESTAMP</code>对于记录<code>INSERT</code>和<code>UPDATE</code>操作的时间戳是有用的。也可以通过指定给它一个<code>NULL</code>值来设置任何<code>TIMESTAMP</code>列为当前日期和时间，除非它已经设置为<code>NULL</code>属性，以允许空值。
+*** 自动初始化以及更新到当前日期和时间可以使用<code>DEFAULT CURRENT_TIMESTAMP</code> 和 <code>ON UPDATE CURRENT_TIMESTAMP</code>列定义子句来定义。
+*** 若<code>explicit_defaults_for_timestamp</code>处于激活状态，则<code>DEFAULT CURRENT_TIMESTAMP</code> 或 <code>ON UPDATE CURRENT_TIMESTAMP</code>属性不会自动分配到任何<code>TIMESTAMP</code>列。它们必须明确的包含在列定义中。
+** <code>TIME[(fsp)]</code>：时间，范围从 '-838:59:59.000000' 到 '838:59:59.000000'，MySQL 以 'HH:MM:SS[.fraction]' 格式显示<code>TIME</code>值，但允许以字符串或数字分配值到<code>TIME</code>列。fsp 用法同上。
+** <code>YEAR[(4)]</code>：四位数格式的年。MySQL 以 YYYY 格式显示<code>YEAR</code>值，但允许以字符串或数字分配值到<code>YEAR</code>列。值显示为 1901 到 2155, 还有 0000。
+
+==字符串类型概述==
+* 为一些字符串数据类型列定义时可以包含指定这个列的字符集或 collation 的属性。这些属性适用于<code>CHAR</code>，<code>VARCHAR</code>，<code>TEXT</code>类型, <code>ENUM</code>，<code>SET</code>数据类型：
+** <code>CHARACTER SET</code>属性指定字符集，<code>COLLATE</code>属性为字符集指定 collation，其中 c1 指定了字符集，其 collation 为 utf 默认的。<code>CHARSET</code>是<code>CHARACTER SET</code>的同义词。：
+<source lang='python'>
+CREATE TABLE t
+(
+    c1 VARCHAR(20) CHARACTER SET utf8,
+    c2 TEXT CHARACTER SET latin1 COLLATE latin1_general_cs
+);
+</source>
+** 为字符数据类型指定<codeCHARACTER SET binary</code>属性将导致该列被创建为相应的二进制数据类型：<code>CHAR</code> 变为 <code>BINARY</code>，<code>VARCHAR</code> 变为 <code>VARBINARY</code>，<code>TEXT</code> 变为 <code>BLOB</code>。对于<code>ENUM</code>和<code>SET</code>数据类型，这不会发生，它们被创建为声明。假设使用这个定义指定一个表：
+<source lang='python'>
+CREATE TABLE t
+(
+  c1 VARCHAR(10) CHARACTER SET binary,
+  c2 TEXT CHARACTER SET binary,
+  c3 ENUM('a','b','c') CHARACTER SET binary
+);
+</source>
+由此产生的表有如下定义：
+<source lang='python'>
+CREATE TABLE t
+(
+  c1 VARBINARY(10),
+  c2 BLOB,
+  c3 ENUM('a','b','c') CHARACTER SET binary
+);
+</source>
+** <code>ASCII</code>是<code>CHARACTER SET latin1</code>的简写。
+** <code>UNICODE</code>是<code>CHARACTER SET ucs2</code>的简写。
+** <code>BINARY</code>属性是指定字符集的二进制 collation。这个例子中的排序和比较基于数字字符值。
+* 字符列的排序和比较基于分配给这列的字符集。对于<code>CHAR</code>，<code>VARCHAR</code>，<code>TEXT</code>，<code>ENUM</code>，和<code>SET</code>数据类型，可以给列声明二进制 collation 或<code>BINARY</code>属性，以使排序和比较使用基本的字符代码值而不是词汇排序。
+** <code>[NATIONAL] CHAR[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]</code>：固定长度字符串，在存储时永远使用空格填充到字符串右边以满足指定的长度。M 相当于以字符为单位的列长度，范围从 0 到 255，若 M 省略了，则长度为 1。'''注意'''：当取回<code>CHAR</code>值时尾随的空格就移除了，除非<code>PAD_CHAR_TO_FULL_LENGTH</code> SQL 模式是激活的。
+*** <code>NATIONAL CHAR</code>（简写为NCHAR）是定义<code>CHAR</code>列应该使用一些预定义的字符集的标准 SQL 方式。MySQL 使用 utf8 作为这个预定义的字符集。
+*** <code>CHAR BYTE</code>数据类型是<code>BINARY</code>数据类型的别名。这是兼容性功能。
+*** MySQL 允许创建类型为<code>CHAR(0)</code>的列，当必须符合依赖于一个列的存在的旧应用程序，而并不真的使用这列的值时，这是有用的。当需要一个只取两个值的列时，<code>CHAR(0)</code>也是有用的：<code> CHAR(0) NULL</code>定义的列只占一位，只能取<code>NULL</code>和<code>''</code>。
+** <code>[NATIONAL] VARCHAR(M) [CHARACTER SET charset_name] [COLLATE collation_name]</code>：可变长度字符串。M 相当于最大的以字符为单位的列长度，范围从 0 到 65535。<code>VARCHAR</code>的有效最大长度受最大行大小（65535字节是所有列共享的）和使用的字符集影响。例如使用 utf8 字符集时每个字符占 3 个字节，一个<code>VARCHAR</code>列使用 utf8 字符集时最多可以声明 21844 个字符。
+*** MySQL 用 1-byte 或 2-byte 长度的前缀加上数据的方式存储<code>VARCHAR</code>值。长度前缀表示值中的字节数。如果值需要不超过 255 字节，<code>VARCHAR</code>列就使用一个长度字节；如果值可能需要超过 255 个字节则使用两个长度字节。'''注意'''：MySQL 遵循标准的 SQL 规范，不从<code>VARCHAR</code>值移除尾随的空格。
+*** <code>VARCHAR</code>是<code>CHARACTER VARYING</code>的简写，<code>NATIONAL VARCHAR</code>是一个<code>VARCHAR</code>列应该使用一些预定义字符集的标准 SQL 方式。MySQL 使用 utf8 作为这个预定义的字符集。<code>NVARCHAR</code>是<code>NATIONAL VARCHAR</code>的简写。
+** <code>BINARY(M)</code>：这个类型类似于<code>CHAR</code>类型，存储二进制字节字符串而不是非二进制的字符字符串。M 表示以字节为单位的列长度。
+** <code>VARBINARY(M)</code>：这个类型类似于<code>VARCHAR</code>类型，存储二进制字节字符串而不是非二进制的字符字符串。M 表示以字节为单位的最大列长度。
+** <code>TINYBLOB</code>：最大长度为 255 字节的<code>BLOB</code>列。每个<code>TINYBLOB</code>值使用一个表示值的字节数的 1 字节长度的前缀来存储。
+** <code>TINYTEXT [CHARACTER SET charset_name] [COLLATE collation_name]</code>：最大长度为 255 字符的<code>TEXT</code>列，如果值中包含多字节字符则有效最大长度小于这个数。每个<code>TINYTEXT</code>值使用一个表示值的字节数的 1 字节长度的前缀来存储。
+** <code>BLOB[(M)]</code>：最大长度为 65535 字节的<code>BLOB</code>列，每个<code>BLOB</code>值使用一个表示值的字节数的 2 字节长度的前缀来存储。M 是一个可选的长度，如果给定了 M 的值，MySQL 将创建最小的<code>BLOB</code>类型但大到足以容纳 M 字节长度值的列。
+** <code>TEXT[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]</code>：最大长度为 65535 字符的<code>TEXT</code>列，如果值中包含多字节字符则有效最大长度小于这个数。每个<code>TEXT</code>值使用一个表示值的字节数的 2 字节长度的前缀来存储。M 是一个可选的长度，如果给定了 M 的值，MySQL 将创建最小的<code>TEXT</code>类型但大到足以容纳 M 字符长度值的列。
+** <code>MEDIUMBLOB</code>：最大长度为 16,777,215 字节的<code>BLOB</code>列，每个<code>MEDIUMBLOB</code>值使用一个表示值的字节数的 3 字节长度的前缀来存储。
+** <code>MEDIUMTEXT [CHARACTER SET charset_name] [COLLATE collation_name]</code>：最大长度为 16,777,215 字符的<code>TEXT</code>列，如果值中包含多字节字符则有效最大长度小于这个数。每个<code>MEDIUMTEXT</code>值使用一个表示值的字节数的 3 字节长度的前缀来存储。
+** <code>LONGBLOB</code>：最大长度为4,294,967,295 或 4GB 字节的<code>BLOB</code>列，<code>LONGBLOB</code>列的有效最大长度取决于在客户端/服务器协议和可用内存中配置的最大数据包大小。每个<code>LONGBLOB</code>值使用一个表示值的字节数的 4 字节长度的前缀来存储。
+** <code> LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]</code>：最大长度为 4,294,967,295 或 4GB 字符的<code>TEXT</code>列，如果值中包含多字节字符则有效最大长度小于这个数。<code>LONGTEXT</code>列的有效最大长度也取决于在客户端/服务器协议和可用内存中配置的最大数据包大小。每个<code>LONGTEXT</code>值使用一个表示值的字节数的 4 字节长度的前缀来存储。
+** <code>ENUM('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]</code>：枚举，一个可以只有一个值的字符串对象，从值'value1', 'value2', ..., NULL 或 the 特殊的 '' 错误值的列表中选择。<code>ENUM</code>值的内部表示为整数。一个<code>ENUM</code>列最多可以有 65535 个不同的元素（实际的限制小于3000）。一个表可以有不超过 255 个独特的元素列表定义在它的<code>ENUM</code>和<code>SET</code>列之间，被认为是一个群组。
+** <code>SET('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]</code>：集合，一个可以有 0 个或多个值的字符串对象，每一种必须从值'value1', 'value2'的列表中选择，<code>... SET</code>值在内部表示为整数。一个<code>SET</code>列最多可以有 64 个不同的成员，一个表可以有不超过 255 个独特的元素列表定义在它的<code>ENUM</code>和<code>SET</code>列之间，被认为是一个群组。

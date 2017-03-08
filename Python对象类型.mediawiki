@@ -1,0 +1,324 @@
+''' 数字（Numbers） '''<br>
+Python常用的数字类型：<br>
+''int：''<code>10</code>。<br>
+''floating point real values：''<code>15.20</code>。<br>
+<source lang="Python">
+# Python Number类型转换
+int(x [,base ])  # 将x转换为一个整数
+float(x)  # 将x转换到一个浮点数  
+</source>
+
+''' 字符串（Strings） '''<br>
+* 可以用单引号 ('...') 或双引号 ("...") 标识。<code>'\'</code> 是转义字符:<br>
+<source lang="Python">
+'spam eggs'  # single quotes
+'spam eggs'
+'doesn\'t'  # use \' to escape the single quote...
+"doesn't"
+"doesn't"  # ...or use double quotes instead
+"doesn't"
+'"Yes," he said.'
+'"Yes," he said.'
+"\"Yes,\" he said."
+'"Yes," he said.'
+'"Isn\'t," she said.'
+'"Isn\'t," she said.'
+</source>
+* 也可以使用在第一个引号前面加上一个<code>r</code>的方法代替<code>'\'</code>:
+<source lang="Python">
+print('C:\some\name')  # here \n means newline!
+C:\some
+ame
+print(r'C:\some\name')  # note the r before the quote
+C:\some\name
+</source>
+*可以使用三引号<code>'''...'''</code>或<code>"""..."""</code>将字符串文本分成多行：<br>
+<source lang="Python">
+print("""\
+Usage: thingy [OPTIONS]
+     -h  
+     -H hostname
+""")
+Usage: thingy [OPTIONS]
+     -h     
+     -H hostname 
+</source>
+* 字符串可以由 <code>+</code> 操作符连接，可以由 <code>*</code> 表示重复:<br>
+<source lang="Python">
+3 * 'un' + 'ium'  # 3 times 'un', followed by 'ium'
+'unununium'
+</source>
+*支持索引和切片：<br>
+<source lang="Python">
+word = 'Python'
+word[0]  # character in position 0
+'P'
+word[-1]  # last character
+'n'
+</source>
+*字符串不可变：<br>
+<source lang="Python">
+word[0] = 'J'
+  ...
+TypeError: 'str' object does not support item assignment
+</source>
+*字符串格式化，使用<code>format()</code>方法：<br>
+<source lang="Python">
+"The sum of 1 + 2 is {0}".format(1+2)
+'The sum of 1 + 2 is 3'
+</source>
+
+''' 列表（Lists） '''<br>
+*基本结构:<br>
+<source lang="Python">
+squares = [1, 4, 9, 16, 25]
+squares
+[1, 4, 9, 16, 25]
+</source>
+*可以被索引和切片:<br>
+<source lang="Python">
+squares[0]  # indexing returns the item
+1
+squares[-1]
+25
+squares[-3:]  # slicing returns a new list
+[9, 16, 25]
+</source>
+*列表可变：<br>
+<source lang="Python">
+cubes = [1, 8, 27, 65, 125]  # something's wrong here
+4 ** 3  # the cube of 4 is 64, not 65!
+64
+cubes[3] = 64  # replace the wrong value
+cubes
+[1, 8, 27, 64, 125]
+</source>
+*使用<code>append()</code>方法在列表的末尾添加新元素:<br>
+<source lang="Python">
+cubes.append(216)  # add the cube of 6
+cubes.append(7 ** 3)  # and the cube of 7
+cubes
+[1, 8, 27, 64, 125, 216, 343]
+</source>
+*也可以使用<code>extend()</code>方法，但和<code>append()</code>方法有区别：<br>
+<source lang="Python">
+aList = [123, 'xyz', 'zara', 'abc', 123]
+bList = [2009, 'manni']
+aList.extend(bList)
+aList
+[123, 'xyz', 'zara', 'abc', 123, 2009, 'manni']
+</source>
+*支持切片赋值：<br>
+<source lang="Python">
+letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+letters
+['a', 'b', 'c', 'd', 'e', 'f', 'g']
+letters[2:5] = ['C', 'D', 'E']  # replace some values
+letters
+['a', 'b', 'C', 'D', 'E', 'f', 'g']
+letters[2:5] = []  # now remove them
+letters
+['a', 'b', 'f', 'g']
+letters[:] = []  # clear the list by replacing all the elements with an empty list
+letters
+[]
+</source>
+*允许嵌套列表：<br>
+<source lang="Python">
+a = ['a', 'b', 'c']
+n = [1, 2, 3]
+x = [a, n]
+x
+[['a', 'b', 'c'], [1, 2, 3]]
+x[0]
+['a', 'b', 'c']
+x[0][1]
+'b'
+</source>
+
+''' 元组（Tuples） '''
+*基本结构、不可变、属于序列，可嵌套：<br>
+<source lang="Python">
+t = 12345, 54321, 'hello!'
+t[0]
+12345
+t
+(12345, 54321, 'hello!')
+u = t, (1, 2, 3, 4, 5)  # Tuples may be nested
+u
+((12345, 54321, 'hello!'), (1, 2, 3, 4, 5))
+t[0] = 88888  # Tuples are immutable
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: 'tuple' object does not support item assignment
+v = ([1, 2, 3], [3, 2, 1])  # but they can contain mutable objects
+v
+([1, 2, 3], [3, 2, 1])
+</source>
+*单个元素的元组示例：<br>
+<source lang="Python">
+empty = ()
+singleton = 'hello',    # <-- note trailing comma
+len(empty)
+0
+len(singleton)
+1
+singleton
+('hello',)
+</source>
+
+'''集合（Sets）'''
+*集合是一个无序不重复元素的集，可以用<code>set()</code>创建集合：<br>
+<source lang="Python">
+basket = {'apple', 'orange', 'apple', 'pear', 'orange', 'banana'}
+print(basket)  # show that duplicates have been removed
+{'orange', 'banana', 'pear', 'apple'}
+'orange' in basket  # fast membership testing
+True
+'crabgrass' in basket
+False
+a = set('abracadabra')  # Demonstrate set operations on unique letters from two words
+b = set('alacazam')
+a  # unique letters in a
+{'a', 'r', 'b', 'c', 'd'}
+a - b  # letters in a but not in b
+{'r', 'd', 'b'}
+a | b  # letters in either a or b
+{'a', 'c', 'r', 'd', 'b', 'm', 'z', 'l'}
+a & b  # letters in both a and b
+{'a', 'c'}
+a ^ b  # letters in a or b but not both
+{'r', 'd', 'b', 'm', 'z', 'l'}
+
+a = {x for x in 'abracadabra' if x not in 'abc'}  # 类似列表解析式的集合解析式
+a
+{'r', 'd'}
+</source>
+
+''' 字典（Dictionaries）'''
+*字典以<code>key</code>为索引，<code>key</code>是任意不可变类型；
+*字典是无序的键：值对（<code>key: value</code>对)集合;
+*使用<code>{}</code>或<code>dict()</code>创建字典;
+*示例：
+<source lang="Python">
+tel = {'jack': 4098, 'sape': 4139}
+tel['guido'] = 4127
+tel
+{'sape': 4139, 'guido': 4127, 'jack': 4098}
+tel['jack']
+4098
+del tel['sape']
+tel['irv'] = 4127
+tel
+{'guido': 4127, 'irv': 4127, 'jack': 4098}
+list(tel.keys())
+['irv', 'guido', 'jack']
+sorted(tel.keys())
+['guido', 'irv', 'jack']
+'guido' in tel
+True
+'jack' not in tel
+False
+
+dict([('sape', 4139), ('guido', 4127), ('jack', 4098)])
+{'sape': 4139, 'jack': 4098, 'guido': 4127}
+dict(sape=4139, guido=4127, jack=4098)
+{'sape': 4139, 'jack': 4098, 'guido': 4127}
+
+{x: x**2 for x in (2, 4, 6)}  # 字典解析式
+{2: 4, 4: 16, 6: 36}
+</source>
+
+'''文件（Files）'''<br>
+*文件读写：<br>
+*函数<code>open()</code>返回文件对象，通常的用法需要两个参数：<code>open(filename, mode)</code>。
+<source lang="Python">
+f = open('workfile', 'w')
+</source>
+*第二个参数的含义：
+{| class="wikitable"
+|-
+!参数
+!描述
+|-
+|<code>'r'</code>
+|读取文件
+|-
+|<code>'w'</code>
+|写入文件
+|-
+|<code>'a'</code>
+|在文件末尾追加内容
+|-
+|<code>'r+'</code>
+|读取和写入
+|-
+|<code>'rb'</code>
+|以二进制格式打开文件用于只读。文件指针会放在文件开头。这是默认模式。
+|-
+|<code>'rb+'</code>
+|以二进制格式打开文件用于读写。文件指针会放在文件开头。
+|-
+|<code>'wb'</code>
+|以二进制格式打开文件用于写入。如果该文件已存在则将其覆盖。如果该文件不存在，创建新文件。
+|-
+|<code>'w+'</code>
+|打开一个文件用于读写。如果该文件已存在则将其覆盖。如果该文件不存在，创建新文件。
+|-
+|<code>'wb+'</code>
+|以二进制格式打开文件用于读写。如果该文件已存在则将其覆盖。如果该文件不存在，创建新文件。
+|-
+|<code>'ab'</code>
+|以二进制格式打开文件用于追加。如果该文件已存在，指针会放在文件的结尾。即新的内容会被写入到已有内容之后。如果该文件不存在，创建新文件进行写入。
+|-
+|<code>'a+'</code>
+|打开一个文件用于读写。如果该文件已存在，文件指针会放在文件结尾。文件打开时是追加模式。如果该文件不存在，创建新文件用于读写。
+|-
+|<code>'ab+'</code>
+|以二进制格式打开文件用于追加。如果该文件已存在，文件指针会放在文件结尾。如果该文件不存在，创建新文件用于读写。
+|}
+*读取文件，调用<code>f.read(size)</code>，size可选，指定字符串长度。若到文件末尾，<code>f.read()</code>返回空字符串<code>（''）</code>：
+<source lang="Python">
+f.read()
+'This is the entire file.\n'
+f.read()  # 到文件末尾时
+' '
+</source>
+*<code>f.readline()</code>从文件读取单独一行，如遇空行，描述为'\n'
+<source lang="Python">
+f.readline()
+'This is the first line of the file.\n'  # 自动在行尾添加<code>'\n'</code>
+f.readline()
+'Second line of the file\n'
+f.readline()
+' '  # 到达文件末尾返回空字符串
+</source>
+*循环遍历文件对象来读取文件的每一行:
+<source lang="Python">
+for line in f:
+    print(line, end='')
+
+This is the first line of the file.
+Second line of the file
+</source>
+*把文件中的所有行读到一个列表中，可以使用<code>list(f)</code>或者<code>f.readlines()</code>。
+* <code>f.write(string)</code>方法：
+<source lang="Python">
+f.write('This is a test\n')  # 将string的内容写入文件，并返回写入字符的长度
+15
+</source>
+*只能写入字符串：
+<source lang="Python">
+value = ('the answer', 42)
+s = str(value)  # 非字符串内容要先转换为字符串
+f.write(s)
+18
+</source>
+*调用<code>f.close()</code>关闭文件。
+*关键字<code>with</code>处理文件对象，文件用完后会自动关闭：
+<source lang="Python">
+with open('workfile', 'r') as f:
+    read_data = f.read()
+f.closed
+True  # 文件已关闭
+</source>

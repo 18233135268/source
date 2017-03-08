@@ -1,0 +1,12 @@
+== Linux 安装 Flask ==
+# 介绍两种安装方式
+----
+=== 分步安装 ===
+# sudo pip install virtualenv
+# ln -s /usr/local/python3/bin/virtualenv /usr/bin/virtualenv   //一定要生成链接!!!
+# . venv/bin/activate
+# pip install Flask
+----
+=== 全局安装 ===
+# sudo pip install Flask  //需要以 root 权限运行 pip
+

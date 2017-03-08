@@ -1,0 +1,2 @@
+*Q:下载过echo后，在本地编译时，会出现 cannot find package "golang.org/x/net/websocket" 错误，也无法利用Terminal下载
+*A：可以到[https://gopm.io]这个网站下载，这个网站提供golang的一些包的下载，其中就有golang.org/x/net/websocket 这个包

@@ -1,0 +1,15 @@
+----
+== 使用组件样式 ==
+<source lang="TypeScript">
+@Component({
+  selector: 'hero-app',
+  template: `
+    <h1>Tour of Heroes</h1>
+    <hero-app-main [hero]=hero></hero-app-main>`,
+  styles: ['h1 { font-weight: normal; }'] // styles 属性可以接受一个包含 CSS 代码的字符串数组
+})
+export class HeroAppComponent {
+/* . . . */
+}
+</source>
+----

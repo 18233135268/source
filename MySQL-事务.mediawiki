@@ -1,0 +1,223 @@
+英文原文：http://www.w3resource.com/mysql/mysql-transaction.php
+==简述==
+* 一个事务是一个包含一条或多条 SQL 语句的作业的逻辑单位。
+* 事务是可以提交或回滚的作业的原子单位。
+* 当一个事务对数据库进行多个更改时，有两种结果，若事务提交则所有更改成功，若事务回滚则所有更改撤销。
+* 事务开始于第一条可执行的 SQL 语句。
+* 当提交或回滚事务时，使用 COMMIT 或 ROLLBACK 语句显式地或在发出 DDL 语句时隐式地提交事务，事务结束。
+** '''DDL(Data Definition Language)'''：用于管理表和索引结构，CREATE、ALTER、RENAME、DROP 和 TRUNCATE 语句仅列出一些数据定义元素。
+==事务的概念==
+* 为了便于理解，用一个银行数据库的例子来说明。假设存款人将资金从他的储蓄卡(SB a/c)转移到信用卡(CA a/c)，该语句将被分为四个部分：
+** 储蓄卡操作
+** 信用卡操作
+** 记录到事务日志
+** 结束事务
+* 操作储蓄卡的 SQL 语句如下：
+<source lang='sql'>
+UPDATE sb_accounts
+SET balance = balance - 1000
+WHERE account_no = 932656 ;
+</source>
+* 操作信用卡的 SQL 语句如下：
+<source lang='sql'>
+UPDATE ca_accounts
+SET balance = balance + 1000
+WHERE account_no = 933456 ;
+</source>
+* 记录到事务日志的 SQL 语句如下：
+<source lang='sql'>
+INSERT INTO journal VALUES 
+(100896, 'Tansaction on Benjamin Hampshair a/c', '26-AUG-08' 932656, 933456, 1000);
+</source>
+* 结束事务的 SQL 语句如下：
+<source lang='sql'>
+COMMIT WORK;
+</source>
+
+==MySQL 和 ACID 模型==
+* ACID (Atomicity, Consistency, Isolation, Durability) 是保证数据库事务可靠处理的一组属性。
+* 在 MySQL 中，InnoDB 存储引擎支持 ACID 兼容的特性。
+* 以下各节讨论 MySQL 的特性，特别是 InnoDB 存储引擎与 ACID 模型类别的交互：
+** '''Atomicity'''：主要涉及InnoDB事务，相关的 MySQL 功能包括：
+*** 自动提交设置(Autocommit setting)；
+*** COMMIT 语句；
+*** ROLLBACK 语句；
+*** 从 INFORMATION_SCHEMA 表操作数据。
+** '''Consistency'''：主要涉及内部 InnoDB 处理以保护数据免遭崩溃，相关的 MySQL 功能包括：
+*** InnoDB 双重写缓冲区(InnoDB doublewrite buffer)；
+**** '''doublewrite buffer''' 是一个位于系统表空间中的存储区域，InnoDB 在将页面写入其在数据文件中的正确位置之前写入从 InnoDB 缓冲池刷新的页面（原文：The doublewrite buffer is a storage area located in the system tablespace where InnoDB writes pages that are flushed from the InnoDB buffer pool, before the pages are written to their proper positions in the data file.）。
+*** InnoDB 崩溃恢复。
+** '''Isolation'''：主要涉及 InnoDB 事务，主要是适用于每个事务的隔离级别，相关的 MySQL 功能包括：
+*** 自动提交设置(Autocommit setting)；
+*** SET ISOLATION LEVEL 语句；
+*** InnoDB 锁的底层细节。在性能调优期间，可以通过 INFORMATION_SCHEMA 表查看详细信息。
+** '''Durability'''：涉及 MySQL 中与特定硬件配置交互的软件功能，相关的 MySQL 功能包括：
+*** InnoDB 双重写缓冲区通过 innodb_doublewrite 配置选项的开启与关闭；
+*** 配置选项 innodb_flush_log_at_trx_commit；
+*** 配置选项 sync_binlog；
+*** 配置选项 innodb_file_per_table；
+*** 在存储设备（如磁盘驱动器，SSD 或 RAID 阵列）中写入缓冲区；
+*** 存储设备中电池支持的缓存（Battery-backed cache in a storage device）；？？？
+*** 用于运行 MySQL 的操作系统，特别是其对 fsync() 系统调用的支持；
+*** UPS 保护所有运行 MySQL 服务和存储 MySQL 数据的服务器和存储设备的电源；
+*** 备份策略，如备份频率、类型以及备份的保留期；
+*** 对于分布式或托管的数据应用程序，数据中心的特殊特性：MySQL 服务器的硬件位于何处、数据中心之间的网络连接。
+
+==MySQL 事务==
+* MySQL(5.6版本) 通过诸如 SET autocommit、START TRANSACTION、COMMIT 和 ROLLBACK 这样的语句支持本地事务（在一个给定的客户端会话中）。以下是START TRANSACTION、COMMIT 和 ROLLBACK 的语法：
+<source lang='sql'>
+START TRANSACTION
+   transaction_characteristic [, transaction_characteristic] ...] 
+
+transaction_characteristic:     
+    WITH CONSISTENT SNAPSHOT    
+    | READ WRITE    
+    | READ ONLY    
+
+BEGIN [WORK]  
+COMMIT [WORK] [AND [NO] CHAIN] [[NO] RELEASE]  
+ROLLBACK [WORK] [AND [NO] CHAIN] [[NO] RELEASE]  
+SET autocommit = {0 | 1}
+</source>
+* 以下这些语句提供对事务使用的控制：
+** START TRANSACTION 或 BEGIN 语句开始一个新事务；
+** COMMIT 提交当前事务，使其更改永久生效；
+** ROLLBACK 回滚当前事务，取消其更改；
+** SETautocommit 语句为当前会话禁止或启用默认的 autocommit 模式。
+* 默认情况，MySQL 运行时 autocommit 模式是激活的。这意味着只要执行一条语句就会更新一个表，MySQL 在磁盘上存储该更新使其永久生效。该更改不能回滚。
+* 现在，MySQL 在 autocommit 模式激活的情况下运行：
+<source lang='sol'>
+mysql> select * from student_mast;
++------------+------------------+----------+
+| STUDENT_ID | NAME             | ST_CLASS |
++------------+------------------+----------+
+|          2 | Neena  Kochhar   |        9 |
+|          3 | Lex  De Haan     |        9 |
+|          4 | Alexander Hunold |       11 |
++------------+------------------+----------+
+3 rows in set (0.09 sec)
+</source>
+* 执行一条更新命令：
+<source lang='sql'>
+mysql> UPDATE STUDENT_MAST SET ST_CLASS=8 WHERE STUDENT_ID=2;
+Query OK, 1 row affected (0.08 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from student_mast;
++------------+------------------+----------+
+| STUDENT_ID | NAME             | ST_CLASS |
++------------+------------------+----------+
+|          2 | Neena  Kochhar   |        8 |
+|          3 | Lex  De Haan     |        9 |
+|          4 | Alexander Hunold |       11 |
++------------+------------------+----------+
+3 rows in set (0.00 sec)
+</source>
+* 现在执行 ROLLBACK 命令来返回前一阶段：
+<source lang='sql'>
+mysql> ROLLBACK;
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> select * from student_mast;
++------------+------------------+----------+
+| STUDENT_ID | NAME             | ST_CLASS |
++------------+------------------+----------+
+|          2 | Neena  Kochhar   |        8 |
+|          3 | Lex  De Haan     |        9 |
+|          4 | Alexander Hunold |       11 |
++------------+------------------+----------+
+3 rows in set (0.00 sec)
+</source>
+* 在 autocommit 模式激活的情况下回滚没有生效。
+* 禁用 autocommit 模式，使用 START TRANSACTION 语句：
+<source lang='sql'>
+mysql> START TRANSACTION;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> UPDATE STUDENT_MAST SET ST_CLASS=10 WHERE STUDENT_ID=2;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from student_mast;
++------------+------------------+----------+
+| STUDENT_ID | NAME             | ST_CLASS |
++------------+------------------+----------+
+|          2 | Neena  Kochhar   |       10 |
+|          3 | Lex  De Haan     |        9 |
+|          4 | Alexander Hunold |       11 |
++------------+------------------+----------+
+3 rows in set (0.00 sec)
+
+mysql> ROLLBACK;
+Query OK, 0 rows affected (0.07 sec)
+
+mysql> select * from student_mast;
++------------+------------------+----------+
+| STUDENT_ID | NAME             | ST_CLASS |
++------------+------------------+----------+
+|          2 | Neena  Kochhar   |        8 |
+|          3 | Lex  De Haan     |        9 |
+|          4 | Alexander Hunold |       11 |
++------------+------------------+----------+
+3 rows in set (0.00 sec)
+</source>
+
+==MySQL 语句不能回滚并且语句引起一个隐式提交==
+* 在 MySQL 中，一些语句不能回滚。例如 CREATE 或 DROP 数据库，CREATE、ALTER 或 DROP 表，或存储程序这样的 DDL 语句。应该在不使用这些语句的情况下设计一个事务。
+* 以下列出的语句（以及它们的同义词）隐式的结束当前会话中活动的任何事务，就像在执行这些语句之前已经执行 COMMIT 一样：
+** 定义或修改数据库对象的 DDL 语句：ALTER DATABASE, UPGRADE DATA DIRECTORY NAME, ALTER EVENT, ALTER PROCEDURE, ALTER SERVER, ALTER TABLE, ALTER VIEW, CREATE DATABAS, CREATE EVENT, CREATE INDEX, CREATE PROCEDURE, CREATE SERVER, CREATE TABLE, CREATE TRIGGER, CREATE VIEW, DROP DATABASE, DROP EVENT, DROP INDEX, DROP PROCEDURE, DROP SERVER, DROP TABLE, DROP TRIGGER, DROP VIEW, RENAME TABLE, TRUNCATE TABLE。
+** 当与 stored function 一起使用时，ALTER FUNCTION, CREATE FUNCTION 和 DROP FUNCTION 也引起隐式提交，但与 UDFs（User-Defined Function） 一起使用时不是这样（ALTER FUNCTION 只能和 stored function 一起使用）。
+*** stored functions 是一种特殊类型的 stored program，它返回单个值。使用 stored functions 来封装可在 SQL 语句或 stored programs 中重复使用的常见公式或业务规则（原文：A stored function is a special kind stored program that returns a single value. You use stored functions to encapsulate common formulas or business rules that are reusable among SQL statements or stored programs.）。
+** 如果使用了 TEMPORARY 关键字，ALTER TABLE, CREATE TABLE 和 DROP TABLE 不提交事务。
+** 隐式的使用或修改 MySQL 数据库中表的语句：CREATE USER, DROP USER, GRANT, RENAME USER, REVOKE, SET PASSWORD。
+** 事务的控制和锁语句：BEGIN, LOCK TABLES, SET autocommit = 1 (如果值不是已经设为 1), START TRANSACTION, UNLOCK TABLES。
+** 数据加载语句： LOAD DATA INFILE。LOAD DATA INFILE 仅在表使用 NDB 存储引擎时引起一个隐式的提交。
+** 管理语句：ANALYZE TABLE, CACHE INDEX, CHECK TABLE, LOAD INDEX INTO CACHE, OPTIMIZE TABLE, REPAIR TABLE。
+** 重复控制语句：START SLAVE, STOP SLAVE, RESET SLAVE, CHANGE MASTER TO。
+
+==SAVEPOINT, ROLLBACK TO SAVEPOINT 和 RELEASE SAVEPOINT==
+* InnoDB 支持 SQL 语句 SAVEPOINT, ROLLBACK TO SAVEPOINT, RELEASE SAVEPOINT，还有用于 ROLLBACK 的可选关键字 WORK。
+* SAVEPOINT 语句用标识符名称设置已经命名的事务 savepoint。如果当前事务有一个与其同名的 savepoint，则旧的 savepoint 将被删除，并设置一个新的。
+* ROLLBACK TO SAVEPOINT 语句将事务回滚到指定的 savepoint 而不终止事务。当前事务对 savepoint 后的行所做的修改在回滚中撤销，但 InnoDB 不释放在 savepoint 后存储在内存中的行锁（？？？）（对于新插入的行，锁的信息由存储在该行中的事务 ID 携带，该锁不单独存储在内存中。）。语法如下：
+<source lang='sql'>
+SAVEPOINT identifier  
+ROLLBACK [WORK] TO [SAVEPOINT] identifier  
+RELEASE SAVEPOINT identifier
+</source>
+* 如果执行 COMMIT，或在没有指定一个 savepoint 时执行 ROLLBACK，则会删除当前事务的所有 savepoint。
+
+==锁定和解锁表==
+* 为了与其它会话协同运行来访问表或防止其它会话在会话需要独占访问它们的期间修改表，MySQL 激活客户端会话来显式的获取表锁。一个会话可以仅为自身获取或释放锁。一个会话不能为另一个会话获取锁或释放另一个会话持有的锁。（A session can acquire or release locks only for itself. One session cannot acquire locks for another session or release locks held by another session.）
+* LOCK TABLES 为当前客户端会话显式的获取表锁。可以为基本表（base tables）或视图获取表锁。必须有 LOCK TABLES 权限，以及要锁定的每个对象的 SELECT 权限（原文：You must have the LOCK TABLES privilege, and the SELECT privilege for each object to be locked.）。
+* UNLOCK TABLES 显式的释放当前会话持有的任何表锁。LOCK TABLES 在获取新锁之前隐式的释放当前会话持有的任何表锁（LOCK TABLES implicitly releases any table locks held by the current session before acquiring new locks.）。语法如下：
+<source lang='sql'>
+LOCK TABLES      
+  tbl_name [[AS] alias] lock_type      
+  [, tbl_name [[AS] alias] lock_type] ...    
+
+lock_type:      
+  READ [LOCAL]    
+ | [LOW_PRIORITY] WRITE    
+
+UNLOCK TABLES
+</source>
+
+==SET TRANSACTION 语法==
+<source lang='sql'>
+SET [GLOBAL | SESSION] TRANSACTION
+    transaction_characteristic [, transaction_characteristic] ...
+	
+transaction_characteristic:      
+    ISOLATION LEVEL level    
+  | READ WRITE    
+  | READ ONLY    
+
+level:       
+  REPEATABLE READ     
+  | READ COMMITTED     
+  | READ UNCOMMITTED     
+  | SERIALIZABLE
+</source>
+* 使用 GLOBAL 关键字，该语句将全局应用于后续会话。现有会话不受影响。
+* 使用 SESSION 关键字，该语句将应用于在当前会话执行的所有后续事务。
+* 不使用任何 SESSION 或 GLOBAL 关键字，该语句应用于当前会话执行的下一个（未启动）事务。

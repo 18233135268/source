@@ -1,0 +1,159 @@
+== Basic ==
+=== Share by Communicating ===
+* Do not communicate by sharing memory; instead, share memory by communicating.
+----
+=== Goroutines ===
+* A goroutine has a simple model: it is a function executing concurrently with other goroutines in the same address space.
+* It is lightweight, costing little more than the allocation of stack space.
+* Goroutines are multiplexed onto multiple OS threads so if one should block, such as while waiting for I/O, others continue to run.
+* In Go, function literals are closures: the implementation makes sure the variables referred to by the function survive as long as they are active.
+```go
+func Announce(message string, delay time.Duration) {
+    go func() { // function literal
+        time.Sleep(delay)
+        fmt.Println(message)
+    }()  // Note the parentheses - must call the function.
+}
+```
+----
+=== Channels ===
+* Like maps, channels are allocated with make, and the resulting value acts as a reference to an underlying data structure. 
+* If an optional integer parameter is provided, it sets the buffer size for the channel.
+* Receivers always block until there is data to receive.
+* If the channel is unbuffered, the sender blocks until the receiver has received the value. 
+* If the channel has a buffer, the sender blocks only until the value has been copied to the buffer.
+```go
+ci := make(chan int)            // unbuffered channel of integers
+cj := make(chan int, 0)         // unbuffered channel of integers
+cs := make(chan *os.File, 100)  // buffered channel of pointers to Files
+
+// Unbuffered channels combine communication guaranteeing that two goroutines are in a known state.
+c := make(chan int)  // 分配 channel，只能发送、接受一个 int
+go func() {
+    list.Sort()
+    c <- 1  // 排序结束，发送信号
+}()
+doSomethingForAWhile()
+<-c   // 排序结束
+```
+A buffered channel can be used like a semaphore
+```go
+var sem = make(chan int, MaxOutstanding)
+
+func handle(r *Request) {
+    sem <- 1    // Wait for active queue to drain.
+    process(r)  // May take a long time.
+    <-sem       // Done; enable next request to run.
+}
+
+func Serve(queue chan *Request) {
+    for {
+        req := <-queue
+        go handle(req)  // Don't wait for handle to finish.
+    }
+}
+
+// A better solution
+func Serve(queue chan *Request) {
+    for req := range queue {
+        sem <- 1
+        go func(req *Request) {
+            process(req)
+            <-sem
+        }(req)
+    }
+}
+// 以上两段代码区别是什么？
+func Serve(queue chan *Request) {
+    for req := range queue {
+        sem <- 1
+        go func() {
+            process(req) // 错误代码，为什么？
+            <-sem
+        }()
+    }
+}
+
+// 另一种写法
+func Serve(queue chan *Request) {
+    for req := range queue {
+        req := req // 注意此处
+        sem <- 1
+        go func() {
+            process(req)
+            <-sem
+        }()
+    }
+}
+
+// 直接启动固定数目的 Goroutine
+func handle(queue chan *Request) {
+    for r := range queue { // 读取请求队列
+        process(r)
+    }
+}
+
+func Serve(clientRequests chan *Request, quit chan bool) {
+    // 启动处理 go-routines
+    for i := 0; i < MaxOutstanding; i++ {
+        go handle(clientRequests)
+    }
+    <-quit  // 等待通知结束
+}
+```
+----
+=== Channels of channels  ===
+* One of the most important properties of Go is that a channel is a first-class value that can be allocated and passed around like any other.
+```go
+type Request struct {
+    args        []int
+    f           func([]int) int
+    resultChan  chan int   // 结果发送 Channel
+}
+
+func sum(a []int) (s int) {
+    for _, v := range a {
+        s += v
+    }
+    return
+}
+
+// Client Side
+request := &Request{[]int{3, 4, 5}, sum, make(chan int)}
+clientRequests <- request   // 发送请求
+fmt.Printf("answer: %d\n", <-request.resultChan) // 等待结果
+
+// Server side
+func handle(queue chan *Request) {
+    for req := range queue {
+        req.resultChan <- req.f(req.args)
+    }
+}
+```
+----
+=== Parallelization ===
+```go
+type Vector []float64
+
+func (v Vector) DoSome(i, n int, u Vector, c chan int) {
+    for ; i < n; i++ {
+        v[i] += u.Op(v[i])
+    }
+    c <- 1    // 通知结束
+}
+
+const numCPU = runtime.GOMAXPROCS(0) // CPU 核心数量
+
+func (v Vector) DoAll(u Vector) {
+    c := make(chan int, numCPU)  // 创建匹配的 Channel
+    for i := 0; i < numCPU; i++ {
+        go v.DoSome(i*len(v)/numCPU, (i+1)*len(v)/numCPU, u, c) // 每一个 CPU 核心执行一部分内容
+    }
+    
+    for i := 0; i < numCPU; i++ {
+        <-c    // 等待某个任务结束
+    }
+    // 执行完毕
+}
+```
+----

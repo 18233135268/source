@@ -1,0 +1,932 @@
+→[[Python 基本语法]]
+==基本语法==
+* 缩进是Python组织语句的方法，同一个语句块中的语句必须缩进相同数量的空格或Tab，建议使用四个空格进行缩进；
+* [[Python编码风格指南]]
+
+===基本对象类型===
+====Numbers====
+数字类型：<br>
+* int：<code>10</code>
+* floating point real values：<code>15.20</code>
+
+====Strings====
+* 示例1：
+<source lang="Python">
+x = "There are %d types of people." % 10  # 字符串格式化
+binary = 'binary'  # 单引号
+do_not = "don't"  # 双引号
+y = "Those who know {} and those who {}.".format(binary, do_not)  # string.format()字符串格式化方法
+
+print(x)
+print(y)
+
+print("I said: %r." % x)
+print("I also said: '%s'." % y)
+
+hilarious = False
+joke_evaluation = "Isn't that joke so funny?! %r"  # 用%r显示的是变量“原始”数据值
+
+print(joke_evaluation % hilarious)
+
+w = "This is the left side of..."
+e = "a string with a right side."
+
+print(w + e)  # 字符串可相加
+
+ # 输出
+There are 10 types of people.
+Those who know binary and those who don't.
+I said: 'There are 10 types of people.'.
+I also said: 'Those who know binary and those who don't.'.
+Isn't that joke so funny?! False
+This is the left side of...a string with a right side.
+</source>
+* 示例2：
+<source lang="Python">
+print("""  # 三引号可以将字符串换行
+There's something going on here.
+With the three double-quotes.
+We'll be able to type as much as we like.
+Even 4 lines if we want, or 5, or 6.
+""")
+
+ # 输出
+There's something going on here.
+With the three double-quotes.
+We'll be able to type as much as we like.
+Even 4 lines if we want, or 5, or 6.
+</source>
+
+* 转义字符\
+* 转义字符\可以转义很多字符，比如\n表示换行，\t表示制表符，\\表示\
+<source lang="Python">
+# Python还允许用r' '表示' '内部的字符串默认不转义
+print('\\\t\\')  # \       \
+
+print(r'\\\t\\')  # \\\t\\
+</source>
+
+* 字符串格式化
+* %运算符用来格式化字符串，有几个%?占位符，后面就跟几个变量或者值，顺序要对应好。如果只有一个%?，括号可以省略。
+{|
+|占位符||替换的值
+|-
+|%d||整数
+|-
+|%f||浮点数
+|-
+|%s||字符串
+|-
+|%x||十六进制整数
+|-
+
+* 格式化整数和浮点数还可以指定是否补0和整数与小数的位数，用%%来表示一个%：
+<source lang="Python">
+g='%2d-%02d' % (3, 1)  # ' 3-01'
+h='%.2f' % 3.1415926  # '3.14'
+p='growth rate: %d %%' % 7  # 'growth rate: 7 %'
+</source>
+
+
+====Lists====
+* 基本结构：
+<source lang="Python">
+cihangwuyong
+
+squares = [1,4,9,16,25]
+
+squares[0]  # 1
+squares[-1]  # 25
+squares[-3:]  # 返回一个新列表[9, 16, 25]
+
+cubes = [1, 8, 27, 65, 125]
+cubes[3] = 64  # [1, 8, 27, 64, 125]
+
+L = ['Apple', 123, True]  # list里面的元素的数据类型也可以不同
+
+a = ['a', 'b', 'c']
+n = [1, 2, 3]
+x = [a, n]  # [['a', 'b', 'c'], [1, 2, 3]]
+x[0]  # ['a', 'b', 'c']
+x[0][1]  # 'b'
+</source>
+
+* list操作
+<source lang="Python">
+classmates = ['Michael', 'Bob', 'Tracy']
+classmates.append('Adam')                # 插入
+print(classmates)                        # ['Michael', 'Bob', 'Tracy', 'Adam']
+classmates.insert(1, 'Jack')             # 指定位置插入
+print(classmates)                        # ['Michael', 'Jack', 'Bob', 'Tracy', 'Adam']
+classmates.pop()                         # 删除末尾元素
+print(classmates)                        # ['Michael', 'Jack', 'Bob', 'Tracy']
+classmates.pop(1)                        # 删除指定位置元素
+print(classmates)                        # ['Michael', 'Bob', 'Tracy']
+</source>
+
+* 列表解析式：
+<source lang="Python">
+ # 示例1
+L = [1, 2, 3, 4, 5]
+[x + 10 for x in L]  # 生成新列表 [11，12，13，14，15]
+[line.upper() for line in open('script.py')] # 可用在文件上
+[line.upper() for line in open('script.py') if line[0] == 'p']  # 添加一条if过滤子句
+[x + y for x in 'abc' for y in 'lmn']  # ['al', 'am', 'an', 'bl', 'bm', 'bn', 'cl', 'cm', 'cn']
+
+ # 示例2
+[(x, y) for x in range(5) if x % 2 == 0 for y in range(5) if y % 2 == 1]  # [(0, 1), (0, 3), (2, 1), (2, 3), (4, 1), (4, 3)]
+ # for循环等价形式
+L = []
+for x in range(5):
+    if x % 2 == 0:
+        for y in range(5):
+            if y % 2 == 1:
+                L.append((x, y))  # L = [(0, 1), (0, 3), (2, 1), (2, 3), (4, 1), (4, 3)]
+
+ # 示例3
+M = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+N = [[2, 2, 2], [3, 3, 3], [4, 4, 4]]
+[M[row][col] * N[row][col] for row in range(3) for col in range(3)]  # [2, 4, 6, 12, 15, 18, 28, 32, 36]
+ # for循环等价形式
+L = []
+for row in range(3):
+    for col in range(3):
+        L.append(M[row][col] * N[row][col])
+ 
+ # 示例4       
+[[M[row][col] * N[row][col] for col in range(3)] for row in range(3)]  # [[2, 4, 6], [12, 15, 18], [28, 32, 36]]
+ # for循环等价形式
+L1 = []
+for row in range(3):
+    L2 = []
+    for col in range(3):
+        L2.append(M[row][col] * N[row][col])
+    L1.append(L2)
+</source>
+
+====Tuples====
+* 基本结构：
+<source lang="Python">
+t = 12345, 54321, 'hello!'
+t[0]  # 12345
+t[-1]  # 'hello!'
+t[0] = 98765  # TypeError: 'tuple' object does not support item assignment
+t  # (12345, 54321, 'hello!')
+u = t, (1, 2, 3, 4, 5)  # u = ((12345, 54321, 'hello!'), (1, 2, 3, 4, 5))
+v = ([1, 2, 3], [3, 2, 1])
+</source>
+
+* 单个元素的元组：
+<source lang="Python">
+empty = ()
+singleton = 'hello',  # ('hello',) 注意逗号
+singleton = ('hello')  # 'hello'
+</source>
+
+*“可变的”tuple：
+<source lang="Python">
+t = ('a', 'b', ['A', 'B'])
+t[2][0] = 'X'
+t[2][1] = 'Y'
+print(t)  # ('a', 'b', ['X', 'Y'])
+</source>
+
+====Sets====
+* 集合是一个无序不重复元素的集，可以用<code>set()</code>创建：
+<source lang="Python">
+cihangwuyong
+
+basket = {'apple', 'orange', 'apple', 'pear', 'orange', 'banana'}
+print(basket)  # {'orange', 'banana', 'pear', 'apple'}
+'orange' in basket  # True
+'crabgrass' in basket  # False
+
+a = set('abracadabra')
+b = set('alacazam')
+a      # {'a', 'r', 'b', 'c', 'd'}
+a - b  # {'r', 'd', 'b'}
+a | b  # {'a', 'c', 'r', 'd', 'b', 'm', 'z', 'l'}
+a & b  # {'a', 'c'}
+a ^ b  # {'r', 'd', 'b', 'm', 'z', 'l'}
+
+s = set([1, 2, 3])
+s.add(4)
+print(s)  # {1, 2, 3, 4}
+s.remove(4)
+print(s)  # {1, 2, 3}
+a = 'abc'
+b = a.replace('a', 'A')
+print(b)  # 'Abc'
+print(a)  # 'abc'
+</source>
+
+* 集合解析式：
+<source lang="Python">
+a = {x for x in 'abracadabra' if x not in 'abc'}
+a  # {'r', 'd'}
+</source>
+
+====Dictionaries====
+# 字典以<code>key</code>为索引，<code>key</code>是任意不可变类型；
+# 字典是无序的键：值对（<code>key: value</code>对)集合;
+# 使用<code>{}</code>或<code>dict()</code>创建字典。
+<source lang="Python">
+tel = {'jack': 4098, 'sape': 4139}
+
+tel['guido'] = 4127
+tel  # {'sape': 4139, 'guido': 4127, 'jack': 4098}
+tel['jack']  # 4098
+
+del tel['sape']
+tel['irv'] = 4127
+tel  # {'guido': 4127, 'irv': 4127, 'jack': 4098}
+
+list(tel.keys())  # ['irv', 'guido', 'jack']
+sorted(tel.keys())  # ['guido', 'irv', 'jack']
+
+'guido' in tel  # True
+'jack' not in tel  # False
+
+dict([('sape', 4139), ('guido', 4127), ('jack', 4098)])  # {'sape': 4139, 'jack': 4098, 'guido': 4127}
+dict(sape=4139, guido=4127, jack=4098)  # {'sape': 4139, 'jack': 4098, 'guido': 4127}
+{x: x**2 for x in (2, 4, 6)}  # {2: 4, 4: 16, 6: 36}
+</source>
+*字典中的循环
+<source lang="Python">
+knights = {'gallahad': 'the pure', 'robin': 'the brave'}
+for k, v in knights.items():
+    print(k, v)
+ # 输出
+gallahad the pure
+robin the brave
+</source>
+
+===动态类型===
+# Python中的类型在运行过程中自动决定，不必事先声明变量；
+# 变量在赋值时创建，可以引用任何类型的对象，并且必须在引用之前赋值；
+# 从变量到对象的连接称为引用。
+* 变量和命名
+<source lang="Python">
+cihangxinxiwuyong
+
+cars = 100
+space_in_a_car = 4.0
+drivers = 30
+passengers = 90
+cars_not_driven = cars - drivers
+cars_driven = drivers
+carpool_capacity = cars_driven * space_in_a_car
+average_passengers_per_car = passengers / cars_driven
+
+print("There are", cars, "cars available.")
+print("There are only", drivers, "drivers available.")
+print("There will be", cars_not_driven, "empty cars today.")
+print("We can transport", carpool_capacity, "people today.")
+print("We have", passengers, "to carpool today.")
+print("We need to put about", average_passengers_per_car, "in each car.")
+
+ # 输出：
+There are 100 cars available.
+There are only 30 drivers available.
+There will be 70 empty cars today.
+We can transport 120.0 people today.
+We have 90 to carpool today.
+We need to put about 3 in each car.
+</source>
+
+* 共享引用：
+<source lang="Python">
+cihagnwuyong
+
+L1 = [2, 3, 4]
+L2 = L1
+L2  # [2, 3, 4]
+
+L1[0] = 24
+L1  # [24, 3, 4]
+L2  # [24, 3, 4]
+</source>
+* 原处修改：
+<source lang="Python">
+cihangwuyong
+
+L1 = [2, 3, 4]
+L2 = L1[:]
+L1[0] = 24
+
+L1  # [24, 3, 4]
+L2  # [2, 3, 4]
+</source>
+
+===类型转换===
+* 类型转换函数：
+<source lang="Python">
+int('111')  # 转换为整数
+float('111')  # 转换为浮点数
+complex('111')  # 转换为复数
+repr('111')  # 转换为表达式字符串
+str('111') # 转换为字符串
+eval("{1: 'a', 2: 'b'}")  # eval表达式转换字符串为python对象
+t = tuple(listTuple)  # tuple将list转换为元组
+l = list(t)  # 元组转换为list
+o = ord('a')  # ord将ascii转换为数字
+chr(48)  # 将0-256数字转换成对应的ascii字符
+hex(48)  # hex将十进制转换为十六进制
+oct(48)  # oct将十进制转换为八进制
+</source>
+
+===运算符===
+* 字符串、序列、元组可以由 <code>+</code> 操作符连接，由 <code>*</code> 表示重复：
+<source lang="Python">
+3 * 'un' + 'ium'  # 'unununium'
+
+ # list可以相加
+L1 = [1,2,3]
+L2 = [4,5,6]
+L1 + L2  # [1, 2, 3, 4, 5, 6]
+
+ # tuple相加
+T1 = (1,2,3)
+T2 = (4,5,6)
+T1 + T2  # (1, 2, 3, 4, 5, 6)
+</source>
+
+==控制逻辑==
+===if===
+# 可以有零到多个<code>elif</code>部分，<code>else</code>是可选的；
+# 关键字<code>'elif'</code>是<code>'else if'</code>的缩写；
+# <code>if ... elif ... elif ...</code>用于替代其它语言中的<code>switch</code>或<code>case</code>语句。
+<source lang="Python">
+x = int(input("Please enter an integer: "))  # 要求用户输入数字并赋值给x
+if x < 0:
+    x = 0
+    print('Negative changed to zero')
+elif x == 0:
+    print('Zero')
+elif x == 1:
+    print('Single')
+else:
+    print('More')
+</source>
+
+===for===
+* <code>for</code>语句对任意序列中的子项按序列中顺序进行迭代：
+<source lang="Python">
+words = ['cat', 'window', 'defenestrate']
+for w in words:
+    print(w, len(w))  # len(w)表示w的长度
+</source>
+
+* 当迭代可变序列时，如需修改被迭代对象，需注意：
+<source lang="Python">
+cihangwuyong
+
+WORDS = words[:]  # 需要复制words，否则words中的insert操作会无限执行
+for w in WORDS:
+    if len(w) > 6:  # 判断w长度是否大于6
+        words.insert(0, w)  # 将符合条件的元素插入到words的第一个位置
+
+ # 输出
+words  # ['defenestrate', 'cat', 'window', 'defenestrate']
+WORDS # ['cat', 'window', 'defenestrate']
+</source>
+
+* 同时循环两个或更多序列，可用<code>zip()</code>整体打包：
+<source lang="Python">
+cihangwuyong
+
+questions = ['name', 'quest', 'favorite color']
+answers = ['lancelot', 'the holy grail', 'blue']
+for q, a in zip(questions, answers):
+    print('What is your {0}?  It is {1}.'.format(q, a))
+
+ # 输出
+What is your name?  It is lancelot.
+What is your quest?  It is the holy grail.
+What is your favorite color?  It is blue.
+</source>
+* 在序列中循环时，索引位置和对应值可以使用<code>enumerate()</code>函数同时得到:
+<source lang="Python">
+cihangwuyong
+
+for i, v in enumerate(['tic', 'tac', 'toe']):
+    print(i, v)
+
+ # 输出
+0 tic
+1 tac
+2 toe
+</source>
+* 调用<code>reversed()</code>函数逆向循环序列:
+<source lang="Python">
+cihangwuyong
+
+for i in reversed(range(1, 10, 2)):
+    print(i)
+
+ # 输出
+9
+7
+5
+3
+1
+</source>
+* 使用<code>sorted()</code>函数按排序后的顺序循环序列，它不改动原序列，而是生成一个新的已排序的序列：
+<source lang="Python">
+cihangwuyong
+
+basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
+for f in sorted(set(basket)):
+    print(f)
+
+ # 输出
+apple
+banana
+orange
+pear
+</source>
+
+====break、continue以及else====
+# <code>break</code>语句用于跳出最近一级的循环;
+# 循环可以有一个<code>else</code>子句，它在迭代完整个列表(对于for)或执行条件为<code>false</code>(对于while)时执行，但循环被<code>break</code>中止的情况下不会执行。
+* 搜索质数代码示例：
+<source lang="Python">
+for n in range(2, 10):
+    for x in range(2, n):
+        if n % x == 0:
+            print(n, 'equals', x, '*', n//x)
+            break
+    else:
+        print(n, 'is a prime number')
+</source>
+* <code>continue</code>表示循环继续执行下一次迭代：
+<source lang="Python">
+for num in range(2, 10):
+    if num % 2 == 0:
+        print("Found an even number", num)
+        continue
+    print("Found a number", num)
+</source>
+
+===while===
+* Python中的<code>while</code>循环可以有<code>else</code>分句：
+<source lang="Python">
+ # 判断y是否是质数
+x = y // 2
+while x > 1:
+    if y % x == 0:
+        print(y, 'has factor', x)
+        break  # 若找到因数x，立即终止循环
+    x -= 1  # 若不满足上面的if判断，继续执行while循环
+else:  # while循环执行完毕后执行else分句
+    print(y, 'is prime')
+</source>
+
+==函数==
+===函数基础===
+# 使用关键字<code>def</code>创建函数，在其后必须跟有函数名和圆括号；
+# 函数体的第一行语句是可选的字符串文本，这个字符串是函数的文档字符串（docstring）。
+* 生成指定边界的斐波那契数列的函数示例：
+<source lang="Python">
+cihangwuyong
+
+def fib(n):
+    """Print a Fibonacci 
+    series up to n."""  # 文档字符串，可用print(fib.__doc __)打印
+    a, b = 0, 1
+    while a < n:
+        print(a, end=' ')
+        a, b = b, a+b
+    print()
+
+fib(2000)  # 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+</source>
+* 函数名可以赋给其它变量名：
+<source lang="Python">
+fib  # 函数对象
+f = fib  # 将函数对象命名为f，可调用
+f(100)  # 0 1 1 2 3 5 8 13 21 34 55 89
+</source>
+* 没有<code>return</code>语句的函数会返回<code>None</code>：
+<source lang="Python">
+fib(0)  # 如果None是唯一值，将被忽略
+print(fib(0))  # 可以使用print()函数打印出None
+</source>
+* <code>return</code>语句从函数中返回值，下例定义一个返回斐波那契数列数字列表的函数：
+<source lang="Python">
+cihangwuyong
+
+def fib2(n):
+    """Return a list containing the Fibonacci series up to n."""
+    result = []
+    a, b = 0, 1
+    while a < n:
+        result.append(a)  # list.append()方法
+        a, b = b, a+b
+    return result
+
+f100 = fib2(100)
+f100  # [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
+</source>
+
+===参数===
+====位置参数====
+* 从左至右进行匹配：
+<source lang="Python">
+def f(a, b, c):
+    print(a, b, c)
+f(1， 2， 3)  # 1 2 3
+</source>
+
+====默认参数====
+* 可以为一个或多个参数指定默认值：
+<source lang="Python">
+def f(a, b=2, c=3):
+    print(a, b, c)
+f(1, c=6)  # 1 2 6
+</source>
+* 当默认参数L指向对象<code>[]</code>，每次调用该函数，如果改变了L的内容，下次调用时默认参数的内容就变了，不再是函数定义时的<code>[]</code>：
+<source lang="Python">
+cihangwuyong
+
+def f(a, L=[]):
+    L.append(a)
+    return L
+
+print(f(1))  # [1]
+print(f(2))  # [1, 2]
+print(f(3))  # [1, 2, 3]
+</source>
+* 默认参数必须指向不变对象，可以用<code>None</code>来避免这种情况：
+<source lang="Python">
+cihangwuyong
+
+def f(a, L=None):
+    if L is None:
+        L = []
+    L.append(a)
+    return L
+
+print(f(1))  # [1]
+print(f(2))  # [2]
+print(f(3))  # [3]
+</source>
+
+====可变参数====
+* 收集任意多基于位置或关键字的参数：
+<source lang="Python">
+def func1(*args):  # 变量名前加一个*号，调用函数时可以传入任意个位置参数
+    print(args)
+func1(1, 2, 3)  # (1, 2, 3)，可变参数在函数调用时自动组装为一个tuple
+
+def func2(**kwargs):  # 变量名前加两个*号，调用函数时可以传入任意个关键字参数
+    print(kwargs)
+func2(a=1, b=2, c=3)  # {'a': 1, 'c': 3, 'b': 2}，关键字参数在函数内部自动组装为一个dict
+
+def func3(*args, **kwargs):
+    print args
+    print kwargs 
+
+func3(1,2,3)
+
+# 输出
+(1, 2, 3)
+{}
+</source>
+
+====可变参数解包====
+* 可以传递任意多的基于位置或关键字的参数：
+<source lang="Python">
+def func(a, b, c, d):
+    print(a, b, c, d)
+func(*(1, 2), **{'d': 4, 'c': 3})  # 1 2 3 4 
+func(1, *(2, 3), **{'d': 4})  # 1 2 3 4
+func(1, c=3, *(2,), **{'d': 4})  # 1 2 3 4
+func(1, *(2,), c=3, **{'d': 4})  # 1 2 3 4
+</source>
+
+====关键字参数====
+*关键字参数允许你传入0个或任意个含参数名的参数，这些关键字参数在函数内部自动组装为一个dict
+* 通过变量名匹配：
+<source lang="Python">
+cihangwuyong
+
+def f(a, b, c):
+    print(a, b, c)
+f(c=3, b=2, a=1)  # 1 2 3
+
+def person(name, age, **kw):
+    print('name:', name, 'age:', age, 'other:', kw)
+
+person('Bob', 35, city='Beijing')  # name: Bob age: 35 other: {'city': 'Beijing'}
+person('Adam', 45, gender='M', job='Engineer')  # name: Adam age: 45 other: {'gender': 'M', 'job': 'Engineer'}
+</source>
+
+====Keyword-only参数====
+* 参数必须按照名称传递：
+<source lang="Python">
+def kwonly(a, *b, c):
+    print(a, b, c)
+kwonly(1, 2, c=3)  # 1 (2,) 3
+kwonly(a=1, c=3)  # 1 () 3
+kwonly(1, 2, 3)  # TypeError: kwonly() needs keyword-only argument c
+</source>
+* 如果要限制关键字参数的名字，可以用Keyword-only参数：
+<source lang="Python">
+cihangwuyong
+
+ # 特殊分隔符*后面的参数被视为Keyword-only参数
+def kwonly(a, *, b, c):
+    print(a, b, c)
+
+kwonly(1, c=3, b=2)  # 1 2 3
+kwonly(c=3, b=2, a=1)  # 1 2 3
+kwonly(1, 2, 3)  # TypeError: kwonly() takes 1 positional argument but 3 were given
+kwonly(1)  # TypeError: kw() missing 2 required keyword-only arguments: 'b' and 'c'
+</source>
+
+====参数组合====
+* 参数定义的顺序必须是：位置参数、默认参数、可变参数、keyword-only参数和关键字参数：
+<source lang="Python">
+cihangwuyong
+
+def f1(a, b, c=0, *args, **kw):
+    print('a =', a, 'b =', b, 'c =', c, 'args =', args, 'kw =', kw)
+
+def f2(a, b, c=0, *, d, **kw):
+    print('a =', a, 'b =', b, 'c =', c, 'd =', d, 'kw =', kw)
+</source>
+* 函数调用时，Python解释器自动按照参数位置和参数名传值：
+<source lang="Python">
+f1(1, 2)  # a = 1 b = 2 c = 0 args = () kw = {}
+f1(1, 2, c=3)  # a = 1 b = 2 c = 3 args = () kw = {}
+f1(1, 2, 3, 'a', 'b')  # a = 1 b = 2 c = 3 args = ('a', 'b') kw = {}
+f1(1, 2, 3, 'a', 'b', x=99)  # a = 1 b = 2 c = 3 args = ('a', 'b') kw = {'x': 99}
+f2(1, 2, d=99, ext=None)  # a = 1 b = 2 c = 0 d = 99 kw = {'ext': None}
+</source>
+* 通过一个tuple和dict，也可以调用上述函数：
+<source lang="Python">
+cihangwuyong
+
+args = (1, 2, 3, 4)
+kw = {'d': 99, 'x': '#'}
+f1(*args, **kw)  # a = 1 b = 2 c = 3 args = (4,) kw = {'d': 99, 'x': '#'}
+
+args = (1, 2, 3)
+kw = {'d': 88, 'x': '#'}
+f2(*args, **kw)  # a = 1 b = 2 c = 3 d = 88 kw = {'x': '#'}
+</source>
+
+===作用域===
+# 作用域指在程序中创建、改变或查找变量名的命名空间；
+# 代码中变量名被赋值的位置决定这个变量名能被访问的范围；
+# 一个变量的作用域由在代码中被赋值的地方决定，与函数调用没有关系。
+
+====作用域搜索原则：LEGB====
+# Local：首先查找本地作用域；
+# Enclosing：然后查找上一层结构中<code>def</code>或<code>lambda</code>的本地作用域；
+# Global：然后查找全局作用域，每个模块都是全局作用域，创建于模块文件顶层的变量具有全局作用域，对于外部访问就是一个模块对象的属性；
+# Builtin：最后查找内置作用域；
+# 搜索会在第一处能找到这个变量名的地方停下来。
+* 示例：
+<source lang="Python">
+cihangwuyong
+
+X = 99  # X定义在模块顶层，是模块中的全局变量
+def func(Y):  # func也是模块中的全局变量
+    Z = X + Y  # Y和Z是函数中的本地变量，只在此函数运行时存在
+    return Z
+
+func(1)  # 100
+</source>
+
+====global语句====
+# 全局变量是位于模块文件顶层的变量名；
+# 全局变量如果要在函数内被赋值的话，必须经过声明；
+# 全局变量在函数内部不经过声明也可以被引用；
+# <code>global</code>语句的作用是生成一个或多个存在于整个模块内部命名空间的变量名（全局变量）。
+* 示例：
+<source lang="Python">
+cihangwuyong
+
+X = 88
+def func():
+    global X
+    X = 99
+
+func()
+print(X)  # 99
+</source>
+
+====嵌套作用域====
+# 在有嵌套函数时，一个引用（X）首先在本地（函数内）作用域查找变量名X；
+# 之后会在嵌套了此函数的函数本地作用域从内到外进行查找；
+# 之后查找模块文件的全局作用域；
+# 最后查找内置作用域；
+# 全局声明（global）将会直接从全局（模块文件）作用域进行搜索。
+* 示例：
+<source lang="Python">
+cihangwuyong
+
+X = 99  # 全局作用域变量
+def f1():
+    X = 88  # f1函数本地作用域变量
+    def f2():  # f2仅在f1内部执行过程中存在
+        print(X)
+    f2()
+
+f1()  # 88
+</source>
+
+====nonlocal语句====
+# nonlocal语句允许对嵌套的函数作用域中的变量赋值；
+# 在声明nonlocal名称的时候，该变量必须已经存在于该嵌套函数的作用域中；
+# nonlocal语句只能出现在嵌套的<code>def</code>中；
+# nonlocal语句的主要作用是允许嵌套的作用域中的变量被修改，而不是只被引用。
+* 示例：
+<source lang="Python">
+cihangwuyong
+
+def tester(start):
+    state = start
+    def nested(label):
+        nonlocal state    # state已经在tester中存在，可以用nonlocal语句进行修改
+        print(label, state)
+        state += 1  # 此处对state的值发生改变
+    return nested
+
+F = tester(0)
+F('spam')  # spam 0
+F('ham')   # ham 1
+F('eggs')  # eggs 2，每一次调用函数state都加1
+</source>
+* 综合情况示例：
+<source lang="Python">
+cihangwuyong
+
+def scope_test():
+    def do_local():
+        spam = "local spam"
+    def do_nonlocal():
+        nonlocal spam  # 定义spam为函数scope_test()的全局变量，使用nonlocal声明变量之前，它必须已经存在于该嵌套函数的作用域中
+        spam = "nonlocal spam"
+    def do_global():
+        global spam  # 定义spam为模块的全局变量
+        spam = "global spam"
+    spam = "test spam"  # 在scope_test本地作用域定义spam
+    do_local()
+    print("After local assignment:", spam)
+    do_nonlocal()
+    print("After nonlocal assignment:", spam)
+    do_global()
+    print("After global assignment:", spam)
+
+scope_test()
+print("In global scope:", spam)
+
+ # 输出结果如下
+After local assignment: test spam
+After nonlocal assignment: nonlocal spam
+After global assignment: nonlocal spam  # 由于nonlocal的作用，搜索到scope_test的作用域就因找到spam = "nonlocal spam"停止继续搜索
+In global scope: global spam
+</source>
+
+===递归===
+* 递归函数就是函数在其内部调用自身：
+<source lang="Python">
+cihangwuyong
+
+def mysum(L):
+    print(L)  # 记录递归执行过程
+    if not L:  # L在每次执行后越来越短
+        return 0
+    else:
+        return L[0] + mysum(L[1:])
+
+mysum([1, 2, 3, 4, 5])
+ # 输出结果如下
+[1, 2, 3, 4, 5]
+[2, 3, 4, 5]
+[3, 4, 5]
+[4, 5]
+[5]
+[]
+15  # 在每一层递归上，要求和的列表越来越小，直到为空，递归循环结束，求和完成
+</source>
+* 编码替代方案：
+<source lang="Python">
+def mysum(L):
+    return 0 if not L else L[0] + mysum(L[1:])  # if/else三元表达式
+</source>
+
+==迭代器==
+* 如果对象是实际保存的序列，或者可以在迭代工具环境中（例如for循环）一次产生一个结果的对象，就看作是可迭代的。
+<source lang="Python">
+for element in [1, 2, 3]:
+    print(element)
+for element in (1, 2, 3):
+    print(element)
+for key in {'one':1, 'two':2}:
+    print(key)
+for char in "123":
+    print(char)
+for line in open("myfile.txt"):
+    print(line, end=' ')
+</source>
+
+* 通过collections模块的Iterable类型可以判断一个对象是否为可迭代对象：
+<source lang="Python">
+from collections import Iterable
+isinstance('abc', Iterable) # str是否可迭代  True
+isinstance([1,2,3], Iterable) # list是否可迭代  True
+isinstance(123, Iterable) # 整数是否可迭代  False
+</source>
+
+===手动迭代===
+* 内置函数<code>next()</code>会自动调用一个对象的<code>__next__</code>方法：
+<source lang="Python">
+s = 'abc'
+it = iter(s)
+it  # <iterator object at 0x00A1DB50>
+next(it)  # 'a'
+next(it)  # 'b'
+next(it)  # 'c'
+next(it)  # StopIteration
+</source>
+* 文件对象是自己的迭代器，有自己的<code>__next__</code>方法，不需像这样返回一个不同对象：
+<source lang="Python">
+f = open('script.py')
+iter(f) is f  # True
+f.__next__()  # 'import sys\n'
+</source>
+
+===生成器===
+# 生成器是创建迭代器的简单而强大的工具；
+# 通过列表解析式可以直接创建列表，但受到内存限制，列表容量是有限的；
+# 当创建一个很大的列表时，会占用很大的存储空间，如果仅需要访问前面几个元素，那后面绝大多数元素占用的空间就浪费了；
+# 为了节省大量的空间，这种一边循环一边计算的对象，称为生成器：generator。
+
+====yield====
+* 生成器函数和常规函数之间的主要不同：生成器yield一个值，而不是return一个值；
+* <code>yield</code>语句挂起该函数并向调用者发送回一个值，保留此状态，当下次调用时，从这次离开的地方继续；
+* 生成器是随着时间产生一系列值，而不是将一次计算出的所有值存储在诸如列表的数据结构中一次传回它们；
+* 生成器支持<code>next()</code>函数，但一般用<code>for</code>循环来调用它。
+<source lang="Python">
+cihangwuyong
+
+def gen(N):
+    for i in range(N):
+        yield i ** 2
+
+for i in gen(5):
+    print(i, end=' : ')  # 0 : 1 : 4 : 9 : 16 : 
+</source>
+
+====生成器表达式====
+* 将列表解析式的中括号换成小括号就是生成器表达式，它返回一个生成器对象；
+* 生成器表达式相比完整的生成器函数更简洁，但可以实现的功能较少；
+* 同等形式的生成器表达式比列表解析式更节省内存。
+
+<source lang="Python">
+cihangwuyong
+
+sum(i*i for i in range(10))  # 285
+
+xvec = [10, 20, 30]
+yvec = [7, 5, 3]
+sum(x*y for x,y in zip(xvec, yvec))  # 260
+
+data = 'golf'
+list(data[i] for i in range(len(data)-1, -1, -1))  # ['f', 'l', 'o', 'g']
+</source>
+
+<source lang="Python">
+G = (x ** 2 for x in range(4))
+next(G)  # 0
+next(G)  # 1
+next(G)  # 4
+next(G)  # 9
+next(G)  # StopIteration，生成器是单迭代器对象，到达对象末尾时，引发内置的StopIteration异常
+</source>
+
+==模块==
+# 把函数按照功能分别放到不同文件中，更易于维护；
+# 在Python中，一个.py文件就称为一个模块（Module）；
+# 一个模块编写完毕后，可以被其它地方引用；
+# 使用模块可以避免函数名和变量名冲突，相同名字的函数和变量可以存在不同的模块中。
+
+===基本用法===
+* import：可以整体导入一个模块
+* from：可以从一个模块文件中获取特定的变量名
+<source lang="Python">
+cihangwuyong
+
+import module  # 导入module模块
+module.printer('Hello World!')  # Hello World！，用.号可以调用module模块的printer函数
+
+from module import printer  # 通过from语句导入后，可以不通过module模块直接使用
+printer('Hello World!')  # Hello World！
+
+from module import *  # 把module模块中的所有变量名复制到导入者的作用域
+printer('Hello World!')  # Hello World！
+</source>

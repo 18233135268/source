@@ -1,0 +1,243 @@
+→[[Python 基本语法]]
+==面向对象编程==
+# 面向对象编程（Object Oriented Programming，简称OOP）是一种程序设计思想，OOP把对象作为程序的基本单元；
+# 面向对象的程序设计把计算机程序视为一组对象的集合，每个对象都可以接收其它对象发过来的消息并进行处理，程序的执行就是一系列消息在各个对象之间传递；
+# 数据封装、继承和多态是OOP的三大特点；
+# 面向对象的设计思想是抽象出Class，根据Class创建Instance；
+# 在Python中，所有数据类型都可以视为对象，也可以自定义对象。自定义的对象数据类型就是面向对象中的类（Class）的概念。
+
+==类和实例==
+* 类定义语法：
+<source lang="python">
+class ClassName:
+    <statement-1>
+    .
+    .
+    .
+    <statement-N>
+</source>
+===类对象===
+* 类对象支持属性引用和实例化：
+<source lang="python">
+class MyClass:
+    """A simple example class"""
+    i = 12345
+    def f(self):
+        return 'hello world'
+</source>
+
+* 属性引用的标准语法：<code>obj.name</code>：
+<source lang="python">
+print(MyClass.__doc __)  # 打印类的文档字符串
+print(MyClass.i)  # 12345
+MyClass.f  # 返回一个方法对象
+</source>
+* 属性修改：
+<source lang="python">
+MyClass.i = 54321
+print(MyClass.i)  # 54321
+</source>
+* 类的实例化：
+<source lang="python">
+x = MyClass()
+x.i = 98765
+print(x.j)  # 98765
+</source>
+* 初始化方法：
+<source lang="python">
+class Complex:
+    def __init __(self, realpart, imagpart):  # 可以有参数
+        self.r = realpart
+        self.i = imagpart
+
+ # 参数通过init方法传递到类的实例化操作上
+x = Complex(3.0, -4.5)
+x.r, x.i  # (3.0, -4.5)
+</source>
+
+===实例属性和类属性===
+* 根据类创建的实例可以任意绑定属性：
+<source lang="python">
+class Student(object):
+    def __init__(self, name):
+        self.name = name
+
+s = Student('Bob')
+s.score = 90
+</source>
+* 在类中定义的属性是类属性：
+<source lang="python">
+class Student(object):
+    name = 'Student'
+</source>
+* 类的所有实例都可以访问到类属性：
+<source lang="python">
+class Student(object):
+    name = 'Student'
+
+s = Student()  # 创建实例s
+print(s.name)  # 打印name属性，因为实例并没有name属性，所以会继续查找class的name属性
+Student
+
+print(Student.name)  # 打印类的name属性
+Student
+
+s.name = 'Michael'  # 给实例绑定name属性
+print(s.name)  # 实例属性优先级比类属性高，它会屏蔽掉类的name属性
+Michael
+print(Student.name)  # 类属性并未消失，用Student.name仍然可以访问
+Student
+
+del s.name  # 如果删除实例的name属性
+print(s.name)  # 再次调用s.name，由于没有找到实例的name属性，显示类的name属性就
+Student
+</source>
+
+===@staticmethod和@classmethod===
+
+===数据封装===
+* 可以在类的内部定义访问数据的函数，这些数据和逻辑被“封装”起来，可以调用函数却不用知道内部实现的细节：
+<source lang="python">
+class Complex:
+    def __init __(self, realpart, imagpart):
+        self.r = realpart
+        self.i = imagpart
+
+    def print_x(self):
+        print('%s, %s' % (self.r, self.i))
+
+ # 调用实例方法
+x = Complex(10, 3)  # 必须传入参数
+x.print_x()  # 10, 3
+</source>
+
+==访问限制==
+* 外部代码可以修改实例的属性，为增强代码健壮性，如果实例变量名以__开头，就变成了私有变量（private）：
+<source lang="python">
+class Student(object):
+    def __init __(self, name, score):
+        self.__name = name
+        self.__score = score
+
+    def print_score(self):
+        print('%s: %s' % (self.__name, self.__score))
+
+ # 实例化并访问
+bart = Student('Bart Simpson', 98)
+bart.__name
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'Student' object has no attribute '__name'
+</source>
+* 想要外部代码访问私有变量时，可以增加新的方法：
+<source lang="python">
+class Student(object):
+    ...
+
+    def get_name(self):
+        return self.__name
+
+    def get_score(self):
+        return self.__score
+</source>
+* 如果要允许外部代码修改score，可以增加新方法：
+<source lang="python">
+class Student(object):
+    ...
+
+    def set_score(self, score):
+        self.__score = score
+</source>
+* 在方法中，可以对参数做检查，避免传入无效的参数：
+<source lang="python">
+class Student(object):
+    ...
+
+    def set_score(self, score):
+        if 0 <= score <= 100:
+            self.__score = score
+        else:
+            raise ValueError('bad score')
+</source>
+
+==继承和多态==
+===继承===
+# 在OOP程序设计中，当定义一个class的时候，可以从某个现有的class继承；
+# 新的class称为子类（Subclass），而被继承的class称为基类、父类或超类（Base class、Super class）；
+# 继承最大的好处是子类获得了父类的全部功能。
+* 编写名为Animal的类，有一个run方法：
+<source lang="python">
+class Animal(object):
+    def run(self):
+        print('Animal is running...')
+</source>
+*当需要编写Dog和Cat类时，可以直接从Animal类继承：
+<source lang="python">
+class Dog(Animal):  # 对于Dog来说，Animal是它的父类，对于Animal来说，Dog是它的子类
+    pass
+
+class Cat(Animal):
+    pass
+</source>
+* Dog和Cat作为Animal的子类自动拥有run方法：
+<source lang="python">
+dog = Dog()
+cat = Cat()
+
+dog.run()  # Animal is running...
+cat.run()  # Animal is running...
+</source>
+* 为了符合逻辑，对子类增加方法如下：
+<source lang="python">
+class Dog(Animal):
+
+    def run(self):
+        print('Dog is running...')
+
+class Cat(Animal):
+
+    def run(self):
+        print('Cat is running...')
+
+ # 当子类和父类存在相同的run方法时，子类的run覆盖了父类的run，代码运行时调用子类的run
+dog.run()  # Dog is running...
+cat.run()  # Cat is running...
+</source>
+
+===多态===
+* 当定义一个类时，实际定义了一种数据类型，和Python自带的数据类型（比如str、list）一样：
+<source lang="python">
+a = list()
+b = Animal()
+c = Dog()
+
+ # 用isinstance()判断变量是否是某个类型
+isinstance(a, list)  # True
+isinstance(b, Animal)  # True
+isinstance(c, Dog)  # True
+
+ # 如果一个实例的数据类型是某个子类，它的数据类型也可以被看做是父类
+isinstance(c, Animal)  # True
+b = Animal()
+isinstance(b, Dog)  # False
+</source>
+*多态示例：
+<source lang="python">
+def run_twice(animal):
+    animal.run()
+    animal.run()
+
+ # 传入Dog的实例
+run_twice(Dog())  # Dog is running... Dog is running...
+
+ # 传入Cat的实例
+run_twice(Cat())  # Cat is running... Cat is running...
+
+ # 定义一个Tortoise类型
+class Tortoise(Animal):
+    def run(self):
+        print('Tortoise is running slowly...')
+
+ # 调用run_twice()，传入Tortoise的实例
+run_twice(Tortoise())  # Tortoise is running slowly... Tortoise is running slowly...
+</source>

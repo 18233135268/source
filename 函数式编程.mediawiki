@@ -1,0 +1,260 @@
+→[[Python 基本语法]]
+==函数式编程==
+# 通过把大段代码拆成函数一层一层的调用，可以把复杂任务分解成简单的任务，这可以称为面向过程的程序设计，函数是面向过程程序设计的基本单元；
+# 函数式编程——Functional Programming，是一种抽象程度很高的编程范式，它一个特点是允许把函数作为参数传入另一个函数，还允许返回一个函数；
+==高阶函数==
+* 变量可以指向函数：
+<source lang="Python">
+abs(-10)  # 10
+abs  # <built-in function abs>
+
+x = abs(-10)
+x  # 10
+
+f = abs
+f  # <built-in function abs>
+f(-10)  # 10
+</source>
+* 函数名就是指向函数的变量：
+<source lang="Python">
+abs = 10
+abs(-10)  # TypeError: 'int' object is not callable
+</source>
+* 变量可以指向函数，函数的参数能接收变量，那一个函数就可以接收另一个函数作为参数，这种函数称为高阶函数：
+<source lang="Python">
+def add(x, y, f):
+    return f(x) + f(y)
+
+add(-5, 6, abs)  # 11
+</source>
+
+==map/reduce==
+* <code>map(function, iterable, ...)</code>函数接收两个参数，一个是函数，一个是Iterable，map将传入的函数依次作用到序列的每个元素，并把结果作为新的Iterator返回：
+<source lang="Python">
+def f(x):
+    return x * x
+r = map(f, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+r  # <map object at 0x105663be0>，r是一个Iterator
+list(r)  # [1, 4, 9, 16, 25, 36, 49, 64, 81]，Iterator是惰性序列，通过list()函数把整个序列都计算出来并返回一个list
+
+ # map()作为高阶函数，它把运算规则抽象了
+list(map(str, [1, 2, 3, 4, 5, 6, 7, 8, 9]))  # ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+</source>
+* <code>functools.reduce(function, iterable[, initializer])</code>把一个函数作用在一个序列上，这个函数必须接收两个参数，reduce把结果继续和序列的下一个元素做累积计算：
+<source lang="Python">
+from functools import reduce
+reduce(lambda x, y: x+y, [1, 2, 3, 4, 5])  # 相当于：((((1+2)+3)+4)+5)
+</source>
+
+<source lang="Python">
+from functools import reduce
+def add(x, y):
+    return x + y
+
+reduce(add, [1, 3, 5, 7, 9])  # 25
+
+ # 把序列[1, 3, 5, 7, 9]转换成整数13579的代码示例
+from functools import reduce
+def fn(x, y):
+    return x * 10 + y
+
+reduce(fn, [1, 3, 5, 7, 9])  # 13579
+
+ # 把str转换为int的代码示例
+from functools import reduce
+def str2int(s):
+    def fn(x, y):
+        return x * 10 + y
+    def char2num(s):
+        return {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9}[s]
+    return reduce(fn, map(char2num, s))
+
+str2int('13579')  # 13579
+</source>
+
+==filter==
+# <code>filter(function, iterable)</code>函数用于过滤序列;
+# 和<code>map()</code>类似，<code>filter()</code>也接收一个函数和一个序列；
+# 和<code>map()</code>不同的是，<code>filter()</code>把传入的函数依次作用于每个元素，然后根据返回值是<code>True</code>还是<code>False</code>决定保留还是丢弃该元素。
+<source lang="Python">
+ # 只保留列表中的奇数
+def is_odd(n):
+    return n % 2 == 1
+
+list(filter(is_odd, [1, 2, 4, 5, 6, 9, 10, 15]))  # [1, 5, 9, 15]
+
+ # 删掉一个序列中的空字符串
+def not_empty(s):
+    return s and s.strip()
+
+list(filter(not_empty, ['A', '', 'B', None, 'C', '  ']))  # ['A', 'B', 'C']
+</source>
+
+==sorted==
+* Python内置的<code>sorted()</code>函数可以对list进行排序：
+<source lang="Python">
+sorted([36, 5, -12, 9, -21])  # [-21, -12, 5, 9, 36]
+</source>
+* <code>sorted()</code>函数是一个高阶函数，它还可以接收一个<code>key</code>函数来实现自定义的排序：
+<source lang="Python">
+sorted([36, 5, -12, 9, -21], key=abs)  # [5, 9, -12, -21, 36]
+
+ # 字符串排序的例子
+sorted(['bob', 'about', 'Zoo', 'Credit'])  # ['Credit', 'Zoo', 'about', 'bob']
+
+ # 给sorted传入key函数，key指定的函数将作用于list的每一个元素上，并根据key函数返回的结果进行排序
+sorted(['bob', 'about', 'Zoo', 'Credit'], key=str.lower)  # ['about', 'bob', 'Credit', 'Zoo']
+
+ # 用一组tuple表示学生名字和成绩，用sorted()对其分别按名字排序和分数进行排序
+L = [('Bob', 75), ('Adam', 92), ('Bart', 66), ('Lisa', 88)]
+def by_name(t):
+    return str(t[0]).lower()
+
+def by_score(t):
+    return int(t[1])
+
+print(sorted(L,key=by_name))  # [('Adam', 92), ('Bart', 66), ('Bob', 75), ('Lisa', 88)]
+print(sorted(L,key=by_score))  # [('Bart', 66), ('Bob', 75), ('Lisa', 88), ('Adam', 92)]
+
+ # 要进行反向排序，可以传入第三个参数reverse=True
+sorted(['bob', 'about', 'Zoo', 'Credit'], key=str.lower, reverse=True)  # ['Zoo', 'Credit', 'bob', 'about']
+</source>
+
+==返回函数==
+* 高阶函数可以把函数作为结果返回：
+<source lang="Python">
+ # 可变参数的求和函数的一般写法
+def calc_sum(*args):
+    ax = 0
+    for n in args:
+        ax = ax + n
+    return ax
+
+calc_sum(1, 2, 3)  # 6
+
+ # 如果不需要立刻求和，可以不返回求和的结果，而是返回求和的函数
+def lazy_sum(*args):
+    def sum():
+        ax = 0
+        for n in args:
+            ax = ax + n
+        return ax
+    return sum
+
+f = lazy_sum(1, 3, 5, 7, 9)
+f  # <function lazy_sum.<locals>.sum at 0x101c6ed90>
+f()  # 25
+
+ # 当调用lazy_sum()时，即使传入相同的参数，每次调用都会返回一个新的函数
+f1 = lazy_sum(1, 3, 5, 7, 9)
+f2 = lazy_sum(1, 3, 5, 7, 9)
+f1 == f2  # False，f1()和f2()的调用结果互不影响
+</source>
+
+==闭包==
+# 上个例子在函数lazy_sum中又定义了函数sum，并且内部函数sum可以引用外部函数lazy_sum的参数和局部变量，当lazy_sum返回函数sum时，相关参数和变量都保存在返回的函数中，这种程序结构称为“闭包(Closure)”；
+# 上例中返回的函数在其定义内部引用了局部变量args，所以，当一个函数返回了一个函数后，其内部的局部变量还被新函数引用；
+# 返回的函数并没有立刻执行，而是直到调用了f()才执行。
+* 使用闭包时，返回函数不要引用任何循环变量，或者后续会发生变化的变量：
+<source lang="Python">
+def count():
+    fs = []
+    for i in range(1, 4):
+        def f():
+             return i*i
+        fs.append(f)
+    return fs
+
+f1, f2, f3 = count()
+f1()  # 9
+f2()  # 9
+f3()  # 9，返回结果全部是9，原因是返回的函数引用了变量i，但它并非立刻执行，等到3个函数都返回时，它们所引用的变量i已经变成了3，因此最终结果为9
+</source>
+* 如果一定要引用循环变量，可以再创建一个函数，用该函数的参数绑定循环变量当前的值，无论该循环变量后续如何更改，已绑定到函数参数的值不变：
+<source lang="Python">
+def count():
+    def f(j):
+        def g():
+            return j*j
+        return g
+    fs = []
+    for i in range(1, 4):
+        fs.append(f(i))  # f(i)立刻执行，因此i的当前值传入f()
+    return fs
+
+f1, f2, f3 = count()
+f1()  # 1
+f2()  # 4
+f3()  # 9
+</source>
+
+==lambda==
+# <code>lambda</code>是一种生成函数对象的表达式形式：：<code>lambda argument1, argument2,...argumentN: expression using arguments</code>
+# <code>lambda</code>是一个表达式，而不是一个语句，可以出现在Python语法不允许<code>def</code>出现的地方，比如列表常量中；
+# <code>lambda</code>是一个单个的表达式，而不是一个代码块，它是为快速实现简单的函数设计的，而<code>def</code>用来处理更大的任务;
+# <code>lambda</code>只能指定单个表达式，它的值就是最后的返回值。
+<source lang="Python">
+list(map(lambda x: x * x, [1, 2, 3, 4, 5, 6, 7, 8, 9]))  # x是lambda函数的参数
+ # 转换为def形式如下
+def f(x):
+    return x * x
+
+ # 匿名函数也是一个函数对象，也可以把匿名函数赋值给一个变量
+f = lambda x: x * x
+f  # <function <lambda> at 0x101c6ef28>
+f(5)  # 25
+
+ # 也可以把匿名函数作为返回值返回
+def build(x, y):
+    return lambda: x * x + y * y
+
+ # lambda也可以使用默认参数
+X = (lambda a='fee', b='fie', c='foe': a + b + c)
+X('wee')  # 'weefiefoe'
+
+ # lambda中也可以使用if/else三元表达式
+lower = (lambda x, y: x if x < y else y)
+lower(4, 9)  # 4
+lower(9, 4)  # 4
+
+ # 计算从1到100整数的和
+from functools import reduce
+reduce(lambda x, y: x + y, range(1, 101))  # 5050
+ # 编码替换方式
+from functools import reduce
+def add(x, y):
+    return x + y
+reduce(add, range(1, 101))
+
+ # 结合sorted函数进行排序
+names = ['David Beazley', 'Brian Jones', 'Raymond Hettinger', 'Ned Batchelder']
+sorted(names, key=lambda name: name.split()[-1].lower())  # lambda表达式将每个名字的名和姓分开，取其姓并转化为小写
+</source>
+* 匿名函数捕获变量值：
+<source lang="Python">
+ # 先看下面代码的效果
+x = 10
+a = lambda y: x + y
+x = 20
+b = lambda y: x + y
+
+a(10)  # 30
+b(10)  # 30
+
+ # lambda表达式中的x是一个自由变量，是在运行时绑定值，而不是定义时就绑定，在调用这个lambda表达式的时候，x的值是执行时的值
+x = 15
+a(10)  # 25
+x = 3
+a(10)  # 13
+
+ # 如果想让某个匿名函数在定义时就捕获到值，将那个参数值定义成默认参数即可
+x = 10
+a = lambda y, x=x: x + y
+x = 20
+b = lambda y, x=x: x + y
+
+a(10)  # 20
+b(10)  # 30
+</source>
+
+

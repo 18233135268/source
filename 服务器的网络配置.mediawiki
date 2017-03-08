@@ -1,0 +1,31 @@
+CentOS默认安装好之后是没有自动开启网络连接的，所以需要进行网络配置.
+
+登录以后，输入以下命令：
+
+1. cd /etc/sysconfig/network-scripts/  #进入network-scripts文件
+
+2. vi ifcfg-eth0  #编辑网络配置文件
+
+3.配置静态ip
+
+:::BOOTPROTO=static  #将原来的“dhcp”改成“static”，表示获取静态ip
+
+:::IPADDR=...  #分配的静态ip（需要添加的参数）
+
+:::NETMASK=255.255.255.0  #子网掩码（需要添加的参数）
+
+:::GATEWAY=...  #网关（需要添加的参数）
+
+:::ONBOOT=yes  #将原来的“NO”改成“YES”，表示系统将在启动时开启该接口
+
+:保存修改并使用以下命令来重启网络服务：
+
+::service network restart
+
+4.修改DNS，输入以下命令：
+:vi  /etc/resolv.conf  
+:添加如下代码：
+::nameserver  网关地址
+
+5.最后，检查是否能连接外网
+

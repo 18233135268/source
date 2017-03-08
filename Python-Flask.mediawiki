@@ -1,0 +1,45 @@
+* Q:用flask框架的时候经常遇到以下错误怎么办？<pre>ExtDeprecationWarning: Importing flask.ext.*** is deprecated, use flask_*** instead.</pre>
+
+* A：flask框架从近期的版本开始对各种类似“flask.ext.WTF”的模块进行更新，改为“flask_WTF”的形式，但是写以前的格式也不会报错而是出现上述的的warning，可能以后的版本会完全的替代，所以用flask框架的时候请坚持使用新的格式，并且多上官网看看每次的版本更新都有什么样的变化，以保证我们的代码的正确性。
+==
+
+* Q：很多情况下，在一台电脑或虚拟环境下调试好的程序，一旦换个电脑或者环境有可能就会出现版本不同的原因而出现错误，但是我们安装了不止一个扩展包，所以每一个的版本号都记下来或者一个一个的查那是很麻烦的，那这种时候怎么办？
+* A：当我们开始一个项目的时候，在项目根目录下执行如下pip命令<pre>（vens) $ pip freeze >requirments.txt</pre>就会创建一个txt文件并记录下目前安装的扩展包的版本，每次安装或升级后都记得更新一下requirments文件即可。
+==
+
+* Q:在flask项目中，经常会用SQLALchemy数据库来存储数据，而很多人在用SQLALchemy的时候经常得到以下的报错,这个错误什么引起的，怎么解决？<pre>sqlalchemy.exc.OperationalError: (OperationalError) no such table/column:</pre>
+* A:这类错误一般都是数据没升级或者忘了创建数据库造成的，写完数据库的配置文件之后，应该用 <pre>>>> db.create_all() </pre>命令来创建新表才能把我们的数据保存到这个库里。若之前创建过数据库还是报错的话，建议重新创建，即先删除久表<pre>>>>db.drop_all() </pre>再重新建表.
+==
+
+* Q:在flask项目里总是逃不过发邮件这个步骤，尤其是在注册新用户，认证用户，更改用户邮箱，密码的时候，但是又不能把管理员的邮箱和密码等敏感信息直接放在源代码里，这个时候怎么办？
+* A：在Python的os模块里有个os.environ函数，正好可以帮我们解决这个问题，在配置函数里设置类似如下的设置
+```python
+import os
+#...
+app.config['MAIL_SERVER'] =smtp.googlemail.com
+app.config['MAIL_USERNAME'] =os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] =os.environ.get('MAIL_PASSWORD')
+#...
+```
+如果你是Linux或者Mac用户的话，在终端里通过以下命令设置变量：
+<pre>(venv)$ export MAIL_USERNAME='Gmail username'
+(venv)$ export MAIL_PASSWORD='Gmail password'</pre>
+Windows用户通过下面的方式设置环境变量：
+<pre>(venv) $ set MAIL_USERNAME='Gmail username'
+(venv) $ set MAIL_PASSWORD='Gmail password'</pre>
+在开源作品里这种设定是至关重要的.
+
+------
+### 推荐一些比较好的github资源：
+1. Awesome Python:由vinta发起维护的Python资源列表，内容包括：web框架，网络爬虫，网络内容提取，模板引擎，数据库，数据可视化，图片处理，文本处理，自然语言处理，机器学习，日志，代码分析等。收藏量已超过25k。<br/>链接：
+ https://github.com/vinta/awesome-python<br/><br/>
+2. pallets/werkzeug: flask的WSGI工具集。其中包括实现非常好的LocalProxy，cached_property, import_string, find_modules,TypeConversionDict等。<br/> 
+链接： https://github.com/pallets/werkzeug<br/><br/>
+3. Tornado: Tornado 是一个Python web框架和异步网络库，起初由 FriendFeed 开发. 通过使用非阻塞网络I/O， Tornado可以支撑上万级的连接，处理 长连接, <code>WebSockets</code> ，和其他需要与每个用户保持长久连接的应用.<br/>
+Tornado 大体上可以被分为4个主要的部分:
+* web框架 (包括创建web应用的 <code>RequestHandler</code> 类，还有很多其他支持的类).
+* HTTP的客户端和服务端实现 <code>(HTTPServer and AsyncHTTPClient)</code>.
+* 异步网络库 <code>(IOLoop and IOStream)</code>, 为HTTP组件提供构建模块，也可以用来实现其他协议.
+* 协程库 <code>(tornado.gen)</code> 允许异步代码写的更直接而不用链式回调的方式.
+Tornado web 框架和HTTP server 一起为 WSGI 提供了一个全栈式的选择. 在WSGI容器 <code>(WSGIAdapter)</code> 中使用Tornado web框架或者使用Tornado HTTP server 作为一个其他WSGI框架<code>(WSGIContainer)</code>的容器,这样的组合方式都是有局限性的. 为了充分利用Tornado的特性,你需要一起使用Tornado的web框架和HTTP server.<br/>
+链接： https://github.com/tornadoweb/tornado

@@ -1,0 +1,36 @@
+Q: Go语言一个函数作为一个函数的参数
+
+A：
+例如，下面的代码
+
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+//comput 函数的参数是一个函数（hypot1）  
+
+// 这个参数是一个  输入变量为float64  输出变量为float64 的 函数
+
+//这里的形参 名字是 hypot1
+
+//comput 函数返回值为float64类型
+
+func compute(hypot1 func(float64, float64) float64) float64 {
+	return hypot1(3, 4)
+}
+
+func main() {
+	hypot := func(x, y float64) float64 {
+		return math.Sqrt(x*x + y*y)
+	}
+	fmt.Println(hypot(5, 12))
+
+	fmt.Println(compute(hypot))
+	fmt.Println(compute(math.Pow))
+}
+
+
+输出结果：13 5 81

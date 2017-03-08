@@ -1,0 +1,17 @@
+* 对于从其它数据库系统导入到 MySQL 的表，MySQL 进行数据类型的映射，具体表见官方文档 12.10。
+* 数据类型映射发生在表创建时，随后原始的类型定义被丢弃。如果用其它厂商使用的类型创建表，然后提交一条 DESCRIBE tbl_name 语句，MySQL 用等效的 MySQL 类型报告表结构：
+<source lang='mysql'>
+mysql> CREATE TABLE t (a BOOL, b FLOAT8, c LONG VARCHAR, d NUMERIC);
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> DESCRIBE t;
++-------+---------------+------+-----+---------+-------+
+| Field | Type          | Null | Key | Default | Extra |
++-------+---------------+------+-----+---------+-------+
+| a     | tinyint(1)    | YES  |     | NULL    |       |
+| b     | double        | YES  |     | NULL    |       |
+| c     | mediumtext    | YES  |     | NULL    |       |
+| d     | decimal(10,0) | YES  |     | NULL    |       |
++-------+---------------+------+-----+---------+-------+
+4 rows in set (0.01 sec)
+</source>

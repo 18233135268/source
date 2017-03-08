@@ -1,0 +1,200 @@
+
+=Basic=
+
+==Package,variables and functions==
+
+===import package===
+package的名称需要加上双引号.
+
+当有多个package的时候，需要加上括号把所有package包括进去，每个package要占一行，中间不需要加逗号或者分号；只有一个package的时候，加不加都可以；当然也可以通过用多个import来导入package.
+----
+===输出===
+Println中的P需要大写
+----
+===:====
+只能在函数中使用.
+
+可以对多个变量名进行赋值，用逗号隔开.
+----
+==="time” package===
+使用Go官网的编辑器，无法输出现在的时间，只能输出当时文档编辑的时间.
+----
+===Package===
+每个程序都由package组成.
+
+Package中的斜杠，比如”math/rand”，就是导入了math的子包rand.
+
+调用package中的函数时，函数首字母需要大写.
+
+导入package以后，在后面的程序中就必须得调用到.
+----
+===Print===
+Println：无任何属性，例如：fmt.Println(4).
+
+Printf (printformat)：格式化(format)，值的传入，例如：fmt.Printf("now you have  %g  problems.", math.sqrt(7)).
+----
+===Exported  names===
+Exported  names 在输出时首字母需要大写，例如：fmt.Println(math.Pi)，而不是fmt.Println(math.pi).
+----
+===Function===
+参数的类型放在函数的参数变量名前面.
+
+函数内容也就是大括号要加一个需要输出变量的类型，如果要输出多个变量，则加个括号，括号里面加上输出变量的类型，顺序与变量输出顺序一样，中间用逗号隔开.
+
+若类型要使用float，则必须写成float32或者float64.
+
+Go里面没有double类型.
+
+如果有好几个连续的参数，并且类型都一样，则可以留下最后一个参数的类型，其他的可以去掉.
+----
+===Swap()===
+返回两个字符
+----
+===Return===
+若一个return语句要输出多个值，除了return后面加上要输出的变量名，变量名之间用逗号隔开，在函数执行语句之前也要加上返回值的类型，用括号括起来，类型之间用逗号隔开，例如：
+    func  split ( sum  int )  (int,int)  {
+        x := sum * 4 / 9
+        y := sum - x
+        return  x,y
+    }
+使用Return时，后面也可以不加参数，在函数内容前面对需要输出的变量进行定义即可，例如：
+    func  split ( sum  int )  (x, y int)  {
+        x = sum * 4 / 9
+        y = sum - x
+        return
+    }//输出与上面那串代码一样
+----
+===Variable===
+变量的定义，int、float等数值类型的初始值是0，bool类型的初始值是false，string的类型的初始值是“”(空字符).
+
+Var自带初始化器，也就是变量名后面的类型可以不写，但是写上可以更清晰，比如float有32位和64位的.
+
+当需要定义多个变量时，可以用括号括起来，每个变量占一行，但中间不可以用逗号隔开.
+
+对变量的初始化 := 只能用在函数中，函数以外的必须得用var.
+----
+===Type===
+赋值的时候，如果右边的变量名没有定义数值类型，则左边的类型视情况而定，例如：
+    i := 42           // int
+    f := 3.142        // float64
+    g := 0.867 + 0.5i // complex128
+----
+===常量===
+常量的定义需要在前面加const，不能使用 := 对常量进行赋值，只能使用=，例如：
+    const Pi = 3.14
+----
+==Flow control statements（控制流语句）==
+===For===
+与C++用法类似，只是不需要小括号“（）”把三个表达式括起来，但是for语句执行的表达式需要用“{ }”括起来，例如：
+    func main() {
+        sum := 0
+        for  i := 0; i < 10; i++ {
+            sum += i
+        }
+        fmt.Println(sum)
+    }
+初始化语句和后置语句也可以省略，例如：
+    func main() {
+        sum := 1
+        for ; sum < 1000; {
+            sum += sum
+        }
+        fmt.Println(sum)
+    }
+省去初始化语句和后置语句后，剩下的两个分号也可以省略，这样子就类似于C++里面的“while”语句，如下：
+    func main() {
+        sum := 1
+        for sum < 1000 {
+            sum += sum
+        }
+        fmt.Println(sum)
+    }
+
+如果继续省去循环条件，循环就不会结束，就会出现如下的报错：
+    process took too long
+这样子就可以更简洁的表达死循环.
+----
+===If===
+If语句执行的表达式需要用大括号“{ }”括起来，例如：
+    if x < 0 {
+        return sqrt(-x) + "i"
+    }
+在if语句中声明的变量，只能使用到if函数结束，但是如果有else语句，变量也可以使用，例如：
+    func pow(x, n, lim float64) float64 {
+        if v := math.Pow(x, n); v < lim {
+            return v
+        } else {
+            fmt.Printf("%g >= %g\n", v, lim)
+        }
+        // can't use v here, though
+        return lim
+    }
+----
+===Sprint()===
+将参数列表 a 中的各个参数转换为字符串格式并返回，各个参数之间以空格分隔.
+----
+===Switch===
+case表达式不必是常量或整数，执行的过程从上至下，直到找到匹配项；而如果switch没有表达式，它自动匹配true. 
+
+Go里面switch默认相当于每个case最后带有break，匹配成功后不会自动向下执行其他case，而是跳出整个switch, 但是可以使用fallthrough强制执行后面的case代码.
+----
+===Defer===
+Defer函数里面的参数会立刻生成，但是在上层函数返回前函数都不会被调用.
+    package main
+    import "fmt"
+    func main() {
+        defer fmt.Println("world")
+        fmt.Println("hello")
+    }
+    //输出:hello
+         world
+Defer函数的调用会被压入一个栈中，执行函数的时候会按照后进先出的顺序，即从后往前调用，如下：
+    func main() {
+        defer fmt.Println("world")
+        defer fmt.Println("!")
+        fmt.Println("hello")
+    }
+    //则输出:hello
+            !
+            world
+----
+==More types==
+===Struct===
+字段可以使用“.”来访问，例如：
+    type Vertex struct {
+        X int
+        Y int
+    }
+    func main() {
+        v := Vertex{1, 2}
+        v.X = 4
+        fmt.Println(v.X)
+    }
+当一个变量指向一个结构体的地址时，想用这个变量名访问结构体的成员时，不需要用“(*变量名).成员名”，把“*”去掉即可.
+----
+===Array===
+定义一个数组，例如：var a [10]int.
+
+数组的长度是它类型的一部分，不能调整大小.
+
+当数组成员的个数小于数组长度时，剩下的都用0补上.
+----
+===Slice===
+Slice是一种类型.
+
+表达：a[0:5]，表示取出数组a的前5个成员；a[1:4]，表示取出数组a的第2个到第5个成员，以此类推.
+
+对切片成员的操作也同时会对数组操作.
+
+下面的几种操作都是一样的：
+    a[0:10]
+    a[:10]
+    a[0:]
+    a[:]
+Nil  Slice没有底层数组.
+
+Make函数第二个参数表示长度，第三个参数表示容量.
+----
+===Type  Switches===
+Case语句指定的是类型，不是值
+----

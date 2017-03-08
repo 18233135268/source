@@ -1,0 +1,379 @@
+= react-native Basic =
+== HelloWorld ==
+<source lang="javascript">
+import React, { Component } from 'react';
+import {
+    Text,
+    View,
+    AppRegistry,
+    StyleSheet
+} from 'react-native';
+
+class HelloWorld extends Component {
+    render() {
+        return(
+            <View>
+                <Text style = {styles.text}>Hello World!</Text>
+            </View>
+        );
+    }
+
+}
+
+//统一管理样式
+const styles = StyleSheet.create({
+    text: {
+        fontSize: 20, //文字大小： 20
+        color: '#f00' //文字颜色： red
+    }
+})
+
+AppRegistry.registerComponent('HelloWorld', () => HelloWorld); //程序入口
+</source>
+----
+
+== Components ==
+=== View ===
+*容器
+<source lang="javascript">
+<View>
+    <OtherComponent/> 
+        or 
+    <OtherComponent>
+
+    </OtherComponent>
+</View>
+</source>
+----
+=== Text ===
+*用于文本显示
+<source lang='javascript'>
+<View>
+    <Text>需要显示的文本</Text>
+</View>
+</source>
+----
+=== Image ===
+*用于图片显示
+<source lang='javascript'>
+//两种方式
+//1.加载本地图片 注意: 将图片路径作为变量或常量时必须以require('')的方式指定
+<View>
+    <Image source={require('./icon.png')} />
+</View>
+//2.加载网络图片 注意: 必须指定尺寸
+<View>
+    <Image source={{uri: 'https://facebook.github.io/react/img/logo_og.png'}} 
+           style={{width: 400, height: 400}} />
+</View>
+</source>
+----
+=== ListView ===
+*用于数据的列表式显示
+<source lang='javascript'>
+//关键属性
+//dataSource: 传递一个数组作为数据源
+//renderRow: 以dataSource中的数组作为参数返回一个可渲染的组件作为ListView的每一行,也可使用自定义组件
+{
+    constructor(props) {
+        super(props);
+        var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+        this.state = {
+            dataSource: ds.cloneWithRows(['row 1', 'row 2']),
+        }
+    }
+
+    render() {
+        return(
+            <ListView
+                dataSource={this.state.dataSource}
+                renderRow={(rowData) => <Text>{rowData}</Text>}
+            />
+        );
+    }
+}
+</source>
+
+*列表元素水平排列
+<source lang='javascript'>
+contentContainerStyle={styles.itemStyle}
+</source>
+<source lang='javascript'>
+itemStyle: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+}
+</source>
+*垂直滚动状态下取消垂直滚动指示条
+<source lang='javascript'>
+showsVerticalScrollIndicator={false}
+</source>
+*设为水平滚动
+<source lang='javascript'>
+horizontal={true}
+</source>
+*水平滚动状态下取消水平滚动指示条
+<source lang='javascript'>
+showsHorizontalScrollIndicator={false}
+</source>
+----
+=== ScrollView ===
+*滚动视图，提供一个具有滚动效果的容器组件
+<source lang='javascript'>
+<ScrollView>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+     <Text>this is a ScrollView.</Text>
+</ScrollView>
+</source>
+----
+=== TextInput ===
+*文本输入
+<source lang='javascript'>
+{
+    constructor(props) {
+        super(props);
+        this.state = { 
+            text: 'text'，
+        };
+    }
+
+    //onChangeText用于读取用户的输入并将参数text存入this.state.text中
+    render() {
+        return (
+            <TextInput
+                onChangeText={(text) => this.setState({text})}
+                placeholder={'指定提示语'}
+                value={this.state.text}
+            />
+        );
+    }
+}
+</source>
+----
+=== ToastAndroid ===
+*短暂的消息提示组件
+<source lang='javascript'>
+//两个参数
+//1.需要显示的消息内容
+//2.显示的时间 常数：ToastAndroid.SHORT 和 ToastAndroid.LONG
+ToastAandroid.show('this is a ToastAndroid'， ToastAndroid.SHORT);
+</source>
+----
+== ES6新特性相关 ==
+*由于ES6的新特性，在编码时可以简化或者需要注意的操作
+=== let，const声明变量 ===
+*let：用于声明变量，用法类似于var，但所声明的变量只在let命令所在的代码块内有效
+<source lang='javascript'>
+{
+    var a = 1;
+    let b = 1;
+}
+a //1
+b //undefined
+//在for循环内使用很合适，如：
+for(let i = 0; i < 5; i++){}
+</source>
+
+*const声明一个只读的常量。一旦声明，常量的值将不再改变
+<source lang='javascript'>
+{
+    const PI = 3.1415926; //PI为常量，不可再次赋新值。
+}
+</source>
+
+----
+=== 箭头函数合理使用 ===
+
+
+*需要留意<br>
+<source lang='javascript'>
+method(arg1) {
+    return arg1;
+}
+
+function1 = {this.method} //yes，将method赋给function1，正确
+function2 = {this.method(arg)} //no，将method的返回值赋给function2，错误
+function3 = {() => this.method(arg)} //yes，将method赋给function3，正确
+</source>
+----
+=== 解构赋值 ===
+<source lang='javascript'>
+{
+    var arr = ['this is a string', 2, 3];
+    var [a, b, c] = arr;
+    a //this is a string
+    b //2
+    c //3
+}
+</source>
+----
+=== 扩展运算符 ===
+*'...' ，把数组或类数组对象展开成一系列用逗号隔开的值<br>
+<source lang='javascript'>
+{
+    var foo = function(a, b, c) {
+      console.log(a);
+      console.log(b);
+      console.log(c);
+    }
+    var arr = [1, 2, 3];
+    //传统写法
+    foo(arr[0], arr[1], arr[2]); //1 2 3
+
+    //使用扩展运算符
+    foo(...arr);
+    //1
+    //2
+    //3
+}
+</source>
+----
+=== rest运算符 ===
+*'...' ，与扩展运算符功能相反，把逗号隔开的值序列组合成一个数组
+<source lang='javascript'>
+{
+    bar = function(a, ...args) {
+        console.log(a);
+        console.log(args);
+    }
+    bar(1, 2, 3, 4);
+    //1
+    //[ 2, 3, 4 ] 
+}
+</source>
+
+<source lang='javascript'>
+三点放在形参或者等号左边为rest运算符; 放在实参或者等号右边为扩展运算符，或者说，放在被赋值一方为rest运算符，放在赋值一方为扩展运算符
+</source>
+----
+== Styles ==
+*样式，如：大小、颜色、比例等
+<source lang='javascript'>
+//两种方式
+//1.直接在组件内指定
+<View style = {{width: 100, height: 100}}></View>
+
+//2.样式的统一管理
+const styles = StyleSheet({
+    style1: {
+        width: 100,
+        height: 100
+    },
+    style2: {
+        width: 50,
+        height: 50
+    }
+})
+
+//调用时
+<View style = {styles.style1}></View>
+<View style = {styles.style2}></View>
+
+//3.动态指定
+{
+    outStyle = {
+        height: this.props.hei,
+    }
+    {
+        <View style = {[outStyle]}></View>
+    }
+}
+
+//调用时：
+hei = 100
+</source>
+----
+=== 通用属性 ===
+----
+==== width & height ====
+*指定宽高，可使用获取的屏幕宽高
+<source lang='javascript'>
+{
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height
+}
+</source>
+----
+==== flex ====
+*按比例显示
+----
+==== flexDirection ====
+*组件中子元素排列方向
+<source lang='javascript'>
+'row' //水平
+'column' //垂直
+//默认为'column'
+</source>
+----
+==== justifyContent ====
+*对齐
+<source lang='javascript'>
+'center' //居中
+'flex-end' //尾部对齐，若是水平布局则在右部，若是垂直布局则在底部
+'flex-start' //首部对齐，若是水平布局则在左部，若是垂直布局则在顶部
+'space-between' //介于
+'space-around' //包围
+</source>
+----
+==== alignItems ====
+*内部组件所在位置
+<source lang='javascript'>
+'center' //居中
+'flex-end' //尾部对齐，若是水平布局则在右部，若是垂直布局则在底部
+'flex-start' //首部对齐，若是水平布局则在左部，若是垂直布局则在顶部
+'stretch' //占满布局
+</source>
+----
+==== padding ====
+*自身边框到自身内部另一个容器边框之间的距离
+<source lang='javascript'>
+paddingLeft //左距离
+paddingRight //右距离
+paddingTop //顶端距离
+paddingBottom //底端距离
+padding //指定四周的距离
+</source>
+----
+==== margin ====
+*自身边框到另一个容器边框之间的距离
+<source lang='javascript'>
+marginLeft //左距离
+marginRight //右距离
+marginTop //顶端距离
+paddingBottom //底端距离
+margin //指定四周的距离
+</source>
+----
+==== backgroundColor ====
+*背景色，由16进制RGB颜色指定
+<source lang='javascript'>
+'#rgb' 
+'#rgba' //a指定透明度，0为全透明，f为不透明
+'#rrggbb'
+'#rrggbbaa'
+</source>
+----
+=== 特定属性 ===
+----
+==== textAlign ====
+*文本类组件的属性，如<Text/> ，用于设置文本在组件内的位置，字符串类型
+<code>textAlign = 'center' //文本居中</code>
+----
+==== color ====
+*文本类组件的属性，如<Text/> ，用于设置文本的颜色，颜色值为RGB颜色，字符串类型
+<code>color = '#f00' //文本颜色为红色</code>
+----
+==== fontSize ====
+*文本类组件的属性，如<Text/> ，用于设置文本的大小，数值类型
+<code>textSize = 20 //文本大小为20</code>
+----
+=== 更多属性 ===
+http://facebook.github.io/react-native/releases/0.26/docs/style.html#content
+

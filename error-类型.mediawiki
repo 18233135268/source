@@ -1,0 +1,46 @@
+原文：https://blog.golang.org/error-handling-and-go
+* error 类型是一个接口，声明如下：
+<source lang='go'>
+type error interface {
+        Error() string
+}
+</source>
+
+* 常用的实现：
+<source lang='go'>
+// errorString is a trivial implementation of error.
+type errorString struct {
+    s string
+}
+
+func (e *errorString) Error() string {
+    return e.s
+}
+</source>
+
+* 用 <code>errors.New</code> 函数构造一个这样的值：
+<source lang='go'>
+// New returns an error that formats as the given text.
+func New(text string) error {
+    return &errorString{text}
+}
+</source>
+
+* 可以这样使用 <code>errors.New</code>：
+<source lang='go'>
+func Sqrt(f float64) (float64, error) {
+    if f < 0 {
+        return 0, errors.New("math: square root of negative number")
+    }
+    // implementation
+}
+</source>
+
+* 可以使用 error 的 <code>Error</code> 方法或直接打印：
+<source lang='go'>
+f, err := Sqrt(-1)
+if err != nil {
+    fmt.Println(err)
+}
+</source>
+fmt 包通过调用一个 error 值的 <code>Error() string</code> 方法来将其格式化。

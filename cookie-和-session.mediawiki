@@ -1,0 +1,6 @@
+
+  Cookie是客户端保存用户信息的一种机制，用来记录用户的一些信息，也是实现Session的一种方式。
+
+  Session是在服务端保存的一个数据结构，用来跟踪用户的状态，这个数据可以保存在集群、数据库、文件中；
+  Session 的运行依赖 session id，而 session id 是存在 cookie 中的，也就是说，如果浏览器禁用了
+  cookie，同时 Session 也会失效（但是可以通过其它方式实现，比如在 url 中传递 session_id）。

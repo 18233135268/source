@@ -1,0 +1,683 @@
+== Basic Types ==
+=== Boolean ===
+```ts
+let isDone: boolean = false;
+```
+----
+=== Number ===
+* As in JavaScript, all numbers in TypeScript are floating point values. 
+```ts
+let decimal: number = 6;
+let hex: number = 0xf00d;
+let binary: number = 0b1010;
+let octal: number = 0o744;
+```
+----
+=== String ===
+```ts
+let fullName: string = `Bob Bobbington`;
+let age: number = 37;
+let sentence: string = `Hello, my name is ${ fullName }.
+
+I'll be ${ age + 1 } years old next month.`
+```
+----
+=== Array ===
+```ts
+let list: number[] = [1, 2, 3];
+let list: Array<number> = [1, 2, 3];
+```
+----
+=== Tuple ===
+```ts
+let x: [string, number];
+x = ["hello", 10]; // OK
+x = [10, "hello"]; // Error
+
+console.log(x[0].substr(1)); // OK
+console.log(x[1].substr(1)); // Error, 'number' does not have 'substr'
+```
+----
+=== Enum ===
+```ts
+enum Color {Red, Green, Blue};
+let c: Color = Color.Green;
+
+enum Color {Red = 1, Green, Blue};  // By default, enums begin numbering their members starting at 0. 
+let c: Color = Color.Green;
+
+enum Color {Red = 1, Green, Blue};
+let colorName: string = Color[2]; // Green
+
+alert(colorName);
+```
+----
+=== Any ===
+```ts
+let notSure: any = 4;
+notSure = "maybe a string instead";
+notSure = false; // okay, definitely a boolean
+
+// 与 Object 类型区别
+let notSure: any = 4;
+notSure.ifItExists(); // okay, ifItExists might exist at runtime
+notSure.toFixed(); // okay, toFixed exists (but the compiler doesn't check)
+
+let prettySure: Object = 4;
+prettySure.toFixed(); // Error: Property 'toFixed' doesn't exist on type 'Object'.
+
+// 数组类型
+let list: any[] = [1, true, "free"];
+list[1] = 100;
+```
+----
+=== Void ===
+```ts
+function warnUser(): void { // 函数返回值
+    alert("This is my warning message");
+}
+
+let unusable: void = undefined; // 变量类型，只能赋值为 undefined 或 null
+```
+----
+=== Type assertions ===
+```ts
+let someValue: any = "this is a string";
+let strLength: number = (<string>someValue).length;
+
+let someValue: any = "this is a string";
+let strLength: number = (someValue as string).length;
+```
+----
+== Variable Declaration ==
+=== let ===
+块作用域外不可访问
+```ts
+function f(input: boolean) {
+    let a = 100;
+
+    if (input) {
+        // Still okay to reference 'a'
+        let b = a + 1;
+        return b;
+    }
+
+    // Error: 'b' doesn't exist here
+    return b;
+}
+```
+不可重复申明变量
+```ts
+function f(x) {
+    let x = 100; // error: interferes with parameter declaration
+}
+
+function g() {
+    let x = 100;
+    var x = 100; // error: can't have both declarations of 'x'
+}
+```
+块级作用域变量的获取
+```ts
+function theCityThatAlwaysSleeps() {
+    let getCity;
+
+    if (true) {
+        let city = "Seattle";
+        getCity = function() {
+            return city;
+        }//此处获取到了变量city
+    }
+
+    return getCity();
+}
+```
+----
+===const===
+```ts
+const numLivesForCat = 9;
+const kitty = {
+    name: "Aurora",
+    numLives: numLivesForCat,
+}
+
+// Error
+kitty = {
+    name: "Danielle",
+    numLives: numLivesForCat
+};
+
+// all "okay"
+kitty.name = "Rory";
+kitty.name = "Kitty";
+kitty.name = "Cat";
+kitty.numLives--;
+```
+对于复合类型的变量，变量名不指向数据，而是指向数据所在的地址。const命令只是保证变量名指向的地址不变，并不保证该地址的数据不变，
+----
+==Interfaces==
+===The First ===
+了解接口如何工作
+```ts
+function printLabel(labelledObj: { label: string }) {
+    console.log(labelledObj.label);
+}// printLabel是对象参数，要求它有一个名为 label 类型为 string 的属性。
+
+let myObj = {size: 10, label: "Size 10 Object"};
+printLabel(myObj);//传入的对象参数可能有更多属性，但是编译器只检查那些必需的属性是否存在及类型是否匹配。
+```
+用接口描述：
+```ts
+interface LabelledValue {
+  label: string;
+}
+
+function printLabel(labelledObj: LabelledValue) {
+  console.log(labelledObj.label);
+}
+
+let myObj = {size: 10, label: "Size 10 Object"};
+printLabel(myObj);
+```
+----
+===Optional Properties===
+```ts
+interface SquareConfig {
+  color?: string;
+  width?: number;
+}//带有可选属性的接口定义方式
+
+function createSquare(config: SquareConfig): {color: string; area: number} {
+  let newSquare = {color: "white", area: 100};
+  if (config.color) {
+    newSquare.color = config.color;
+  }
+  if (config.width) {
+    newSquare.area = config.width * config.width;
+  }
+  return newSquare;
+}
+
+let mySquare = createSquare({color: "black"});
+```
+----
+===Readonly properties===
+```ts
+interface Point {
+    readonly x: number;
+    readonly y: number;
+}
+let p1: Point = { x: 10, y: 20 };
+p1.x = 5; // error!
+```
+
+```ts
+let a: number[] = [1, 2, 3, 4];
+let ro: ReadonlyArray<number> = a;
+ro[0] = 12; // error!
+ro.push(5); // error!
+ro.length = 100; // error!
+a = ro; // error! 赋值给一个普通数组也不可实现，但可以用类型断言重写 <code>a = ro as number[];</code>
+
+```
+
+== Classes ==
+=== Basic ===
+```ts
+class Greeter {
+    greeting: string;
+    constructor(message: string) { // 构造函数就叫 constructor
+        this.greeting = message;
+    }
+    greet() {
+        return "Hello, " + this.greeting;
+    }
+}
+
+let greeter = new Greeter("world");
+```
+----
+=== Inheritance ===
+```ts
+class Animal {
+    name: string;
+    constructor(theName: string) { this.name = theName; }
+    move(distanceInMeters: number = 0) {
+        console.log(`${this.name} moved ${distanceInMeters}m.`);
+//模版字符串被反引号包围（ `  ），并且以 ${ expr }形式嵌入表达式，可定义多行文本和内嵌表达式
+    }
+}
+
+class Snake extends Animal {
+    constructor(name: string) { super(name); }//包含constructor函数的派生类必须调用 super() ，它会执行基类的构造方法。
+    move(distanceInMeters = 5) {
+        console.log("Slithering...");
+        super.move(distanceInMeters);
+    }
+}
+
+class Horse extends Animal {
+    constructor(name: string) { super(name); }
+    move(distanceInMeters = 45) {
+        console.log("Galloping...");
+        super.move(distanceInMeters);
+    }
+}
+
+let sam = new Snake("Sammy the Python");
+let tom: Animal = new Horse("Tommy the Palomino");
+
+sam.move();
+tom.move(34);
+```
+结果如下：
+```ts
+Slithering...
+Sammy the Python moved 5m.
+Galloping...
+Tommy the Palomino moved 34m.
+```
+----
+=== Public, Private, and Protected ===
+TypeScript中每个成员默认为 public，当成员被标记成 private 时，不能在声明它的类的外部访问
+```ts
+class Animal {
+    private name: string;
+    constructor(theName: string) { this.name = theName; }
+}
+new Animal("Cat").name; // Error: 'name' is private;
+
+class Animal {
+    private name: string;
+    constructor(theName: string) { this.name = theName; }
+}
+
+class Rhino extends Animal {
+    constructor() { super("Rhino"); }
+}
+
+class Employee {
+    private name: string;
+    constructor(theName: string) { this.name = theName; }
+}
+
+let animal = new Animal("Goat");
+let rhino = new Rhino();
+let employee = new Employee("Bob");
+
+animal = rhino;
+animal = employee; // Error: Animal and Employee are not compatible
+```
+Animal 和 Rhino 共享了来自 Animal 里的私有成员定义 private name: string ，因此它们兼容。
+
+```ts
+class Person {
+    protected name: string;
+    constructor(name: string) { this.name = name; }
+}
+
+class Employee extends Person {
+    private department: string;
+
+    constructor(name: string, department: string) {
+        super(name)
+        this.department = department;
+    }
+
+    public getElevatorPitch() {
+        return `Hello, my name is ${this.name} and I work in ${this.department}.`;
+    }
+}
+
+let howard = new Employee("Howard", "Sales");
+console.log(howard.getElevatorPitch());
+console.log(howard.name); // error
+```
+构造函数也可以被标记成 protected 。 这意味着这个类不能在包含它的类外被实例化，但是能被继承。
+```ts
+class Person {
+    protected name: string;
+    protected constructor(theName: string) { this.name = theName; }
+}
+
+// Employee can extend Person
+class Employee extends Person {
+    private department: string;
+
+    constructor(name: string, department: string) {
+        super(name);
+        this.department = department;
+    }
+
+    public getElevatorPitch() {
+        return `Hello, my name is ${this.name} and I work in ${this.department}.`;
+    }
+}
+
+let howard = new Employee("Howard", "Sales");
+let john = new Person("John"); // Error: The 'Person' constructor is protected
+```
+----
+===readonly===
+
+使用 readonly 关键字将属性设置为只读的。 只读属性必须在声明时或构造函数里被初始化
+```ts
+class Octopus {
+    readonly name: string;
+    readonly numberOfLegs: number = 8;
+    constructor (theName: string) {
+        this.name = theName;
+    }
+}
+let dad = new Octopus("Man with the 8 strong legs");
+dad.name = "Man with the 3-piece suit"; // error! name is readonly.
+```
+----
+=== Parameter properties ===
+在上面的例子中舍弃了 theName ，仅在构造函数里使用 private name: string 参数来创建和初始化 name 成员。 即把声明和赋值合并至一处。
+```ts
+class Animal {
+    constructor(private name: string) { } // 构造函数参数列表中直接声明类成员变量
+    move(distanceInMeters: number) {
+        console.log(`${this.name} moved ${distanceInMeters}m.`);
+    }
+}//参数属性通过给构造函数参数添加一个访问限定符来声明，使用 private 限定一个参数属性会声明并初始化一个私有成员，对于 public 和 protected 来说也是一样
+```
+----
+=== Accessors ===
+```ts
+let passcode = "secret passcode";
+
+class Employee {
+    private _fullName: string;
+
+    get fullName(): string {
+        return this._fullName;
+    }
+
+    set fullName(newName: string) {
+        if (passcode && passcode == "secret passcode") { // 可以做一些额外操作，比如，session 检查，权限检查等
+            this._fullName = newName;
+        }
+        else {
+            console.log("Error: Unauthorized update of employee!");
+        }
+    }
+}
+
+let employee = new Employee();
+employee.fullName = "Bob Smith";
+if (employee.fullName) {
+    console.log(employee.fullName);
+}
+```
+----
+=== Static Properties ===
+```ts
+class Grid {
+    static origin = {x: 0, y: 0};
+    calculateDistanceFromOrigin(point: {x: number; y: number;}) {
+        let xDist = (point.x - Grid.origin.x);
+        let yDist = (point.y - Grid.origin.y);
+        return Math.sqrt(xDist * xDist + yDist * yDist) / this.scale;
+    }
+    constructor (public scale: number) { }
+}
+```
+----
+=== Abstract Classess ===
+```ts
+    abstract class Department { // 不能创建实例
+
+    constructor(public name: string) {
+    }
+
+    printName(): void {
+        console.log('Department name: ' + this.name);
+    }
+
+    abstract printMeeting(): void; // 子类必须实现该方法
+}
+   
+
+   class AccountingDepartment extends Department {
+
+    constructor() {
+        super('Accounting and Auditing'); // constructors in derived classes must call super()
+    }
+
+    printMeeting(): void {
+        console.log('The Accounting Department meets each Monday at 10am.');
+    }//派生类中实现抽象方法
+
+    generateReports(): void {
+        console.log('Generating accounting reports...');
+    }//派生类中实现抽象方法
+}
+
+let department: Department; // 创建对象引用
+department = new Department(); // 抽象类不能实例化
+department = new AccountingDepartment(); // 创建非抽象派生类的对象
+department.printName();
+department.printMeeting();
+department.generateReports(); // error: method doesn't exist on declared abstract type
+
+```
+----
+==Function==
+===Function Types===
+为函数指定类型，可以给每个参数添加类型之后再为函数本身添加返回值类型。 TypeScript可根据返回语句自动推断出返回值类型，很多情况下我们可以忽略它
+```ts
+function add(x: number, y: number): number {
+    return x + y;
+}
+```
+写出函数完整类型：
+```ts
+let myAdd = function(x: number, y: number): number { return x+y; };
+```
+在函数和返回值类型之前使用( => )符号
+```ts
+let myAdd: (x: number, y: number)=>number =
+    function(x: number, y: number): number { return x+y; };
+```
+只要参数类型是匹配的，就认为它是有效的函数类型，不在乎参数名是否正确。
+```ts
+let myAdd: (baseValue:number, increment:number) => number =
+    function(x: number, y: number): number { return x + y; };
+```
+----
+===Inferring the types===
+赋值语句中函数类型（包含参数类型和返回值类型）不完整时，TypeScript编译器自动识别出类型
+```ts
+// myAdd has the full function type
+let myAdd = function(x: number, y: number): number { return x + y; };
+
+// The parameters `x` and `y` have the type number
+let myAdd: (baseValue:number, increment:number) => number =
+    function(x, y) { return x + y; };
+```
+----
+===Optional and Default Parameters===
+和JavaScript不同的是，TypeScript中每一个参数是必须的，即传递给一个函数的参数个数必须与函数期望的参数个数一致。
+```ts
+function buildName(firstName: string, lastName: string) {
+    return firstName + " " + lastName;
+}
+
+let result1 = buildName("Bob");                  // error, too few parameters
+let result2 = buildName("Bob", "Adams", "Sr.");  // error, too many parameters
+let result3 = buildName("Bob", "Adams");         // ah, just right
+```
+在TypeScript里在参数名旁使用 ? 实现可选参数的功能
+```ts
+function buildName(firstName: string, lastName?: string) {
+    if (lastName)
+        return firstName + " " + lastName;
+    else
+        return firstName;
+}//lastname是可选参数
+let result1 = buildName("Bob");  // works correctly now
+let result2 = buildName("Bob", "Adams", "Sr.");  // error, too many parameters
+let result3 = buildName("Bob", "Adams");  // ah, just right
+```
+可选参数必须跟在必须参数后面。 如果想让first name是可选的，就必须调整位置把first name放在后面。
+
+在所有必须参数后面的带默认初始值的参数都是可选的，与可选参数一样，在调用函数的时候可以省略。 也就是说可选参数与末尾的默认参数共享参数类型。
+```ts
+function buildName(firstName: string, lastName?: string) {
+    // ...
+}
+
+
+和
+function buildName(firstName: string, lastName = "Smith") {
+    // ...
+}
+```
+
+共享同样的类型 (firstName: string, lastName?: string) => string 。 默认参数的默认值消失了，只保留了它是一个可选参数的信息。
+
+与普通可选参数不同的是带默认值的参数不需要放在必须参数的后面。 如果带默认值的参数出现在必须参数前面，必须明确的传入 undefined 值来获得默认值。
+
+```ts
+function buildName(firstName = "Will", lastName: string) {
+    return firstName + " " + lastName;
+}
+
+let result1 = buildName("Bob");                  // error, too few parameters
+let result2 = buildName("Bob", "Adams", "Sr.");  // error, too many parameters
+let result3 = buildName("Bob", "Adams");         // okay and returns "Bob Adams"
+let result4 = buildName(undefined, "Adams");     // okay and returns "Will Adams"
+```
+===Rest Parameters===
+在TypeScript里，可把所有参数收集到一个数组里
+```ts
+function buildName(firstName: string, ...restOfName: string[]) {
+  return firstName + " " + restOfName.join(" ");
+}//编译器创建参数数组restOfName后可在函数体使用这个数组
+
+let employeeName = buildName("Joseph", "Samuel", "Lucas", "MacKinzie");
+```
+在带有剩余参数的函数类型定义上使用
+```ts
+function buildName(firstName: string, ...restOfName: string[]) {
+  return firstName + " " + restOfName.join(" ");
+}
+
+let buildNameFun: (fname: string, ...rest: string[]) => string = buildName;
+```
+----
+==Generic==
+===the identity function===
+T捕获用户传入的类型，再使用 T 当做返回值类型，则参数类型与返回值类型相同
+```ts
+function identity<T>(arg: T): T {
+    return arg;
+}
+```
+明确的指定了 T 是字符串类型，并作为一个参数传给函数
+```ts
+let output = identity<string>("myString");  // type of output will be 'string'
+```
+利用类型推论，编译器会根据传入的参数自动地帮助确定T的类型（复杂情况下不能确定是还是要明确类型）
+```ts
+let output = identity("myString");  // type of output will be 'string'
+```
+```ts
+function identity<T>(arg: T): T {
+    return arg;
+}
+function loggingIdentity<T>(arg: T): T {
+    console.log(arg.length);  // Error: T doesn't have .length
+    return arg;
+}//类型变量代表的是任意类型，不一定具有.length属性
+```
+修改：可将T类型变为数组或者创建自定义泛型
+```ts
+function loggingIdentity<T>(arg: T[]): T[] {
+    console.log(arg.length);  // Array has a .length, so no more error
+    return arg;
+}
+```
+```ts
+function loggingIdentity<T>(arg: Array<T>): Array<T> {
+    console.log(arg.length);  // Array has a .length, so no more error
+    return arg;
+}
+```
+使用不同的泛型参数名，只要在数量上和使用方式上对应即可
+```ts
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: <U>(arg: U) => U = identity;
+```
+我们还可以使用带有调用签名的对象字面量来定义泛型函数？？？
+```ts
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: {<T>(arg: T): T} = identity
+```
+```ts
+interface GenericIdentityFn {
+    <T>(arg: T): T;
+}//把上例的对象字面量作为一个接口
+
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: GenericIdentityFn = identity;
+```
+
+```ts
+interface GenericIdentityFn<T> {
+    (arg: T): T;
+}
+
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+let myIdentity: GenericIdentityFn<number> = identity;
+```
+----
+===Generic Classes===
+```ts
+class GenericNumber<T> {
+    zeroValue: T;
+    add: (x: T, y: T) => T;
+}//使用（ <> ）括起泛型类型，跟在类名后面。泛型类和泛型接口有些相似
+
+let myGenericNumber = new GenericNumber<number>();//泛型类指的是实例部分的类型，类的静态属性不能使用这个泛型类型。
+myGenericNumber.zeroValue = 0;
+myGenericNumber.add = function(x, y) { return x + y; };
+```
+----
+===Generic Constraints===
+```ts
+interface Lengthwise {
+    length: number;
+}
+
+function loggingIdentity<T extends Lengthwise>(arg: T): T {
+    console.log(arg.length);  // Now we know it has a .length property, so no more error
+    return arg;
+}
+```
+用包含 .length 属性的接口和extend关键字来实现约束
+<code>loggingIdentity(3);  // Error, number doesn't have a .length property</code>
+<code>loggingIdentity({length: 10, value: 3});//传入包含必须属性的值</code>
+
+===Using Type Parameters in Generic Constraints===
+```ts
+function find<T, U extends Findable<T>>(n: T, s: U) {
+  // ...
+}
+find (giraffe, myAnimals);
+```
+

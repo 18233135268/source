@@ -1,0 +1,61 @@
+* Q：Angular2安装过程中在npm install以后typings文件夹未出现在project根目录下怎么办？
+*A：在终端窗口 ( 或 Windows 的 cmd 窗口 ) 中通过命令<code>npm run typings install</code>手动安装它,如果typings还是没有出现，确认各个需要的文件是否齐全，有没有出错，可通过<code>npm install -g typings</code>将其安装为全局的文件
+----
+* Q：对于这个编译错误<code>error TS1219: Experimental support for decorators is a feature that is subject to change in a future release. Set the 'experimentalDecorators' option to remove this warning.</code>怎么解决？
+*A：在tsconfig.json中将expetimentalDecorators设置为ture即可
+ "compilerOptions": {
+    "experimentalDecorators": true
+  }
+----
+*Q：官网英雄教程中创建英雄数据时语句 heroes = HEROES为何报错(把英雄数据都放到组件类中)？
+*A：如果将英雄数组放在组件类里面，则该数组不能定义为const，因为类的成员不能使用const关键字，另外HEROES未指明是当前类中的数组，故HEROES应改为this.HEROES。如果将英雄数组放在组件类外，只需要在heroes = HEROES 前加let 声明变量即可
+----
+*Q：
+find遍历函数，代码如下：
+
+if (!Array.prototype.find) {
+  Array.prototype.find = function(predicate) {
+    'use strict';
+    if (this == null) {
+      throw new TypeError('Array.prototype.find called on null or undefined');
+    }
+    if (typeof predicate !== 'function') {
+      throw new TypeError('predicate must be a function');
+    }
+    var list = Object(this);
+    var length = list.length >>> 0;          //请注意这行，什么意思呢？
+    var thisArg = arguments[1];
+    var value;
+
+    for (var i = 0; i < length; i++) {
+      value = list[i];
+      if (predicate.call(thisArg, value, i, list)) {
+        return value;
+      }
+    }
+    return undefined;
+  };
+}
+*A：
+>>>在js中是移位运算符，表示向右移位，后面跟的参数表示移位的位数。本代码中，给list.length向右移0位，看起来没什么用，实际上是对list.length做了类型转换。因为如果find函数被数组调用，那么list是一个数组，list.length是一个int整数；可如果是一个不是数组的对象调用find函数，那么list是当前对象，list.length的类型就不一定是int了。所以list.length>>>0 转换类类型，避免报错。
+
+---
+*Q：
+angular官网的代码：
+ngOnInit(): void {
+  this.route.params.forEach((params: Params) => {
+    let id = +params['id'];              //请注意这里，id是整形的，而params['id']是字符串，发生了什么？
+    this.heroService.getHero(id)
+      .then(hero => this.hero = hero);
+  });
+}
+
+*A：
+在js中，常见的字符串转数字方法有三种。<br>
+1、转换函数。parseInt()方法或parseFloat()方法，参数只能是string类型的，参数为其他类型的返回NaN；<br>
+2、强制类型转换。Number(value)——把给定的值转换成数字（可以是整数或浮点数）；<br>
+3、利用js的弱类型。像这样：<br>
+var str= '012.345 ';<br>
+var x = str-0;      ////这时x被自动转换为数值<br>
+x = x*1;<br>
+而当对str这样的字符串进行“+”操作是，一般默认为是字符串的拼接。然而在“let id = +params['id'];”中，“+”前面没有任何参数，这时候不再认为是字符串的拼接，而认为是数字的+，所以params['id']被转换成了数字。

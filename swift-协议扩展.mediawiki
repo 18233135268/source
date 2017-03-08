@@ -1,0 +1,439 @@
+== 协议语法 ==
+<source lang="swift">
+protocol SomeProtocol {
+    // protocol definition goes here
+}
+
+//结构体遵守协议
+struct SomeStructure: FirstProtocol, AnotherProtocol {
+    // structure definition goes here
+}
+
+//类遵守协议
+class SomeClass: SomeSuperclass, FirstProtocol, AnotherProtocol {
+    // class definition goes here
+}
+</source>
+----
+== 属性要求 ==
+<source lang="swift">
+protocol SomeProtocol {
+    var mustBeSettable: Int { get set }// 可读写
+    var doesNotNeedToBeSettable: Int { get }// 可读
+}
+
+// 通常在协议的定义中使用 static 前缀表示该属性为类成员
+// 用类实现协议时，使用class 或者 static 关键字来表示该属性为类成员，
+protocol AnotherProtocol {
+    static var someTypeProperty: Int { get set }
+}
+
+// 若协议未被完整遵循，编译时则会报错
+protocol FullyNamed {
+    var fullName: String { get }
+}
+class Starship: FullyNamed {
+    var prefix: String?
+    var name: String
+    init(name: String, prefix: String? = nil) {
+        self.name = name
+        self.prefix = prefix
+    }
+    var fullName: String { // Starship 类将 fullName 实现为可读的计算型属性
+        return (prefix != nil ? prefix! + " " : "") + name
+    }
+}
+var ncc1701 = Starship(name: "Enterprise", prefix: "USS")
+// ncc1701.fullName is "USS Enterprise"
+</source>
+----
+== 方法要求 ==
+# 协议方法支持变长参数(variadic parameter)，不支持默认参数(default parameter)
+<source lang="swift">
+protocol RandomNumberGenerator {
+    func random() -> Double
+} 
+class LinearCongruentialGenerator: RandomNumberGenerator {
+    var lastRandom = 42.0
+    let m = 139968.0
+    let a = 3877.0
+    let c = 29573.0
+    func random() -> Double {
+        lastRandom = ((lastRandom * a + c) % m)
+        return lastRandom / m
+    }
+}
+let generator = LinearCongruentialGenerator()
+print("Here's a random number: \(generator.random())")
+// Prints "Here's a random number: 0.37464991998171"
+print("And another one: \(generator.random())")
+// Prints "And another one: 0.729023776863283"
+</source>
+----
+== 可变方法要求 ==
+# 用 class 实现协议中的 mutating 方法时，不用写 mutating 关键字
+# mutating 关键字只适用于结构体和枚举实现协议中的 mutating 方法
+<source lang="swift">
+protocol Togglable {
+    mutating func toggle()
+}
+enum OnOffSwitch: Togglable {
+    case Off, On
+    mutating func toggle() {
+        switch self {
+        case Off:
+            self = On
+        case On:
+            self = Off
+        }
+    }
+}
+var lightSwitch = OnOffSwitch.Off
+lightSwitch.toggle()
+// lightSwitch is now equal to .On
+</source>
+----
+== 初始化要求 ==
+<source lang="swift">
+protocol SomeProtocol {
+    init(someParameter: Int)
+} 
+</source>
+----
+=== 用类实现协议初始化 ===
+# 对于某个类，如果在 initialiser 前加上关键字required修饰，则要求：所有该类的子类都得实现这个 initialiser 。并且子类在实现该required initialiser 时也得加上关键字 required 修饰；和其他的 initialiser 不同，此时不再需要关键字 override
+<source lang="swift">
+class SomeClass: SomeProtocol { 
+    required init(someParameter: Int) {
+        // initializer implementation goes here
+    }
+}
+
+protocol SomeProtocol {
+    init()
+}
+ 
+class SomeSuperClass {
+    init() {
+        // initializer implementation goes here
+    }
+}
+ 
+class SomeSubClass: SomeSuperClass, SomeProtocol {
+    // "required" from SomeProtocol conformance; "override" from SomeSuperClass
+    required override init() {
+        // initializer implementation goes here
+    }
+}
+</source>
+----
+== 协议类型 ==
+# 作为函数，方法或构造器中的参数类型，返回值类型
+# 作为常量，变量，属性的类型
+# 作为数组，字典或其他容器中的元素类型
+<source lang="swift">
+class Dice {
+    let sides: Int
+    let generator: RandomNumberGenerator // RandomNumberGenerator是一个协议上面有具体的定义
+    init(sides: Int, generator: RandomNumberGenerator) {
+        self.sides = sides
+        self.generator = generator
+    }
+    func roll() -> Int {
+        return Int(generator.random() * Double(sides)) + 1
+    }
+}
+var d6 = Dice(sides: 6, generator: LinearCongruentialGenerator())
+for _ in 1...5 {
+    print("Random dice roll is \(d6.roll())")
+}
+// Random dice roll is 3
+// Random dice roll is 5
+// Random dice roll is 4
+// Random dice roll is 5
+// Random dice roll is 4
+</source>
+----
+== 代理模式 ==
+# 委托是一种设计模式，它允许类或结构体将一些需要它们负责的功能交由(委托)给其他的类型。
+# 委托模式可以用来响应特定的动作或接收外部数据源提供的数据，而无需要知道外部数据源的类型。
+<source lang="swift">
+protocol DiceGame {
+    var dice: Dice { get }
+    func play()
+}
+protocol DiceGameDelegate {
+    func gameDidStart(game: DiceGame)
+    func game(game: DiceGame, didStartNewTurnWithDiceRoll diceRoll: Int)
+    func gameDidEnd(game: DiceGame)
+}
+
+class SnakesAndLadders: DiceGame {
+    let finalSquare = 25
+    let dice = Dice(sides: 6, generator: LinearCongruentialGenerator())
+    var square = 0
+    var board: [Int]
+    init() {
+        board = [Int](count: finalSquare + 1, repeatedValue: 0)
+        board[03] = +08; board[06] = +11; board[09] = +09; board[10] = +02
+        board[14] = -10; board[19] = -11; board[22] = -02; board[24] = -08
+    }
+    var delegate: DiceGameDelegate?
+    func play() {
+        square = 0
+        delegate?.gameDidStart(self)
+        gameLoop: while square != finalSquare {
+            let diceRoll = dice.roll()
+            delegate?.game(self, didStartNewTurnWithDiceRoll: diceRoll)
+            switch square + diceRoll {
+            case finalSquare:
+                break gameLoop
+            case let newSquare where newSquare > finalSquare:
+                continue gameLoop
+            default:
+                square += diceRoll
+                square += board[square]
+            }
+        }
+        delegate?.gameDidEnd(self)
+    }
+}
+
+class DiceGameTracker: DiceGameDelegate { // DiceGameTracker 遵守了 DiceGameDelegate 并实现了里面的方法
+    var numberOfTurns = 0
+    func gameDidStart(game: DiceGame) {
+        numberOfTurns = 0
+        if game is SnakesAndLadders {
+            print("Started a new game of Snakes and Ladders")
+        }
+        print("The game is using a \(game.dice.sides)-sided dice")
+    }
+    func game(game: DiceGame, didStartNewTurnWithDiceRoll diceRoll: Int) {
+        numberOfTurns += 1
+        print("Rolled a \(diceRoll)")
+    }
+    func gameDidEnd(game: DiceGame) {
+        print("The game lasted for \(numberOfTurns) turns")
+    }
+}
+let tracker = DiceGameTracker()
+let game = SnakesAndLadders()
+game.delegate = tracker
+game.play()
+// Started a new game of Snakes and Ladders
+// The game is using a 6-sided dice
+// Rolled a 3
+// Rolled a 5
+// Rolled a 4
+// Rolled a 5
+// The game lasted for 4 turns
+</source>
+----
+== 在扩展中添加协议成员 ==
+# 扩展可以为已存在的类型添加属性，方法，下标，协议等成员。
+# 通过扩展为已存在的类型遵循协议时，该类型的所有实例也会随之添加协议中的方法
+<source lang="swift">
+protocol TextRepresentable {
+    var textualDescription: String { get }
+}
+// 通过遵守 TextRepresentable 协议对 Dice 类进行扩展
+extension Dice: TextRepresentable {
+    var textualDescription: String {
+        return "A \(sides)-sided dice"
+    }
+} 
+</source>
+----
+== 通过延展补充协议声明 ==
+# 当一个类型已经实现了协议中的所有要求，却没有声明时，可以通过扩展来补充协议声明
+# 即时满足了协议的所有要求，类型也不会自动转变，因此你必须为它做出明显的协议声明
+<source lang="swift">
+struct Hamster {
+    var name: String
+    var textualDescription: String {
+        return "A hamster named \(name)"
+    }
+}
+extension Hamster: TextRepresentable {} 
+let simonTheHamster = Hamster(name: "Simon")
+let somethingTextRepresentable: TextRepresentable = simonTheHamster
+print(somethingTextRepresentable.textualDescription)
+</source>
+----
+== 集合中的协议类型 ==
+# 集合中元素类型可以是协议类型
+<source lang="swift">
+let things: [TextRepresentable] = [game, d12, simonTheHamster]
+for thing in things { // thing被当做是TextRepresentable类型而不是Dice，DiceGame，Hamster等类型
+    print(thing.textualDescription)
+} 
+</source>
+----
+== 协议的继承 ==
+# 协议能够继承一或多个其他协议
+<source lang="swift">
+protocol InheritingProtocol: SomeProtocol, AnotherProtocol {
+    // 协议的内容
+}
+
+protocol PrettyTextRepresentable: TextRepresentable {
+    var prettyTextualDescription: String { get }
+}
+//通过遵循 PrettyTextRepresentable 协议来扩展 SnakesAndLadders
+// 遵循 PrettyTextRepresentable 同时也遵循 TextRepresentable协议
+extension SnakesAndLadders: PrettyTextRepresentable {
+    var prettyTextualDescription: String {
+        var output = textualDescription + ":\n"
+        for index in 1...finalSquare {
+            switch board[index] {
+            case let ladder where ladder > 0:
+                output += "▲ "
+            case let snake where snake < 0:
+                output += "▼ "
+            default:
+                output += "○ "
+            }
+        }
+        return output
+    }
+}
+</source>
+----
+== 只能用于类的协议 ==
+# class 关键字必须在其它的协议的名称的前面
+<source lang=""swift>
+protocol SomeClassOnlyProtocol: class, SomeInheritedProtocol {
+    // class-only protocol definition goes here
+} 
+</source>
+----
+== 协议合成 ==
+# 一个协议可由多个协议采用protocol这样的格式进行组合。
+# 协议合成并不会生成一个新协议类型，而是将多个协议合成为一个临时的协议，超出范围后立即失效。
+<source lang="swift">
+protocol Named {
+    var name: String { get }
+}
+protocol Aged {
+    var age: Int { get }
+}
+struct Person: Named, Aged {
+    var name: String
+    var age: Int
+}
+func wishHappyBirthday(celebrator: protocol<Named, Aged>) {
+    print("Happy birthday \(celebrator.name) - you're \(celebrator.age)!")
+}
+let birthdayPerson = Person(name: "Malcolm", age: 21)
+wishHappyBirthday(birthdayPerson)
+</source>
+----
+== 检验协议的一致性 ==
+# is 操作符用来检查实例是否遵循了某个协议
+# as? 返回一个可选值，当实例遵循协议时，返回该协议类型；否则返回 nil
+# as! 用以强制向下转换型
+<source lang="swift">
+// 定义一个协议
+protocol HasArea {
+    var area: Double { get }
+}
+// 两个遵守 HasArea 的类
+class Circle: HasArea {
+    let pi = 3.1415927
+    var radius: Double
+    var area: Double { return pi * radius * radius }
+    init(radius: Double) { self.radius = radius }
+}
+class Country: HasArea {
+    var area: Double
+    init(area: Double) { self.area = area }
+}
+class Animal {
+    var legs: Int
+    init(legs: Int) { self.legs = legs }
+}
+// 采用 AnyObject 类型的数组来装载在他们的实例,因为它们没有相同的基类
+let objects: [AnyObject] = [
+    Circle(radius: 2.0),
+    Country(area: 243_610),
+    Animal(legs: 4)
+]
+// 检查object数组的元素是否遵循了HasArea协议
+for object in objects {
+    if let objectWithArea = object as? HasArea {
+        print("Area is \(objectWithArea.area)")
+    } else {
+        print("Something that doesn't have an area")
+    }
+}
+</source>
+----
+== 可选协议 ==
+# 可选协议只能在含有@objc前缀的协议中生效。
+# @objc用来表示协议是可选的，也可以用来表示暴露给Objective-C的代码，此外，@objc型协议只对类有效
+# 在协议中使用@optional关键字作为前缀来定义可选成员
+<source lang="swift">
+@objc protocol CounterDataSource {
+    optional func incrementForCount(count: Int) -> Int // 可选方法
+    optional var fixedIncrement: Int { get } // 可选属性
+}
+
+@objc class Counter { 
+    var count = 0 
+    var dataSource: CounterDataSource? 
+    func increment() { 
+        if let amount = dataSource?.incrementForCount?(count) { //dataSource 可能为 nil,所以在 dataSource 后边加上了 ? 标记来表明只在 dataSource 非空时才去调用 incrementForCount 方法,又因为不知道是否实现了incrementForCount方法，因此在incrementForCount 方法后边也加有 ? 标记
+            count += amount 
+        } else if let amount = dataSource?.fixedIncrement? { 
+            count += amount 
+        } 
+    } 
+} 
+
+// ThreeSource 实现了 CounterDataSource 协议
+class ThreeSource: NSObject, CounterDataSource {
+    let fixedIncrement = 3
+}
+var counter = Counter()
+counter.dataSource = ThreeSource()
+for _ in 1...4 {
+    counter.increment()
+    print(counter.count)
+}
+</source>
+----
+== 协议扩展 ==
+<source lang="swift">
+// 对 RandomNumberGenerator 协议进行扩展，添加了 randomBool() 方法
+extension RandomNumberGenerator {
+    func randomBool() -> Bool {
+        return random() > 0.5
+    }
+} 
+let generator = LinearCongruentialGenerator()
+print("Here's a random number: \(generator.random())")
+// Prints "Here's a random number: 0.37464991998171"
+print("And here's a random Boolean: \(generator.randomBool())")
+// Prints "And here's a random Boolean: true
+</source>
+----
+== 提供了默认的实现 ==
+# 通过扩展来默认实现协议的方法属性要求
+<source lang="swift">
+extension PrettyTextRepresentable  {
+    var prettyTextualDescription: String {
+        return textualDescription
+    }
+}
+</source>
+----
+== 协议扩展添加约束 ==
+<source lang="swift">
+extension CollectionType where Generator.Element: TextRepresentable {
+    var textualDescription: String {
+        let itemsAsText = self.map { $0.textualDescription }
+        return "[" + itemsAsText.joinWithSeparator(", ") + "]"
+    }
+}
+</source>
+----

@@ -1,0 +1,360 @@
+==CHAR 和 VARCHAR 类型==
+* 这两个类型相似，但在存储和检索时的方式有所不同，在最大长度和是否有尾随空格处也有不同。
+* 这两个类型声明时指定了想要存储字符的最大数量，比如：CHAR(30) 可以存储 30 个字符。
+* CHAR 列的长度固定为创建表时声明的长度，长度可以为 0 到 255 的任一数字。当 CHAR 存储时，在不足指定长度的字符串右边添加空格以到达指定字符长度。当检索时，尾随空格会移除，除非启用了 SQL 模式 PAD_CHAR_TO_FULL_LENGTH。
+* VARCHAR 列中的值为可变长度的字符串。长度可以指定为 0 到 65535 之间的任意值。VARCHAR 列的有效最大长度取决于最大行大小（65535 字节是在所有列中共享的）和使用的字符集。
+* CHAR, VARCHAR 的值存储为 1 字节或 2 字节的前缀加上数据。前缀表示值中的字节数。如果值不需要超过 255 字节，列使用一个长度字节；如果值可能需要超过 255 字节，使用两个长度字节。
+* 如果在没有启用严格的 SQL 模式时分配给 CHAR 或 VARCHAR 列的值超过列的最大长度，值将被截断为适合的长度并产生一个警告。对于非空格字符截断，通过使用严格的 SQL 模式会导致报错和抑制插入值。
+* 对于 VARCHAR 列来说，超过列长度的尾随空格将在插入前截断并产生一个警告，不管使用的什么 SQL 模式。对于 CHAR 列来说，不管使用什么 SQL 模式，从插入值截断多余的尾随空格都将默默的进行。
+* VARCHAR 值在存储时不填充。当存储和检索时尾随空格将保留，与标准 SQL 一致。
+* 如果存储一个值到 CHAR(4) 和 VARCHAR(4) 列，从列检索到的值不永远相同，因为 CHAR 列中的尾随空格在检索时移除了。下例说明了这点不同：
+<source lang='mysql'>
+mysql> CREATE TABLE vc (v VARCHAR(4), c CHAR(4));
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> INSERT INTO vc VALUES ('ab  ', 'ab  ');
+Query OK, 1 row affected (0.00 sec)
+
+mysql> SELECT CONCAT('(', v, ')'), CONCAT('(', c, ')') FROM vc;
++---------------------+---------------------+
+| CONCAT('(', v, ')') | CONCAT('(', c, ')') |
++---------------------+---------------------+
+| (ab  )              | (ab)                |
++---------------------+---------------------+
+1 row in set (0.06 sec)
+</source>
+* VARCHAR 和 CHAR 列中值的存储和比较取决于分配给这列的字符集 collation。
+* 所有的 MySQL 的 collation 都是 PADSPACE 类型的。意思是在 MySQL 中进行 CHAR, VARCHAR, 和 TEXT 值的比较时，不考虑任何尾随空格。这里的“比较”不包含 LIKE 模式匹配运算符，对 LIKE 来说尾随空格是重要的：
+<source lang='mysql'>
+mysql> CREATE TABLE names (myname CHAR(10));
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> INSERT INTO names VALUES ('Monty');
+Query OK, 1 row affected (0.00 sec)
+
+mysql> SELECT myname = 'Monty', myname = 'Monty  ' FROM names;
++------------------+--------------------+
+| myname = 'Monty' | myname = 'Monty  ' |
++------------------+--------------------+
+|                1 |                  1 |
++------------------+--------------------+
+1 row in set (0.00 sec)
+
+mysql> SELECT myname LIKE 'Monty', myname LIKE 'Monty  ' FROM names;
++---------------------+-----------------------+
+| myname LIKE 'Monty' | myname LIKE 'Monty  ' |
++---------------------+-----------------------+
+|                   1 |                     0 |
++---------------------+-----------------------+
+1 row in set (0.00 sec)
+</source>
+** 所有 MySQL 版本都是这样，不受 SQL 模式的影响。
+** 对于那些尾随字符被移除或者在比较时忽略尾随字符的例子来说，如果一个列有一个需要唯一值的索引，插入仅尾随填充字符数量不同的值将导致重复键错误。比如一个表中包含 'a'，插入 'a ' 将导致重复键错误。
+
+==BINARY 和 VARBINARY 类型==
+*  BINARY 和 VARBINARY 类型与 CHAR 和 VARCHAR 类型相似，但它们包含的是二进制字符串而不是非二进制字符串。也就是说，它们包含字节字符串而不是字符字符串。意思是它们没有字符集，排序和比较基于值中字节的数字值。
+* BINARY 和 VARBINARY 允许的最大长度与 CHAR 和 VARCHAR 相同，但是以字节为单位的长度，而不是以字符为单位。
+* BINARY 和 VARBINARY 数据类型与 CHAR BINARY 和 VARCHAR BINARY 类型是不同的。对于后面的类型，BINARY 属性不会导致列被视为二进制字符串列。相反，它会导致列字符集的二进制 collation 将被使用，而且列自己包含非二进制字符字符串而不是二进制字节字符串。
+* 如果没有启用严格的 SQL 模式，并且插入到 BINARY 或 VARBINARY 列的值超过其最大长度，值将截断到适合的长度并产生一个警告。对于截断的情况，通过使用严格的 SQL 模式可以导致报错和抑制插入值。
+* 当 BINARY 值存储时，它们使用填充值右填充来达到指定长度，填充值是 0x00（零字节）。值在插入时使用 0x00 右填充，选择时没有尾随字节被移除。在比较时所有字节都是重要的，包括在 ORDER BY 和 DISTINCT 操作时。在比较时 0x00 字节和空格是不同的，0x00 < 空格。
+* 例如：对于一个 BINARY(3) 列来说，'a ' 在插入时变为 'a \0'，'a\0' 在插入时变为 'a\0\0'，在选择时插入的所有值保持不变。
+* 对于 VARBINARY 来说，在插入时没有填充，在选择时也没有字节被移除。在比较时所有字节都是重要的，包括在 ORDER BY 和 DISTINCT 操作时。在比较时 0x00 字节和空格是不同的，0x00 < 空格。
+* 对于那些尾随字节被移除或者在比较时忽略尾随字节的例子来说，如果一个列有一个需要唯一值的索引，插入仅尾随填充字节数量不同的值将导致重复键错误。例如一个表包含 'a'，试图存储 'a\0' 将导致重复键错误。
+* 如果计划使用 BINARY 数据类型来存储二进制数据并且需要值在检索时与存储时保持一致，应该仔细考虑前面的填充和 stripping 特性。下面的例子解释了 BINARY 值的 0x00 填充如何影响列值的比较：
+<source lang='mysql'>
+mysql> CREATE TABLE t (c BINARY(3));
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> INSERT INTO t SET c = 'a';
+Query OK, 1 row affected (0.01 sec)
+
+mysql> SELECT HEX(c), c = 'a', c = 'a\0\0' FROM t;
++--------+---------+-------------+
+| HEX(c) | c = 'a' | c = 'a\0\0' |
++--------+---------+-------------+
+| 610000 |       0 |           1 |
++--------+---------+-------------+
+1 row in set (0.09 sec)
+</source>
+* 如果检索的值必须和指定的没有填充的存储的值一致，可能最好使用 VARBINARY 或 BLOB 类型代替。
+
+==BLOB 和 TEXT 类型==
+* BLOB 是可以保存可变数据量的二进制大对象。四个 BLOB 类型分别是 TINYBLOB, BLOB, MEDIUMBLOB, 和 LONGBLOB，不同之处仅为可保存的值的最大长度不同。四个 TEXT 类型分别是 TINYTEXT, TEXT, MEDIUMTEXT, 和 LONGTEXT，这些对应于四个 BLOB 类型，和它们有一样的最大长度和存储要求。
+* BLOB 值被视为二进制字符串，没有字符集，排序和比较基于列值中字节的数字值。TEXT 值被视为非二进制字符串(字符字符串)，有字符集，排序和比较基于字符集对应的 collation。
+* 对于 BLOB 和 TEXT类型，在未启用严格的 SQL 模式时，处理超出其最大长度的值的方式与 BINARY 和 VARBINARY 基本一致，对于非空格字符截断，通过使用严格的 SQL 模式会导致报错和抑制插入值。
+* 无论什么 SQL 模式，插入到 TEXT 列的值的多余尾随空格的截断永远产生一个警告。
+* 对于 TEXT 和 BLOB 列，在插入时没有填充，在选择时没有字节被移除。
+* 如果一个 TEXT 列被索引，索引条目比较在最后是空格填充的。这意味着，如果索引需要唯一的值，值在仅尾随空格数量不同时将发生重复键错误。比如一个表中包含了 'a'，若试图存储 'a ' 将发生重复键错误。对于 BLOB 来说不是这样的。
+* 在大多情况下，可以把 BLOB 列看作 VARBINARY 列，可以随你所愿的大。同样，可以把 TEXT 列看作 VARCHAR 列。BLOB 和 TEXT 与 VARBINARY 和 VARCHAR 的不同如下：
+** 对于 BLOB 和 TEXT 列的索引，必须指定索引前缀长度。CHAR 和 VARCHAR 的前缀长度是可选的。
+** BLOB 和 TEXT 列不能有默认值。
+* 如果在 TEXT 数据类型下使用 BINARY 属性，将分配给列与列字符集对应的二进制 collation。
+* '''LONG 和 LONG VARCHAR 映射为 MEDIUMTEXT 数据类型，这是兼容性特性。'''
+* MySQL 连接器/ODBC 像 LONGVARBINARY 一样定义 BLOB 值，像 LONGVARCHAR 一样定义 TEXT 值。
+* 因为 BLOB 和 TEXT 值可以非常长，在使用它们时可能遇到一些限制：
+** 仅列的第一个 max_sort_length 字节在排序时使用。max_sort_length 的默认值是 1024。可以在服务器启动时或运行时通过增加 max_sort_length 的值，来使更多的字节在排序或分组时具有重要意义。任何客户端可以更改其会话  max_sort_length 变量的值。
+<source lang='mysql'>
+mysql> SET max_sort_length = 2000;
+mysql> SELECT id, comment FROM t
+    -> ORDER BY comment;
+</source>
+** 查询结果中的 BOLB 或 TEXT 列的实例是使用临时表处理的，这导致服务器在磁盘上使用表而不是在内存中，因为 MEMORY 存储引擎不支持这些数据类型。使用磁盘带来性能损失，所以仅在确实需要它们时才在查询结果中包含 BLOB 和 TEXT 列。例如，避免使用 <code>SELECT *</code>来选择所有列。
+** 一个 BOLB 或 TEXT 对象的最大尺寸由其类型决定，但在客户端和服务器之间实际可传送的最大值取决于可用内存量和通信缓冲区的大小。可以通过更改 max_allowed_packet 变量的值来更改消息缓冲区的大小，但必须在服务器和客户端程序都执行此操作。
+* 每个 BLOB 和 TEXT 值分别由内部分配的对象来表示。这与所有其它数据类型形成对比，后者是当打开表时为每列分配一次。
+
+==ENUM 类型==
+* ENUM 是一个字符串对象，其值是从表创建时的列定义中明确枚举的值列表中选择的。它有这些优势：
+** 当列在有一个有限的可能值集时进行紧凑的数据存储。指定为输入值的字符串自动编码为数字。
+** 可读的查询和输出。在查询结果中，数字将转换回相应的字符串。
+* 创建和使用 ENUM 列：枚举值必须是引用的字符串字面值，如下例所示，创建一个 ENUM 列。
+<source lang='mysql'>
+CREATE TABLE shirts (
+    name VARCHAR(40),
+    size ENUM('x-small', 'small', 'medium', 'large', 'x-large')
+);
+INSERT INTO shirts (name, size) VALUES ('dress shirt','large'), ('t-shirt','medium'),
+  ('polo shirt','small');
+SELECT name, size FROM shirts WHERE size = 'medium';
++---------+--------+
+| name    | size   |
++---------+--------+
+| t-shirt | medium |
++---------+--------+
+UPDATE shirts SET size = 'small' WHERE size = 'large';
+COMMIT;
+</source>
+* 插入一百万行 'medium' 到表中需要一百万字节的存储，而如果在 VARCHAR 列中插入实际的字符串 'medium' 需要六百万字节的存储。
+
+===枚举常量的索引值===
+* 每个枚举值有一个索引：
+** 列定义中列出的元素是分配的索引号，从 1 开始。
+** 空字符串错误值的索引值是 0。这意味着可以使用以下 SELECT 语句来发现被分配无效 ENUM 值的行：
+<source lang='mysql'>
+mysql> SELECT * FROM tbl_name WHERE enum_col=0;
+</source>
+** NULL 值的索引是 NULL。
+** 术语 'index' 在这里是指枚举值列表中的位置。它与表索引无关。
+* 一个 ENUM 列最多可以有 65535 个不同的元素。一个表在它的 ENUM 和 SET 列中可以有不超过 255 个独特的元素列表被视为是一个群组。
+* 如果在 numeric 环境中检索一个 ENUM 值，将返回列值的索引。比如可以从 ENUM 列中像这样检索数字值：
+<source lang='mysql'>
+mysql> SELECT enum_col+0 FROM tbl_name;
+
+mysql> SELECT name, size+0 FROM shirts;
++-------------+--------+
+| name        | size+0 |
++-------------+--------+
+| dress shirt |      3 |
+| t-shirt     |      2 |
+| polo shirt  |      3 |
++-------------+--------+
+3 rows in set (0.00 sec)
+</source>
+* SUM() 或 AVG() 这样的函数期望一个数字参数，如果需要的话将这个参数投射到一个数字。对于 ENUM 值来说，索引值用来计算。
+===枚举值处理===
+* 当表创建时尾随空格从表定义中的 ENUM 成员值自动删除。
+* ENUM 列可以分配字符集和 collation。
+* 如果存储一个数字到 ENUM 列，该数字视为可能值的索引，并且所存储的值是该索引对应的的枚举成员。如果数字值是在引号内的，如果在枚举值的列表中没有与其匹配的字符串它仍解释为索引。由于这些原因，用看起来像数字的枚举值来定义 ENUM 列是不可取的，因为这非常容易混淆。例如，下面的列有 '0', '1' 和 '2' 字符串值的枚举成员，但数字索引值是 1, 2 和 3：
+<source lang='mysql'>
+numbers ENUM('0','1','2')
+</source>
+如果存储 2，它将解释为一个索引值，变为 '1'（索引 2 的值）。如果存储 '2'，它匹配一个枚举值，所以它存储为 '2'。如果存储 '3'，它不匹配任何枚举值，所以它被视为索引并变为 '2'（索引 3 的值）。
+<source lang='mysql'>
+mysql> CREATE TABLE testenum (
+    ->     name VARCHAR(40),
+    ->     numbers ENUM('0', '1', '2')
+    -> );
+Query OK, 0 rows affected (0.06 sec)
+
+INSERT INTO testenum (name, numbers) VALUES ('A', '1'), ('B', '2');
+Query OK, 2 rows affected (0.00 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> SELECT name, numbers FROM testnum;
+ERROR 1146 (42S02): Table 'zoo.testnum' doesn't exist
+mysql> SELECT name, numbers FROM testenum;
++------+---------+
+| name | numbers |
++------+---------+
+| A    | 1       |
+| B    | 2       |
++------+---------+
+2 rows in set (0.00 sec)
+
+mysql> INSERT INTO testenum (name, numbers) VALUES ('C', 2), ('D', '2'), ('E', '3');
+Query OK, 3 rows affected (0.00 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+mysql> SELECT * FROM testenum;
++------+---------+
+| name | numbers |
++------+---------+
+| A    | 1       |
+| B    | 2       |
+| C    | 1       |
+| D    | 2       |
+| E    | 2       |
++------+---------+
+5 rows in set (0.00 sec)
+
+mysql> SELECT name, numbers+0 FROM testenum;
++------+-----------+
+| name | numbers+0 |
++------+-----------+
+| A    |         2 |
+| B    |         3 |
+| C    |         2 |
+| D    |         3 |
+| E    |         3 |
++------+-----------+
+5 rows in set (0.00 sec)
+</source>
+* 要确定一个 ENUM 列所有可能的值，使用 <code>SHOW COLUMNS FROM tbl_name LIKE 'enum_col'</code>并在输出的 Type 列分析 ENUM 的定义。例如：
+<source lang='mysql'>
+mysql> SHOW COLUMNS FROM testenum LIKE 'numbers';
++---------+-------------------+------+-----+---------+-------+
+| Field   | Type              | Null | Key | Default | Extra |
++---------+-------------------+------+-----+---------+-------+
+| numbers | enum('0','1','2') | YES  |     | NULL    |       |
++---------+-------------------+------+-----+---------+-------+
+1 row in set (0.00 sec)
+</source>
+
+===空的或 NULL 枚举值===
+* 一个枚举值也可以是空字符串，或 NULL：
+** 如果向 ENUM 插入一个无效的值（即字符串没有在允许值列表中），该字符串插入后被替换为一个特殊错误值。该字符串可以通过其有数字值 0 与 'normal' 空字符串进行区分。在严格的 SQL 模式下，尝试插入无效的 ENUM 值会导致报错。
+** 如果一个 ENUM 列声明了允许 NULL 值，对于这个列来说 NULL 是有效值，并且默认值是 NULL。如果一个 ENUM 列声明为 NOT NULL，它的默认值是其允许值列表中的第一个元素。
+
+===枚举排序===
+* ENUM 值基于其索引数字进行排序，而索引数字取决于列定义中列举出的枚举成员的顺序。比如说，对于 ENUM('b', 'a') 来说，'b' 排在 'a' 的前面。空字符串排在非空字符串前面，NULL 值排在所有枚举值前面。
+* 使用以下方法来防止在 ENUM 列中使用 ORDER BY 子句时发生意外情况：
+** 用字母序来定义 ENUM 列。
+** 确认列是以字典进行排序，而不是通过使用 ORDER BY CAST(col AS CHAR) 或 ORDER BY CONCAT(col) 进行编译的索引数字。
+
+===枚举的局限===
+* 一个枚举值不能成为一个表达式，即使是评估为字符串的枚举值。
+* 例如，以下的 CREATE TABLE 语句不能工作，因为 CONCAT 函数不能用于构造 ENUM 值：
+<source lang='mysql'>
+CREATE TABLE sizes (
+    size ENUM('small', CONCAT('med','ium'), 'large')
+);
+</source>
+* 也不能使用用户变量作为枚举值。以下语句不工作：
+<source lang='mysql'>
+SET @mysize = 'medium';
+
+CREATE TABLE sizes (
+    size ENUM('small', @mysize, 'large')
+);
+</source>
+* 强烈建议不适用数字作为枚举值，因为它不以适当的 TINYINT 或 SMALLINT 类型进行存储，而且如果不正确的引用 ENUM 值很容易将字符串与隐含的数字值混淆。如果使用数字作为索引值，永远将其封装在引号内。如果忽略了引号，该数字将被视为索引。
+
+==SET 类型==
+* SET 是一个字符串对象，可以有零个或多个值，每个值必须从表创建时定义的允许值列表中选取。SET 列的值由多个 set 列成员组成（列成员由用逗号分隔开的成员定义而成）。这样做的结果是 SET 成员值自身不应该包含逗号。
+* 比如，列定义为 SET('one', 'two') NOT NULL 可以有以下任一值：
+<source lang='mysql'>
+''
+'one'
+'two'
+'one,two'
+</source>
+* 一个 SET 列可以有 64 个不同的成员，一个表可以有不超过 255 个独一无二的元素列表定义在它的 ENUM 和 SET 列中（将这两类列视为一个群组）。
+* 定义中有完全一样的值将导致一个警告，若启用了严格的 SQL 模式，将导致报错。
+* 当表创建时在表定义中的尾随空格将自动从 SET 成员值中删除。
+* 当检索时，存储在 SET 列中的值使用用在列定义中的 lettercase 来显示。
+* SET 列可以分配字符集和 collation。
+* MySQL 用数字来存储 SET 值，低阶位的存储值相当于第一个 set 成员。可以像下面这样从 SET 列中检索数字值：
+<source lang='mysql'>
+mysql> SELECT set_col+0 FROM tbl_name;
+</source>
+* 如果一个数字存储到 SET 列，设置为二进制的位表示决定列值中的集合成员的数字。比如列指定为 SET('a','b','c','d')，成员由以下十进制和二进制值：
+{| class="wikitable"
+| SET 成员
+| 十进制值
+| 二进制值
+|-
+| 'a'
+| 1
+| style="text-align:left;" | 0001
+|-
+| 'b'
+| 2
+| style="text-align:left;" | 0010
+|-
+| 'c'
+| 4
+| style="text-align:left;" | 0100
+|-
+| 'd'
+| 8
+| style="text-align:left;" | 1000
+|}
+* 如果分配一个值 9 给这个列，即二进制的 1001，所以第一个和第四个 SET 值成员 'a' 和 'd' 被选择，因此产生的结果是 'a,d'。
+
+* 对于包含超过一个 SET 元素的值，插入的元素以什么顺序进行排列是无关紧要的。一个给定的元素在值中列出多少次也是无关紧要的。当稍后进行检索时，该值中的每个元素出现一次，元素基于表创建时定义的顺序列出。例如，假定列设置为 SET('a','b','c','d')：
+<source lang='mysql'>
+mysql> CREATE TABLE myset (col SET('a', 'b', 'c', 'd'));
+</source>
+** 如果插入值 'a,d', 'd,a', 'a,d,d', 'a,d,a', 和 'd,a,d':：
+<source lang='mysql'>
+mysql> INSERT INTO myset (col) VALUES 
+-> ('a,d'), ('d,a'), ('a,d,a'), ('a,d,d'), ('d,a,d');
+Query OK, 5 rows affected (0.01 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+</source>
+** 当检索时所有插入的这些值都显示为 'a,d':
+<source lang='mysql'>
+mysql> SELECT col FROM myset;
++------+
+| col  |
++------+
+| a,d  |
+| a,d  |
+| a,d  |
+| a,d  |
+| a,d  |
++------+
+5 rows in set (0.04 sec)
+</source>
+** 如果设置 SET 列为不支持的值，该值将被忽略并给出一个警告：
+<source lang='mysql'>
+mysql> INSERT INTO myset (col) VALUES ('a,d,d,s');
+Query OK, 1 row affected, 1 warning (0.03 sec)
+
+mysql> SHOW WARNINGS;
++---------+------+------------------------------------------+
+| Level   | Code | Message                                  |
++---------+------+------------------------------------------+
+| Warning | 1265 | Data truncated for column 'col' at row 1 |
++---------+------+------------------------------------------+
+1 row in set (0.04 sec)
+
+mysql> SELECT col FROM myset;
++------+
+| col  |
++------+
+| a,d  |
+| a,d  |
+| a,d  |
+| a,d  |
+| a,d  |
+| a,d  |
++------+
+6 rows in set (0.01 sec)
+</source>
+* 若在启用了严格 SQL 模式时插入无效值将导致报错。
+* SET 值进行数字排序，NULL 值排在非空 SET 值前面。
+* SUM() 或 AVG() 这样的函数期待一个数字的参数，如果需要的话将参数投射到一个数字。对于 SET 值来说，投射操作导致数字值被使用。
+* 通常，使用 FIND_IN_SET() 函数或 LIKE 操作来搜索 SET 值：
+<source lang='mysql'>
+mysql> SELECT * FROM tbl_name WHERE FIND_IN_SET('value',set_col)>0;
+mysql> SELECT * FROM tbl_name WHERE set_col LIKE '%value%';
+</source>
+** 第一行语句查找 set_col 列中包含 set 成员 value 的行。第二行语句也类似，但不相同：它查找 set_col 无论何处都包含 value 的行，即使作为另一个 set 成员的子字符串。
+* 以下语句也是可以的：
+<source lang='mysql'>
+mysql> SELECT * FROM tbl_name WHERE set_col & 1;
+mysql> SELECT * FROM tbl_name WHERE set_col = 'val1,val2';
+</source>
+** 第一行语句查找包含第一个 set 成员的值。第二行查找一个精确的匹配。
+** 比较 set 值 'val1,val2' 与比较 'val2,val1' 返回不同的结果。应该指定与列定义时的顺序一致的值。
+* 为 SET 列决定所有可能的值，使用 SHOW COLUMNS FROM tbl_name LIKE set_col，并在输出的 Type 列分析 SET 定义。

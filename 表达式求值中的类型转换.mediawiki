@@ -1,0 +1,15 @@
+* 当操作符用于不同的操作数时，发生类型转换使操作数兼容。一些转换隐式的发生。例如 MySQL 在必要时会自动将数字转换为字符串，反之亦然：
+<source lang='mysql'>
+mysql> SELECT 1+'1';
+        -> 2
+mysql> SELECT CONCAT(2,' test');
+        -> '2 test'
+</source>
+* 也可以使用 CAST() 函数显式的将数字转换为字符串也是可能的。CONCAT() 函数中的转换隐式的发生，因为它期待字符串参数：
+<source lang='mysql'>
+mysql> SELECT 38.8, CAST(38.8 AS CHAR);
+        -> 38.8, '38.8'
+mysql> SELECT 38.8, CONCAT(38.8);
+        -> 38.8, '38.8'
+</source>
+* 

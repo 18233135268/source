@@ -1,0 +1,209 @@
+→[[Python 基本语法]]
+==异常处理==
+# 程序运行过程中，若发生异常，可以事先约定返回异常代码，这样就可以知道是否有错，以及出错的原因；
+# Python内置了一套<code>try...except...finally...</code>的错误处理机制。
+* 下面的例子会一直要求用户输入，直到输入一个合法的整数为止（允许用户中断这个程序）：
+<source lang="python">
+while True:
+    try:
+        x = int(input("Please enter a number: "))
+        break
+    except ValueError:
+        print("Oops!  That was no valid number.  Try again...")
+</source>
+
+==try语句==
+# 用<code>try</code>语句运行可能出错的代码；
+# 如果没有异常发生，<code>except</code>子句在<code>try</code>语句执行完毕后被忽略；
+# 如果在<code>try</code>语句执行过程中发生异常，该语句其余部分会被忽略；
+# 如果异常匹配于<code>except</code>关键字后面指定的异常类型，就执行对应的<code>except</code>子句；
+# 执行完<code>except</code>子句后，如果有<code>finally</code>语句块，则执行<code>finally</code>语句块。
+
+* try语句示例：
+<source lang="python">
+try:
+    print('try...')
+    r = 10 / 0
+    print('result:', r)
+except ZeroDivisionError as e:  # 为了简便，把异常名赋值给变量名e
+    print('except:', e)
+finally:
+    print('finally...')
+print('END')
+</source>
+
+* 计算<code>10 / 0</code>时会产生一个除法运算错误：
+<source lang="python">
+ # 异常发生时，后续语句print('result:', r)不会被执行。except由于捕获到ZeroDivisionError，因此被执行。最后，finally语句被执行
+try...
+except: division by zero
+finally...
+END
+</source>
+
+* 若把除数0改成2，执行结果如下：
+<source lang="python">
+ # 没有异常发生，except语句块不会被执行，但finally如果有，则一定会被执行（可以没有finally语句）
+try...
+result: 5.0
+finally...
+END
+</source>
+
+* 若发生不同类型的异常，应该由不同的<code>except</code>语句块处理，可以有多个<code>except</code>来捕获不同类型的异常：
+<source lang="python">
+try:
+    print('try...')
+    r = 10 / int('a')
+    print('result:', r)
+except ValueError as e:
+    print('ValueError:', e)
+except ZeroDivisionError as e:
+    print('ZeroDivisionError:', e)
+finally:
+    print('finally...')
+print('END')
+</source>
+
+* 可以在<code>except</code>语句块后面加一个<code>else</code>，当没有异常发生时，会自动执行<code>else</code>语句：
+<source lang="python">
+try:
+    print('try...')
+    r = 10 / int('2')
+    print('result:', r)
+except ValueError as e:
+    print('ValueError:', e)
+except ZeroDivisionError as e:
+    print('ZeroDivisionError:', e)
+else:
+    print('no error!')
+finally:
+    print('finally...')
+print('END')
+</source>
+
+* Python的异常也是<code>class</code>，所有的异常类型都继承自<code>BaseException</code>类：
+<source lang="python">
+ # 在使用except时需要注意，它不但捕获该类型的异常，还捕获其子类异常
+try:
+    foo()
+except ValueError as e:
+    print('ValueError')
+except UnicodeError as e:  # 这个except永远捕获不到UnicodeError，因为UnicodeError是ValueError的子类
+    print('UnicodeError')
+</source>
+
+* 使用<code>try...except</code>捕获异常时，可以跨越多层调用：
+<source lang="python">
+ # 比如函数main()调用bar()，bar()调用foo()，结果foo()出错了，只要main()捕获到了，就可以处理
+def foo(s):
+    return 10 / int(s)
+
+def bar(s):
+    return foo(s) * 2
+
+def main():
+    try:
+        bar('0')
+    except Exception as e:
+        print('Error:', e)
+    finally:
+        print('finally...')
+</source>
+
+==记录异常==
+# 如果不捕获异常，Python解释器可以打印出异常信息，但程序也就停止运行了；
+# 既然用户能捕获异常，就可以把异常信息打印出来，然后分析异常原因，同时让程序继续执行下去；
+# Python内置的logging模块可以记录错误信息。
+* 示例
+<source lang="python">
+ # err_logging.py
+
+import logging
+
+def foo(s):
+    return 10 / int(s)
+
+def bar(s):
+    return foo(s) * 2
+
+def main():
+    try:
+        bar('0')
+    except Exception as e:
+        logging.exception(e)
+
+main()
+print('END')
+</source>
+
+* 虽然有异常，但程序打印完异常信息后会继续执行，并正常退出：
+<source lang="python">
+ERROR:root:division by zero
+Traceback (most recent call last):
+  File "err_logging.py", line 13, in main
+    bar('0')
+  File "err_logging.py", line 9, in bar
+    return foo(s) * 2
+  File "err_logging.py", line 6, in foo
+    return 10 / int(s)
+ZeroDivisionError: division by zero
+END
+</source>
+
+==抛出异常==
+# 异常是class，捕获一个异常就是捕获到该class的一个实例；
+# 异常并不是凭空产生的，而是有意创建并抛出的。Python的内置函数会抛出很多类型的异常，用户编写的函数也可以抛出异常。
+
+* <code>raise</code>语句允许用户强制抛出一个指定的异常：
+<source lang="python">
+raise NameError('HiThere')
+ # 运行代码
+Traceback (most recent call last):
+  File "err_raise.py", line 1, in <module>
+    raise NameError('HiThere')
+NameError: HiThere
+</source>
+
+* 如果需要明确一个异常是否抛出，但不想处理它，<code>raise</code>语句可以重新抛出该异常：
+<source lang="python">
+try:
+    raise NameError('HiThere')
+except NameError:
+    print('An exception flew by!')
+    raise
+</source>
+
+* 执行代码，<code>raise</code>语句重新抛出该异常：
+<source lang="python">
+An exception flew by!
+Traceback (most recent call last):
+  File "err_raise.py", line 2, in <module>
+    raise NameError('HiThere')
+NameError: HiThere
+</source>
+
+* 用户也可以根据需要定义一个异常的class，选择好继承关系，然后用<code>raise</code>语句抛出一个异常的实例：
+<source lang="python">
+# err_raise.py
+class FooError(ValueError):
+    pass
+
+def foo(s):
+    n = int(s)
+    if n == 0:
+        raise FooError('invalid value: %s' % s)
+    return 10 / n
+
+foo('0')
+</source>
+
+* 执行代码，可以跟踪到自己定义的异常：
+<source lang="python">
+Traceback (most recent call last):
+  File "err_raise.py", line 11, in <module>
+    foo('0')
+  File "err_raise.py", line 8, in foo
+    raise FooError('invalid value: %s' % s)
+__main__.FooError: invalid value: 0
+</source>

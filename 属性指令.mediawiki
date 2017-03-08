@@ -1,0 +1,116 @@
+----
+== 指令概念 ==
+=== Angular 中指令的分类 ===
+# 组件 － 拥有模版的指令
+# 结构指令 － 通过添加喝移除 DOM 元素改变 DOM 格局的指令
+# 属性型指令 － 改变元素显示和行为的指令
+== 创建简单的属性型指令 ==
+# 属性型指令至少需要带有一个 @Directive 装饰器的控制器类
+== 编写指令代码 ==
+<source lang="TypeScript">
+import { Directive, ElementRef, Input, Renderer } from '@angular/core';
+@Directive({ selector: '[myHighlight]' }) // css 中的 attribute 选择器就是属性名称加方括号
+export class HighlightDirective {
+    constructor(el: ElementRef, renderer: Renderer) { // ElementRef 注入，这样代码可以访问 DOM 元素，Renderer 让代码可以改变 DOM 元素的样式 
+       renderer.setElementStyle(el.nativeElement, 'backgroundColor', 'yellow');
+    }
+}
+</source>
+== 使用属性型指令 ==
+<source lang="TypeScript">
+<h1>My First Attribute Directive</h1>
+<p myHighlight>Highlight me!</p>
+</source>
+<source lang="TypeScript">
+// 在 @Ngmodule 的 declarations 数组中设置，目的是为了让指令生效
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { AppComponent } from './app.component';
+import { HighlightDirective } from './highlight.directive';
+@NgModule({
+  imports: [ BrowserModule ],
+  declarations: [
+    AppComponent,
+    HighlightDirective
+  ],
+  bootstrap: [ AppComponent ]
+})
+export class AppModule { }
+</source>
+== 响应用户引发的事件 ==
+<source lang="TypeScript"> 
+@HostListener('mouseenter') onMouseEnter() {
+/* . . . */
+}
+
+@HostListener('mouseleave') onMouseLeave() {
+/* . . . */
+}
+</source>
+<source lang="TypeScript">
+@HostListener('mouseenter') onMouseEnter() {
+    this.highlight('yellow');
+  }
+
+  @HostListener('mouseleave') onMouseLeave() {
+    this.highlight(null);
+  }
+
+  private highlight(color: string) {
+    this.renderer.setElementStyle(this.el.nativeElement, 'backgroundColor', color);
+  }
+</source>
+<source lang="TypeScript">
+import { Directive, ElementRef, HostListener, Input, Renderer } from '@angular/core';
+@Directive({
+  selector: '[myHighlight]'
+})
+export class HighlightDirective {
+  constructor(private el: ElementRef, private renderer: Renderer) { }
+  @HostListener('mouseenter') onMouseEnter() {
+    this.highlight('yellow');
+  }
+  @HostListener('mouseleave') onMouseLeave() {
+    this.highlight(null);
+  }
+  private highlight(color: string) {
+    this.renderer.setElementStyle(this.el.nativeElement, 'backgroundColor', color);
+  }
+}
+</source>
+== 通过绑定来传递值到指令中 ==
+<source lang="TypeScript">
+<p [myHighlight]="color">Highlight me!</p>
+</source>
+<source lang="TypeScript">
+export class HighlightDirective {
+  private _defaultColor = 'red';
+
+  constructor(private el: ElementRef, private renderer: Renderer) { }
+
+  @Input('myHighlight') highlightColor: string; // highlightColor 作为输入属性，所以有 @Input（）装饰器，myHighlight 作为别名，代码绑定到 myHighlight 属性上，但是指令属性名为 highlightColor
+
+  @HostListener('mouseenter') onMouseEnter() {
+    this.highlight(this.highlightColor || this._defaultColor);
+  }
+  @HostListener('mouseleave') onMouseLeave() {
+    this.highlight(null);
+  }
+
+  private highlight(color: string) {
+    this.renderer.setElementStyle(this.el.nativeElement, 'backgroundColor', color);
+  }
+}
+</source>
+== 绑定到第二个属性 ==
+<source lang="TypeScript">
+@Input() set defaultColor(colorName: string){ // defaultColor 属性是一个 setter 函数 
+  this._defaultColor = colorName || this._defaultColor;
+}
+</source>
+<source lang="TypeScript">
+<p [myHighlight]="color" [defaultColor]="'violet'">
+  Highlight me too!
+</p>
+</source>
+----
